@@ -31,6 +31,6 @@ dependencies {
     compile "org.jetbrains.anko:anko-sdk25:$anko_version"
     compile 'com.android.support:appcompat-v7:25.3.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
-    compile 'com.ldzs.recyclerlibrary:recyclerlibrary:1.7.7'
+    compile 'com.cz.recyclerlibrary:recyclerlibrary:1.2.5'
     testCompile 'junit:junit:4.12'
 }

@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">AndroidSample</string>
+    <string name="sample1">示例1</string>
+    <string name="sample1_info">演示初始化时,铺满列表</string>
+    <string name="sample2">示例2</string>
+    <string name="sample2_info">演示铺满列表后,滚动列表时,加载列表其他项</string>
+    <string name="sample3">示例3</string>
+    <string name="sample3_info">演示滚动后,加载更多,以及回收无用控件</string>
 </resources>
