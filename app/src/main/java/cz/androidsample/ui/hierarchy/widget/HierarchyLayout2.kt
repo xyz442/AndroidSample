@@ -1,10 +1,7 @@
 package cz.androidsample.ui.hierarchy.widget
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Matrix
-import android.graphics.Rect
+import android.graphics.*
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.StateListDrawable
 import android.support.v4.widget.ScrollerCompat
@@ -20,15 +17,18 @@ import kotlin.collections.ArrayList
 /**
  * Created by cz on 2017/10/10.
  */
-class HierarchyLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
+class HierarchyLayout2(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
         View(context, attrs, defStyleAttr) ,ViewManager, ScaleGestureDetector.OnScaleGestureListener, GestureDetector.OnGestureListener {
 
     constructor(context: Context, attrs: AttributeSet?):this(context,attrs,0)
     constructor(context: Context):this(context,null,0)
+    private var MAX_SCALE=3.0f
+    private var MIN_SCALE=1f
     private val scroller=ScrollerCompat.create(context)
     private val scaleGestureDetector = ScaleGestureDetector(context, this)
     private val gestureDetector = GestureDetector(context, this)
     private val rect= Rect()
+    private var m = FloatArray(9)
     private val scaleMatrix=Matrix()
     private val views=ArrayList<View>()
     init {
@@ -128,20 +128,16 @@ class HierarchyLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int)
         views.remove(view)
     }
 
-    fun getScale(){
-
-    }
-
     override fun computeHorizontalScrollRange(): Int {
         val value=8
-        return value*300-width
+        return ((value*300*getMatrixScaleX()-width)).toInt()
     }
 
     override fun computeVerticalScrollRange(): Int {
         val value=8
         val childCount=getChildCount()
         val row=if(0==childCount%value) childCount/value else childCount/value+1
-        return row*300-height
+        return ((row*300*getMatrixScaleX()-height)).toInt()
     }
 
     override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
@@ -153,11 +149,45 @@ class HierarchyLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int)
     }
 
 
+    private fun getMatrixScaleX(): Float {
+        scaleMatrix.getValues(m)
+        return m[Matrix.MSCALE_X]
+    }
+
+    private fun getMatrixScaleY(): Float {
+        scaleMatrix.getValues(m)
+        return m[Matrix.MSCALE_Y]
+    }
+
     override fun onScale(detector: ScaleGestureDetector): Boolean {
-        val scaleFactor=detector.scaleFactor
-        scaleMatrix.setScale(scaleFactor, scaleFactor, detector.focusX, detector.focusY)
-        debugLog("onScale:$scaleFactor")
+        var scaleFactor=detector.scaleFactor
+        val matrixScaleX = getMatrixScaleX()
+        val matrixScaleY = getMatrixScaleY()
+        if(MIN_SCALE>scaleFactor*matrixScaleX){
+            scaleFactor=MIN_SCALE/matrixScaleX
+        } else if(MAX_SCALE<scaleFactor*matrixScaleX){
+            scaleFactor=MAX_SCALE/matrixScaleX
+        }
+        scaleMatrix.postScale(scaleFactor, scaleFactor, detector.focusX, detector.focusY)
+        val scaleX=getMatrixScaleX()
+        val scaleY=getMatrixScaleY()
+
+        val value=8
+        views.forEachIndexed { index, childView ->
+            val row=(index/value)
+            val column=index%value
+            childView.left= Math.round((column*childView.measuredWidth)*scaleX)
+            childView.top= Math.round((row*childView.measuredHeight)*scaleY)
+            childView.right= Math.round(childView.left+childView.measuredWidth*scaleX)
+            childView.bottom= Math.round(childView.top+childView.measuredHeight*scaleY)
+        }
+//        val offsetX=detector.currentSpanX-detector.previousSpanX
+//        val offsetY=detector.currentSpanY-detector.previousSpanY
+//        val offsetScaleX=getMatrixScaleX()-matrixScaleX
+//        val offsetScaleY=getMatrixScaleY()-matrixScaleY
+//        scrollBy((measuredWidth*offsetScaleX).toInt(), (measuredHeight*offsetScaleY).toInt())
         invalidate()
+//        debugLog("onScale:$scaleFactor $offsetScaleX $offsetScaleY offsetX:$offsetX offsetY:$offsetY scrollX:$scrollX scrollY:$scrollY")
         return true
     }
 
@@ -169,10 +199,10 @@ class HierarchyLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int)
             val column=it%value
             val childView=getChildAt(it)
             canvas.save()
-            canvas.translate((column*300).toFloat(), (row*300).toFloat())
+            canvas.translate(childView.left.toFloat(), childView.top.toFloat())
             childView.draw(canvas)
             canvas.restore()
-//            debugLog("onDraw index:$it row:$row column:$column width:${childView.measuredWidth} height:${childView.measuredHeight} left:${childView.left} top:${childView.top}")
+            debugLog("onDraw index:$it row:$row column:$column width:${childView.measuredWidth}:${childView.width} height:${childView.measuredHeight}:${childView.height} left:${childView.left} top:${childView.top}")
         }
     }
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -228,33 +258,46 @@ class HierarchyLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int)
     }
 
     override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
+        //当正在进行缩放时,不触发滚动
+        if(scaleGestureDetector.isInProgress){
+            return false
+        } else {
+            scrollRange(distanceX, distanceY)
+            return true
+        }
+    }
+
+    /**
+     * 滚动视图
+     */
+    private fun scrollRange(distanceX: Float, distanceY: Float) {
         val horizontalScrollRange = computeHorizontalScrollRange()
         val verticalScrollRange = computeVerticalScrollRange()
         //横轨滚动越界
-        var distanceX=distanceX.toInt()
-        if(0>scrollX||scrollX>horizontalScrollRange){
+        var distanceX = distanceX.toInt()
+        if (0 > scrollX || scrollX > horizontalScrollRange) {
             //横向直接越界
-            distanceX=0
-        } else if(scrollX<-distanceX){
+            distanceX = 0
+        } else if (scrollX < -distanceX) {
             //横向向左滚动阀值越界
             distanceX = -scrollX
-        } else if(scrollX+distanceX>horizontalScrollRange){
+        } else if (scrollX + distanceX > horizontalScrollRange) {
             //横向向右越界
-            distanceX = horizontalScrollRange-scrollX
+            distanceX = horizontalScrollRange - scrollX
         }
         //纵向滚动越界
-        var distanceY=distanceY.toInt()
-        if(0>scrollY||scrollY>verticalScrollRange){
-            distanceY=0
-        } else if(scrollY<-distanceY){
+        var distanceY = distanceY.toInt()
+        if (0 > scrollY || scrollY > verticalScrollRange) {
+            distanceY = 0
+        } else if (scrollY < -distanceY) {
             distanceY = -scrollY
-        } else if(scrollY+distanceY>verticalScrollRange){
-            distanceY = verticalScrollRange-scrollY
+        } else if (scrollY + distanceY > verticalScrollRange) {
+            distanceY = verticalScrollRange - scrollY
         }
-        scrollBy(distanceX,distanceY)
+        scrollBy(distanceX, distanceY)
+        invalidate()
         //释放按下控件状态
         releasePressView()
-        return true
     }
 
     override fun onLongPress(e: MotionEvent) {

@@ -20,9 +20,11 @@
         <activity android:name="cz.layoutmanagersample.ui.Sample1Activity" />
         <activity android:name="cz.layoutmanagersample.ui.Sample2Activity" />
         <activity android:name="cz.layoutmanagersample.ui.Sample3Activity" />
-        <activity android:name=".ui.hierarchy.HierarchyActivity" />
+        <activity android:name=".ui.hierarchy.Hierarchy1Activity" />
         <activity android:name=".ui.anim.Animator1Activity" />
-        <activity android:name=".ui.layout.ConstraintActivity"></activity>
+        <activity android:name=".ui.layout.ConstraintActivity" />
+        <activity android:name=".ui.hierarchy.Hierarchy2Activity" />
+        <activity android:name=".ui.widget.MyImageViewActivity"></activity>
     </application>
 
 </manifest>

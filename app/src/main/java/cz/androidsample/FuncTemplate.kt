@@ -3,8 +3,10 @@ package cz.kotlinwidget
 import android.app.Activity
 import cz.androidsample.ui.FlipImgActivity
 import cz.androidsample.ui.anim.Animator1Activity
-import cz.androidsample.ui.hierarchy.HierarchyActivity
+import cz.androidsample.ui.hierarchy.Hierarchy1Activity
+import cz.androidsample.ui.hierarchy.Hierarchy2Activity
 import cz.androidsample.ui.layout.ConstraintActivity
+import cz.androidsample.ui.widget.MyImageViewActivity
 import cz.kotlinwidget.model.SampleItem
 import cz.layoutmanagersample.ui.Sample1Activity
 import cz.layoutmanagersample.ui.Sample2Activity
@@ -67,7 +69,19 @@ class FuncTemplate {
                     id = 3
                     title = "视图树控件"
                     desc = "检索出当前所有的控件信息"
-                    clazz= HierarchyActivity::class.java
+
+                    item {
+                        pid=3
+                        title = "层级示例1"
+                        desc = "以自定义View进行绘制,并处理排版,点击效果"
+                        clazz= Hierarchy1Activity::class.java
+                    }
+                    item {
+                        pid=3
+                        title = "层级示例2"
+                        desc = "以自定义View完成视图层绘制,并处理Zoom手势效果"
+                        clazz= Hierarchy2Activity::class.java
+                    }
                 }
                 item {
                     id = 4
@@ -86,6 +100,18 @@ class FuncTemplate {
                         title = "ConstraintLayout"
                         desc = "演示ConstraintLayout使用"
                         clazz= ConstraintActivity::class.java
+                    }
+                }
+                item {
+                    id = 6
+                    title = "控件演示"
+                    desc = "各种非正式控件演示列"
+
+                    item {
+                        pid=6
+                        title = "ZoomImageView"
+                        desc = "来源于FBReader的最精简的可缩放的图像控件演示"
+                        clazz= MyImageViewActivity::class.java
                     }
                 }
             }

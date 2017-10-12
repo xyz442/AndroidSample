@@ -4,9 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="cz.androidsample.ui.hierarchy.HierarchyActivity">
+    tools:context="cz.androidsample.ui.hierarchy.Hierarchy1Activity">
 
-    <cz.androidsample.ui.hierarchy.widget.HierarchyLayout
+    <cz.androidsample.ui.hierarchy.widget.HierarchyLayout1
         android:id="@+id/hierarchyView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>

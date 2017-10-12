@@ -11,6 +11,7 @@ import android.util.Log
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import cz.kotlinwidget.FuncTemplate
 import cz.kotlinwidget.model.SampleItem
 import kotlinx.android.synthetic.main.activity_main.*
@@ -80,8 +81,10 @@ class MainActivity : AppCompatActivity() {
                         putExtra("title",item.title)
                         putExtra("desc",item.desc)
                     })//子分组
-                } else {
+                } else if(null!=item.clazz){
                     it.context.startActivity(Intent(context,item.clazz).apply { putExtra("title",item.title) })//子条目
+                } else{
+                    Toast.makeText(context,"未配置子分组,也未配置跳转界面信息!",Toast.LENGTH_SHORT).show()
                 }
             }
         }
