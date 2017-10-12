@@ -27,13 +27,15 @@ class HierarchyLayout2(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     private val scroller=ScrollerCompat.create(context)
     private val scaleGestureDetector = ScaleGestureDetector(context, this)
     private val gestureDetector = GestureDetector(context, this)
-    private val rect= Rect()
+    private val tmpRect = Rect()
+    //当前屏幕显示区域
+    private val screenRect= Rect()
     private var m = FloatArray(9)
     private val scaleMatrix=Matrix()
     private val views=ArrayList<View>()
     init {
         val random=Random()
-        (0..100).forEach {
+        (0..200).forEach {
             val view=View(context)
             val color=Color.argb(0xff,random.nextInt(0xFF),random.nextInt(0xFF),random.nextInt(0xFF))
             val pressColor=Color.argb(0xff,Math.min(0xff,Color.red(color)+30),Math.min(0xff,Color.green(color)+30),Math.min(0xff,Color.blue(color)+30))
@@ -159,6 +161,11 @@ class HierarchyLayout2(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         return m[Matrix.MSCALE_Y]
     }
 
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        debugLog("onSizeChanged:$w $h $width $height $measuredWidth $measuredHeight")
+    }
+
     override fun onScale(detector: ScaleGestureDetector): Boolean {
         var scaleFactor=detector.scaleFactor
         val matrixScaleX = getMatrixScaleX()
@@ -168,43 +175,43 @@ class HierarchyLayout2(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         } else if(MAX_SCALE<scaleFactor*matrixScaleX){
             scaleFactor=MAX_SCALE/matrixScaleX
         }
-        scaleMatrix.postScale(scaleFactor, scaleFactor, detector.focusX, detector.focusY)
-        val scaleX=getMatrixScaleX()
-        val scaleY=getMatrixScaleY()
-
-        val value=8
-        views.forEachIndexed { index, childView ->
-            val row=(index/value)
-            val column=index%value
-            childView.left= Math.round((column*childView.measuredWidth)*scaleX)
-            childView.top= Math.round((row*childView.measuredHeight)*scaleY)
-            childView.right= Math.round(childView.left+childView.measuredWidth*scaleX)
-            childView.bottom= Math.round(childView.top+childView.measuredHeight*scaleY)
-        }
-//        val offsetX=detector.currentSpanX-detector.previousSpanX
-//        val offsetY=detector.currentSpanY-detector.previousSpanY
-//        val offsetScaleX=getMatrixScaleX()-matrixScaleX
-//        val offsetScaleY=getMatrixScaleY()-matrixScaleY
-//        scrollBy((measuredWidth*offsetScaleX).toInt(), (measuredHeight*offsetScaleY).toInt())
+        scaleMatrix.postScale(scaleFactor, scaleFactor, detector.currentSpanX, detector.currentSpanX)
+        val offsetScaleX=getMatrixScaleX()-matrixScaleX
+        val offsetScaleY=getMatrixScaleY()-matrixScaleY
+        scrollTo((scrollX+(scrollX+detector.currentSpanX)*offsetScaleX).toInt(), (scrollY+(scrollY+detector.currentSpanY)*offsetScaleY).toInt())
         invalidate()
-//        debugLog("onScale:$scaleFactor $offsetScaleX $offsetScaleY offsetX:$offsetX offsetY:$offsetY scrollX:$scrollX scrollY:$scrollY")
+        debugLog("onScale:$scaleFactor ${scrollX+detector.currentSpanX} ${scrollY+detector.currentSpanY} $offsetScaleX $offsetScaleY")
         return true
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        val value=8
-        (0..getChildCount()-1).forEach {
-            val row=(it/value)
-            val column=it%value
-            val childView=getChildAt(it)
-            canvas.save()
-            canvas.translate(childView.left.toFloat(), childView.top.toFloat())
-            childView.draw(canvas)
-            canvas.restore()
-            debugLog("onDraw index:$it row:$row column:$column width:${childView.measuredWidth}:${childView.width} height:${childView.measuredHeight}:${childView.height} left:${childView.left} top:${childView.top}")
+        //当前屏幕所占矩阵
+        val matrixScaleX = getMatrixScaleX()
+        val matrixScaleY = getMatrixScaleY()
+        screenRect.set(scrollX,scrollY,scrollX+width,scrollY+height)
+        forEachIndexed { index,childView->
+            //是否绘制,仅确定,当前控件所在矩阵,与当前显示矩阵是否相交,如果不相交,不进行绘制
+            tmpRect.set((childView.left*matrixScaleX).toInt(),
+                    (childView.top*matrixScaleY).toInt(),
+                    (childView.right*matrixScaleX).toInt(),
+                    (childView.bottom*matrixScaleY).toInt())
+            if(intersectsRect(screenRect, tmpRect)){
+                canvas.save()
+                //按比例放大
+                canvas.scale(matrixScaleX,matrixScaleY)
+                canvas.translate(childView.left.toFloat(), childView.top.toFloat())
+                childView.draw(canvas)
+                canvas.restore()
+                debugLog("onDraw index:$index rect:$screenRect rect:$tmpRect")
+            }
         }
     }
+
+    private fun intersectsRect(rect1:Rect,rect2:Rect):Boolean{
+        return rect1.left < rect2.right && rect2.left < rect1.right && rect1.top < rect2.bottom && rect2.top < rect1.bottom;
+    }
+
     override fun onTouchEvent(event: MotionEvent): Boolean {
         scaleGestureDetector.onTouchEvent(event)
         gestureDetector.onTouchEvent(event)
@@ -222,9 +229,7 @@ class HierarchyLayout2(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     }
 
     override fun onSingleTapUp(e: MotionEvent): Boolean {
-        views.find { it.isPressed }?.let {
-            Toast.makeText(context,"Click:${indexOfChild(it)}",Toast.LENGTH_SHORT).show()
-        }
+        views.find { it.isPressed }?.let { it.performClick() }
         releasePressView()
         return true
     }
@@ -234,9 +239,14 @@ class HierarchyLayout2(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         scroller.abortAnimation()
         val x=scrollX+e.x.toInt()
         val y=scrollY+e.y.toInt()
-        views.forEach{ view ->
-            rect.set(view.left,view.top,view.right,view.bottom)
-            if(rect.contains(x,y)) run {
+        val matrixScaleX = getMatrixScaleX()
+        val matrixScaleY = getMatrixScaleY()
+        forEachChild { view->
+            tmpRect.set((view.left*matrixScaleX).toInt(),
+                    (view.top*matrixScaleY).toInt(),
+                    (view.right*matrixScaleX).toInt(),
+                    (view.bottom*matrixScaleY).toInt())
+            if(tmpRect.contains(x,y)) run {
                 setChildPress(view,true)
             }
         }
@@ -303,6 +313,10 @@ class HierarchyLayout2(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     override fun onLongPress(e: MotionEvent) {
         releasePressView()
     }
+
+    fun forEachChild(action:(View)->Unit)=views.forEach(action)
+
+    fun forEachIndexed(action:(Int,View)->Unit)=views.forEachIndexed(action)
 
 
 
