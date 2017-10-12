@@ -65,7 +65,7 @@ open class SimpleLinearLayoutManager1 : RecyclerView.LayoutManager {
 
     private fun updateLayoutStateToFillEnd(itemPosition: Int, offset: Int) {
         layoutState.layoutOffset = offset
-        layoutState.available = height - paddingBottom - offset
+        layoutState.available = orientationHelper.totalSpace
         layoutState.position = itemPosition
         layoutState.itemDirection = DIRECTION_END
     }

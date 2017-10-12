@@ -2,6 +2,9 @@ package cz.kotlinwidget
 
 import android.app.Activity
 import cz.androidsample.ui.FlipImgActivity
+import cz.androidsample.ui.anim.Animator1Activity
+import cz.androidsample.ui.hierarchy.HierarchyActivity
+import cz.androidsample.ui.layout.ConstraintActivity
 import cz.kotlinwidget.model.SampleItem
 import cz.layoutmanagersample.ui.Sample1Activity
 import cz.layoutmanagersample.ui.Sample2Activity
@@ -60,7 +63,33 @@ class FuncTemplate {
                         clazz= Sample3Activity::class.java
                     }
                 }
+                item {
+                    id = 3
+                    title = "视图树控件"
+                    desc = "检索出当前所有的控件信息"
+                    clazz= HierarchyActivity::class.java
+                }
+                item {
+                    id = 4
+                    title = "动画演示"
+                    desc = "部分动画实例演示"
+                    clazz= Animator1Activity::class.java
+                }
+
+                item {
+                    id = 5
+                    title = "布局演示"
+                    desc = "各种ViewGroup演示"
+
+                    item {
+                        pid=5
+                        title = "ConstraintLayout"
+                        desc = "演示ConstraintLayout使用"
+                        clazz= ConstraintActivity::class.java
+                    }
+                }
             }
+
         }
     }
 }

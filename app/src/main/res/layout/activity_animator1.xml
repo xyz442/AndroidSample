@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="cz.androidsample.ui.anim.Animator1Activity">
+
+    <TextView
+        android:id="@+id/headerText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="小白卡"
+        android:textSize="20sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="30dp"
+        android:layout_marginBottom="15dp"
+        app:layout_constraintBottom_toTopOf="@+id/creditLayout" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="等级特权"
+        android:textColor="#A08A59"
+        android:layout_marginRight="32dp"
+        app:layout_constraintTop_toTopOf="@+id/headerText"
+        app:layout_constraintBottom_toBottomOf="@+id/headerText"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginEnd="32dp" />
+
+
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/creditLayout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="32dp"
+        android:layout_marginRight="32dp"
+        android:background="@mipmap/group_background"
+        app:layout_constraintTop_toBottomOf="@+id/headerText"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp">
+
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/innerLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/whiteCardText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="信用钱包|小白卡"
+                android:textSize="20sp"
+                android:layout_marginTop="16dp"
+                android:layout_marginLeft="16dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                android:layout_marginStart="16dp" />
+
+            <ImageView
+                android:layout_width="34dp"
+                android:layout_height="27dp"
+                app:layout_constraintTop_toBottomOf="@+id/whiteCardText"
+                app:layout_constraintLeft_toLeftOf="@+id/whiteCardText"
+                android:layout_marginTop="20dp"
+                android:src="@mipmap/card_flag"/>
+
+            <TextView
+                android:id="@+id/borrowText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="最高可借款额度"
+                android:textSize="12sp"
+                android:layout_marginTop="19dp"
+                android:textColor="#464B53"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/whiteCardText"
+                />
+
+
+            <TextView
+                android:id="@+id/goldText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="10000"
+                android:textSize="32dp"
+                android:textColor="@android:color/black"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintHorizontal_chainStyle="packed"
+                app:layout_constraintTop_toBottomOf="@+id/borrowText"
+                app:layout_constraintRight_toLeftOf="@+id/goldUnit"/>
+
+            <TextView
+                android:id="@+id/goldUnit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="元"
+                android:textSize="18dp"
+                android:layout_marginLeft="4dp"
+                android:textColor="@android:color/black"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintLeft_toRightOf="@+id/goldText"
+                app:layout_constraintBaseline_toBaselineOf="@+id/goldText"
+                android:layout_marginStart="4dp" />
+
+
+            <ImageView
+                android:id="@+id/image1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@mipmap/borrow_flag1"
+                android:layout_marginTop="18dp"
+                app:layout_constraintHorizontal_chainStyle="packed"
+                app:layout_constraintTop_toBottomOf="@+id/goldText"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toLeftOf="@+id/borrowText1"/>
+
+            <TextView
+                android:id="@+id/borrowText1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="3"
+                android:textSize="22sp"
+                android:textColor="#A08A59"
+                app:layout_constraintTop_toTopOf="@+id/image1"
+                app:layout_constraintBottom_toBottomOf="@+id/image1"
+                app:layout_constraintLeft_toRightOf="@+id/image1"
+                app:layout_constraintRight_toLeftOf="@+id/borrowInfo1"/>
+
+            <TextView
+                android:id="@+id/borrowInfo1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="分钟申请"
+                android:textSize="14sp"
+                android:textColor="#A08A59"
+                android:layout_marginRight="46dp"
+                app:layout_constraintLeft_toRightOf="@+id/borrowText1"
+                app:layout_constraintRight_toLeftOf="@+id/image2"
+                app:layout_constraintBaseline_toBaselineOf="@+id/borrowText1"
+                android:layout_marginEnd="46dp" />
+
+            <TextView
+                android:id="@+id/borrowHintInfo1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="申请易 资料简单"
+                android:textSize="14sp"
+                android:textColor="#464B53"
+                android:layout_marginTop="4dp"
+                app:layout_constraintTop_toBottomOf="@+id/image1"
+                app:layout_constraintLeft_toLeftOf="@+id/image1" />
+
+
+            <ImageView
+                android:id="@+id/image2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@mipmap/borrow_flag2"
+                app:layout_constraintTop_toTopOf="@+id/image1"
+                app:layout_constraintLeft_toRightOf="@+id/borrowInfo1"
+                app:layout_constraintRight_toLeftOf="@+id/borrowText2"
+                app:layout_constraintTop_toBottomOf="@+id/goldText" />
+
+            <TextView
+                android:id="@+id/borrowText2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="52"
+                android:textSize="22sp"
+                android:textColor="#A08A59"
+                app:layout_constraintTop_toTopOf="@+id/image2"
+                app:layout_constraintBottom_toBottomOf="@+id/image2"
+                app:layout_constraintLeft_toRightOf="@+id/image2"
+                app:layout_constraintRight_toLeftOf="@+id/borrowInfo2" />
+
+            <TextView
+                android:id="@+id/borrowInfo2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="分钟申请"
+                android:textSize="14sp"
+                android:textColor="#A08A59"
+                app:layout_constraintLeft_toRightOf="@+id/borrowText2"
+                app:layout_constraintBaseline_toBaselineOf="@+id/borrowText2"
+                app:layout_constraintRight_toRightOf="parent"/>
+
+
+            <TextView
+                android:id="@+id/borrowHintInfo2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="到账快 立等可取"
+                android:textSize="14sp"
+                android:textColor="#464B53"
+                android:layout_marginTop="4dp"
+                app:layout_constraintTop_toBottomOf="@+id/image2"
+                app:layout_constraintLeft_toLeftOf="@+id/image2" />
+        </android.support.constraint.ConstraintLayout>
+
+    </android.support.constraint.ConstraintLayout>
+
+    <TextView
+        android:id="@+id/borrowFlag"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="借款攻略"
+        android:textSize="12sp"
+        android:paddingTop="3dp"
+        android:paddingBottom="7dp"
+        android:paddingLeft="13dp"
+        android:paddingRight="11dp"
+        android:layout_marginRight="24dp"
+        android:layout_marginTop="17dp"
+        android:textColor="@color/lightWhite"
+        android:background="@mipmap/red_flag"
+        app:layout_constraintTop_toTopOf="@+id/creditLayout"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginEnd="24dp" />
+
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:id="@+id/guideline"
+        app:layout_constraintBottom_toBottomOf="@+id/creditLayout"
+        android:layout_marginBottom="46dp" />
+
+
+    <ImageView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/guideline"
+        android:background="@mipmap/rectangle_7"/>
+
+
+    <Button
+        android:id="@+id/buttonStart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_margin="12dp"/>
+
+
+</android.support.constraint.ConstraintLayout>

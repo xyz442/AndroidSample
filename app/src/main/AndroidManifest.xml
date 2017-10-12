@@ -16,10 +16,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.FlipImgActivity"></activity>
+        <activity android:name=".ui.FlipImgActivity" />
         <activity android:name="cz.layoutmanagersample.ui.Sample1Activity" />
         <activity android:name="cz.layoutmanagersample.ui.Sample2Activity" />
-        <activity android:name="cz.layoutmanagersample.ui.Sample3Activity"></activity>
+        <activity android:name="cz.layoutmanagersample.ui.Sample3Activity" />
+        <activity android:name=".ui.hierarchy.HierarchyActivity" />
+        <activity android:name=".ui.anim.Animator1Activity" />
+        <activity android:name=".ui.layout.ConstraintActivity"></activity>
     </application>
 
 </manifest>

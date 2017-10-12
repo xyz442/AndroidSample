@@ -96,6 +96,6 @@ val DEBUG=true
 inline fun <reified T> T.debugLog(value:String){
     if(DEBUG){
         val item=this as Any
-        Log.i(item::class.java.simpleName,value)
+        Log.e(item::class.java.simpleName,value)
     }
 }
