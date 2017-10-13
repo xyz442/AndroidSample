@@ -1,6 +1,5 @@
 package cz.androidsample.ui.hierarchy
 
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 
 import cz.androidsample.R
@@ -14,10 +13,6 @@ class Hierarchy2Activity : ToolBarActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_hierarchy2)
         setTitle(intent.getStringExtra("title"))
-
-        //将当前界面所有控件节点信息扫描出来
-        val decorView=window.decorView
-
     }
 
 

@@ -2,27 +2,23 @@ package cz.androidsample.ui.hierarchy.widget
 
 import android.content.Context
 import android.graphics.*
-import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.StateListDrawable
 import android.support.v4.view.ViewCompat
 import android.support.v4.widget.ScrollerCompat
 import android.util.AttributeSet
 import android.view.*
-import android.widget.Toast
 import cz.androidsample.DEBUG
+import cz.androidsample.R
 import cz.androidsample.debugLog
-import org.jetbrains.anko.backgroundDrawable
-import java.util.*
+import cz.androidsample.ui.hierarchy.model.HierarchyNode
 import kotlin.collections.ArrayList
 
 
 /**
- * Created by cz on 2017/10/10.
- * 1:完成滚动超出屏控件不进行绘制
- * 2:修改了缩放机制,将以前排版列缩放更改为绘制缩放
- * 3:增加了缩放动态滚动机制,确保缩放中心点
+ * Created by cz on 2017/10/11.
+ * 1:完成视图树绘制
  */
-class HierarchyLayout2(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
+class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
         View(context, attrs, defStyleAttr) ,ViewManager, ScaleGestureDetector.OnScaleGestureListener, GestureDetector.OnGestureListener {
     constructor(context: Context, attrs: AttributeSet?):this(context,attrs,0)
     constructor(context: Context):this(context,null,0)
@@ -32,25 +28,66 @@ class HierarchyLayout2(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     private val scaleGestureDetector = ScaleGestureDetector(context, this)
     private val gestureDetector = GestureDetector(context, this)
     private val tmpRect = Rect()
+    private var horizontalSpacing:Float=0f
+    private var verticalSpacing:Float=0f
     //当前屏幕显示区域
     private val screenRect= Rect()
     private var m = FloatArray(9)
     private val scaleMatrix=Matrix()
     private val views=ArrayList<View>()
+    private var adapter:HierarchyAdapter?=null
+
     init {
-        val random=Random()
-        (0..200).forEach {
-            val view=View(context)
-            val color=Color.argb(0xff,random.nextInt(0xFF),random.nextInt(0xFF),random.nextInt(0xFF))
-            val pressColor=Color.argb(0xff,Math.min(0xff,Color.red(color)+30),Math.min(0xff,Color.green(color)+30),Math.min(0xff,Color.blue(color)+30))
-            val drawable=StateListDrawable()
-            drawable.addState(intArrayOf(android.R.attr.state_empty),ColorDrawable(color))
-            drawable.addState(intArrayOf(android.R.attr.state_pressed),ColorDrawable(pressColor))
-            view.backgroundDrawable=drawable
-            view.setOnClickListener {
-                Toast.makeText(context,"点击${indexOfChild(it)}",Toast.LENGTH_SHORT).show()
+        context.obtainStyledAttributes(attrs, R.styleable.HierarchyLayout3).apply {
+            setHorizontalSpacing(getDimension(R.styleable.HierarchyLayout3_hl_horizontalSpacing,0f))
+            setVerticalSpacing(getDimension(R.styleable.HierarchyLayout3_hl_verticalSpacing,0f))
+            recycle()
+        }
+    }
+
+    fun setHorizontalSpacing(spacing: Float) {
+        this.horizontalSpacing=spacing
+        requestLayout()
+    }
+    fun setVerticalSpacing(spacing: Float) {
+        this.verticalSpacing=spacing
+        requestLayout()
+    }
+
+    open fun setAdapter(adapter:HierarchyAdapter){
+        //清空所有view
+        this.adapter=null
+        views.clear()
+        requestLayout()
+        val item=adapter.item
+        //重新排版控件树
+        this.adapter=adapter
+        //遍历节点树
+        forEachHierarchyNode(adapter,item.root,0,item.verticalLevel)
+    }
+
+    /**
+     * 遍历当前节点信息
+     * @param adapter 当前数据适配器
+     * @param node 当前操作节点
+     * @param startLevel 当前节点下子节点起始层级
+     * @param endLevel 当前节点下节点结束层级
+     */
+    private fun forEachHierarchyNode(adapter:HierarchyAdapter, node:HierarchyNode, startLevel:Int, endLevel:Int){
+        //排版空间树
+        val view=nextHierarchyView(node)
+        if(null!=view){
+            //添加并排版
+            addView(view,null)
+            val depth=endLevel-startLevel
+            //记录此节点深度
+            node.depth=depth/2
+            //子节点深度
+            val itemDepth=depth/ node.children.size
+            //遍历子节点
+            node.children.forEachIndexed { index, node ->
+                forEachHierarchyNode(adapter,node,index*itemDepth,(index+1)*itemDepth)
             }
-            addView(view,ViewGroup.LayoutParams(300,300))
         }
     }
 
@@ -63,8 +100,8 @@ class HierarchyLayout2(context: Context, attrs: AttributeSet?, defStyleAttr: Int
 
     fun measureChildWithMargins(child: View, widthMode: Int, heightMode: Int) {
         val lp = child.layoutParams as ViewGroup.LayoutParams
-        val widthSpec = getChildMeasureSpec(width, widthMode, paddingLeft + paddingRight, lp.width)
-        val heightSpec = getChildMeasureSpec(height, heightMode, paddingTop + paddingBottom, lp.height)
+        val widthSpec = getChildMeasureSpec(measuredWidth, widthMode, paddingLeft + paddingRight, lp.width)
+        val heightSpec = getChildMeasureSpec(measuredHeight, heightMode, paddingTop + paddingBottom, lp.height)
         child.measure(widthSpec, heightSpec)
     }
 
@@ -93,13 +130,8 @@ class HierarchyLayout2(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        val value=8
-        (0..getChildCount()-1).forEach {
-            val row=(it/value)
-            val column=it%value
-            val childView=getChildAt(it)
-            childView.layout((column*300), (row*300), ((column+1)*300), ((row+1)*300))
-            setChildPress(childView,false)
+        for(view in views){
+            view.layout(0,0,view.measuredWidth,measuredHeight)
         }
     }
 
@@ -120,16 +152,21 @@ class HierarchyLayout2(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     fun indexOfChild(view:View)=views.indexOf(view)
 
     override fun addView(view: View, params: ViewGroup.LayoutParams?) {
-        view.layoutParams=params
+        if(null!=params){
+            view.layoutParams=params
+        }
         views.add(view)
+        requestLayout()
     }
 
     override fun updateViewLayout(view: View, params: ViewGroup.LayoutParams?) {
         view.layoutParams=params
+        requestLayout()
     }
 
     override fun removeView(view: View) {
         views.remove(view)
+        requestLayout()
     }
 
     override fun computeHorizontalScrollRange(): Int {
@@ -336,6 +373,64 @@ class HierarchyLayout2(context: Context, attrs: AttributeSet?, defStyleAttr: Int
 
     fun forEachIndexed(action:(Int,View)->Unit)=views.forEachIndexed(action)
 
+    private fun nextHierarchyView(hierarchyNode:HierarchyNode):View?{
+        val adapter=adapter?:return null
+        val view=adapter.getView()
+        adapter.bindView(view,hierarchyNode)
+        if(null==view.layoutParams){
+            view.layoutParams=ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
+        measureChildWithMargins(view,ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT)
+        //记录node信息,因为这些view完全内维护,外围无法操作,所以不必操作tag信息
+        view.tag=hierarchyNode
+        return view
+    }
+
+    /**
+     * 视图对象
+     */
+    class HierarchyItem(val root:HierarchyNode){
+        //横向级
+        var horizontalLevel=0
+        //纵向级
+        var verticalLevel=0
+    }
+
+    /**
+     * Created by cz on 2017/10/13.
+     * 视图数据适配器
+     */
+    open abstract class HierarchyAdapter(node:HierarchyNode) {
+        internal val item:HierarchyItem=HierarchyItem(node.children[0])
+
+        init {
+            //分析出控件信息树,层级关系
+            forEachHierarchyDepth(node)
+        }
+
+        private fun forEachHierarchyDepth(node:HierarchyNode){
+            //横向层级判断
+            if(item.horizontalLevel<node.level){
+                item.horizontalLevel=node.level
+            }
+            //纵向层级++
+            if(1==node.children.size){
+                item.verticalLevel++
+            } else if(0!=node.children.size){
+                item.verticalLevel+=node.children.size+1
+            }
+            node.children.forEach(this::forEachHierarchyDepth)
+        }
+        /**
+         * 获得绘制节点view
+         */
+        abstract fun getView(): View
+
+        /**
+         * 绑定数据
+         */
+        abstract fun bindView(view:View,node: HierarchyNode)
+    }
 
 
 }

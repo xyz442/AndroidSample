@@ -96,7 +96,7 @@ class MainActivity : AppCompatActivity() {
 }
 
 val DEBUG=true
-inline fun <reified T> T.debugLog(value:String){
+internal inline fun <reified T> T.debugLog(value:String){
     if(DEBUG){
         val item=this as Any
         Log.e(item::class.java.simpleName,value)

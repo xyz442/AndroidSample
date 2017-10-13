@@ -5,6 +5,7 @@ import cz.androidsample.ui.FlipImgActivity
 import cz.androidsample.ui.anim.Animator1Activity
 import cz.androidsample.ui.hierarchy.Hierarchy1Activity
 import cz.androidsample.ui.hierarchy.Hierarchy2Activity
+import cz.androidsample.ui.hierarchy.Hierarchy3Activity
 import cz.androidsample.ui.layout.ConstraintActivity
 import cz.androidsample.ui.widget.MyImageViewActivity
 import cz.kotlinwidget.model.SampleItem
@@ -81,6 +82,12 @@ class FuncTemplate {
                         title = "层级示例2"
                         desc = "以自定义View完成视图层绘制,并处理Zoom手势效果"
                         clazz= Hierarchy2Activity::class.java
+                    }
+                    item {
+                        pid=3
+                        title = "层级示例3"
+                        desc = "自定义控件样式,以及排版"
+                        clazz= Hierarchy3Activity::class.java
                     }
                 }
                 item {

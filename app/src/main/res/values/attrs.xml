@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="HierarchyLayout3">
+        <attr name="hl_horizontalSpacing" format="reference"/>
+        <attr name="hl_verticalSpacing" format="reference"/>
+    </declare-styleable>
+</resources>

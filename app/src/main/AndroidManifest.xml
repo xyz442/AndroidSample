@@ -24,7 +24,8 @@
         <activity android:name=".ui.anim.Animator1Activity" />
         <activity android:name=".ui.layout.ConstraintActivity" />
         <activity android:name=".ui.hierarchy.Hierarchy2Activity" />
-        <activity android:name=".ui.widget.MyImageViewActivity"></activity>
+        <activity android:name=".ui.widget.MyImageViewActivity" />
+        <activity android:name=".ui.hierarchy.Hierarchy3Activity"></activity>
     </application>
 
 </manifest>
