@@ -12,13 +12,19 @@ class HierarchyNode(val level:Int,val name:String){
     var id:Int= View.NO_ID
     //id文本
     var entryName:String?=null
-    //屏幕矩阵
+    //view屏幕矩阵
     var rect= Rect()
+    //节点排版矩阵
+    var layoutRect=Rect()
     //描述
     var description:CharSequence?=null
 
-    //纵深居中层级
-    var depth=0
+    //子节点纵深层级
+    var childDepth =0
+    //当前列起始深度
+    var startDepth =0
+    //排列结束
+    var endDepth =0
     //父节点
     var parent:HierarchyNode?=null
     //子集

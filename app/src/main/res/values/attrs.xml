@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="HierarchyLayout3">
-        <attr name="hl_horizontalSpacing" format="reference"/>
-        <attr name="hl_verticalSpacing" format="reference"/>
+        <attr name="hl_horizontalSpacing" format="dimension"/>
+        <attr name="hl_verticalSpacing" format="dimension"/>
+        <attr name="hl_connectLineColor" format="color"/>
+        <attr name="hl_connectLineStrokeWidth" format="dimension"/>
     </declare-styleable>
 </resources>

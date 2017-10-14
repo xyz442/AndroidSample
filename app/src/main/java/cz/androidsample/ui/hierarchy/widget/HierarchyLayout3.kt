@@ -9,8 +9,8 @@ import android.util.AttributeSet
 import android.view.*
 import cz.androidsample.DEBUG
 import cz.androidsample.R
-import cz.androidsample.debugLog
 import cz.androidsample.ui.hierarchy.model.HierarchyNode
+import java.util.*
 import kotlin.collections.ArrayList
 
 
@@ -23,11 +23,13 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     constructor(context: Context, attrs: AttributeSet?):this(context,attrs,0)
     constructor(context: Context):this(context,null,0)
     private var MAX_SCALE=3.0f
-    private var MIN_SCALE=1f
+    private var MIN_SCALE=0.2f
     private val scroller=ScrollerCompat.create(context)
     private val scaleGestureDetector = ScaleGestureDetector(context, this)
     private val gestureDetector = GestureDetector(context, this)
     private val tmpRect = Rect()
+    private val linePaint=Paint(Paint.ANTI_ALIAS_FLAG)
+    private var collectLineStrokeWidth =1f
     private var horizontalSpacing:Float=0f
     private var verticalSpacing:Float=0f
     //当前屏幕显示区域
@@ -35,14 +37,26 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     private var m = FloatArray(9)
     private val scaleMatrix=Matrix()
     private val views=ArrayList<View>()
-    private var adapter:HierarchyAdapter?=null
+    private var hierarchyAdapter:HierarchyAdapter?=null
 
     init {
         context.obtainStyledAttributes(attrs, R.styleable.HierarchyLayout3).apply {
             setHorizontalSpacing(getDimension(R.styleable.HierarchyLayout3_hl_horizontalSpacing,0f))
             setVerticalSpacing(getDimension(R.styleable.HierarchyLayout3_hl_verticalSpacing,0f))
+            setConnectLineColor(getColor(R.styleable.HierarchyLayout3_hl_connectLineColor,Color.WHITE))
+            setConnectLineStrokeWidth(getDimension(R.styleable.HierarchyLayout3_hl_connectLineStrokeWidth,0f))
             recycle()
         }
+    }
+
+    fun setConnectLineColor(color: Int) {
+        linePaint.color=color
+        invalidate()
+    }
+
+    fun setConnectLineStrokeWidth(strokeWidth: Float) {
+        collectLineStrokeWidth =strokeWidth
+        invalidate()
     }
 
     fun setHorizontalSpacing(spacing: Float) {
@@ -56,50 +70,39 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
 
     open fun setAdapter(adapter:HierarchyAdapter){
         //清空所有view
-        this.adapter=null
-        views.clear()
-        requestLayout()
-        val item=adapter.item
+        if(null!=hierarchyAdapter){
+            hierarchyAdapter =null
+            views.clear()
+            requestLayout()
+        }
         //重新排版控件树
-        this.adapter=adapter
+        hierarchyAdapter = adapter
         //遍历节点树
-        forEachHierarchyNode(adapter,item.root,0,item.verticalLevel)
+        addHierarchyNodeView(adapter.root)
     }
 
     /**
      * 遍历当前节点信息
-     * @param adapter 当前数据适配器
      * @param node 当前操作节点
-     * @param startLevel 当前节点下子节点起始层级
-     * @param endLevel 当前节点下节点结束层级
      */
-    private fun forEachHierarchyNode(adapter:HierarchyAdapter, node:HierarchyNode, startLevel:Int, endLevel:Int){
+    private fun addHierarchyNodeView(node:HierarchyNode){
         //排版空间树
         val view=nextHierarchyView(node)
         if(null!=view){
             //添加并排版
             addView(view,null)
-            val depth=endLevel-startLevel
-            //记录此节点深度
-            node.depth=depth/2
-            //子节点深度
-            val itemDepth=depth/ node.children.size
             //遍历子节点
-            node.children.forEachIndexed { index, node ->
-                forEachHierarchyNode(adapter,node,index*itemDepth,(index+1)*itemDepth)
-            }
+            node.children.forEach(this::addHierarchyNodeView)
         }
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        for(view in views){
-            measureChildWithMargins(view,MeasureSpec.getMode(widthMeasureSpec),MeasureSpec.getMode(heightMeasureSpec))
-        }
+        views.forEach { measureChildWithMargins(it,MeasureSpec.getMode(widthMeasureSpec),MeasureSpec.getMode(heightMeasureSpec)) }
     }
 
     fun measureChildWithMargins(child: View, widthMode: Int, heightMode: Int) {
-        val lp = child.layoutParams as ViewGroup.LayoutParams
+        val lp = child.layoutParams
         val widthSpec = getChildMeasureSpec(measuredWidth, widthMode, paddingLeft + paddingRight, lp.width)
         val heightSpec = getChildMeasureSpec(measuredHeight, heightMode, paddingTop + paddingBottom, lp.height)
         child.measure(widthSpec, heightSpec)
@@ -131,7 +134,13 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         for(view in views){
-            view.layout(0,0,view.measuredWidth,measuredHeight)
+            val node=view.tag as HierarchyNode
+            val left=paddingLeft+node.level*horizontalSpacing+node.level*view.measuredWidth
+            val centerDepth=node.startDepth+(node.endDepth-node.startDepth)/2
+            val top=paddingTop+centerDepth*verticalSpacing+centerDepth *view.measuredHeight
+            view.layout(left.toInt(), top.toInt(), left.toInt()+view.measuredWidth, top.toInt()+view.measuredHeight)
+            //记录view排版矩阵
+            node.layoutRect.set(left.toInt(), top.toInt(), left.toInt()+view.measuredWidth, top.toInt()+view.measuredHeight)
         }
     }
 
@@ -170,15 +179,27 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     }
 
     override fun computeHorizontalScrollRange(): Int {
-        val value=8
-        return ((value*300*getMatrixScaleX()-width)).toInt()
+        val adapter=hierarchyAdapter?:return 0
+        val depth=adapter.horizontalDepth
+        var horizontalScrollRange=paddingLeft+paddingRight
+        val childCount = getChildCount()
+        if(0<childCount){
+            val childView=getChildAt(0)
+            horizontalScrollRange+= (depth*horizontalSpacing+(depth+1)*childView.measuredWidth).toInt()
+        }
+        return Math.max(0,(horizontalScrollRange*getMatrixScaleX()-width).toInt())
     }
 
     override fun computeVerticalScrollRange(): Int {
-        val value=8
-        val childCount=getChildCount()
-        val row=if(0==childCount%value) childCount/value else childCount/value+1
-        return ((row*300*getMatrixScaleX()-height)).toInt()
+        val adapter=hierarchyAdapter?:return 0
+        var verticalScrollRange=paddingTop+paddingBottom
+        val childCount = getChildCount()
+        if(0<childCount){
+            val childView=getChildAt(0)
+            val depth=adapter.root.childDepth
+            verticalScrollRange= ((depth+1)*verticalSpacing+depth*childView.measuredHeight).toInt()
+        }
+        return Math.max(0,(verticalScrollRange*getMatrixScaleY()-height).toInt())
     }
 
     private fun getMatrixScaleX(): Float {
@@ -230,12 +251,24 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
                     (childView.bottom*matrixScaleY).toInt())
             if(intersectsRect(screenRect, tmpRect)){
                 canvas.save()
-                //按比例放大
+                //按比例放大,并绘制
                 canvas.scale(matrixScaleX,matrixScaleY)
                 canvas.translate(childView.left.toFloat(), childView.top.toFloat())
                 childView.draw(canvas)
                 canvas.restore()
-                debugLog("onDraw index:$index rect:$screenRect rect:$tmpRect")
+
+                //绘连接线
+                val node=childView.tag as HierarchyNode
+                val layoutRect=node.layoutRect
+                //检测父节点是否在当前屏幕内,不在也需要绘制连接线
+                val parentNode=node.parent
+                if(null!=parentNode){
+                    drawConnectLine(canvas,node, parentNode.layoutRect, matrixScaleX,matrixScaleY)
+                }
+                //绘制子连接线
+                node.children.forEach {
+                    drawConnectLine(canvas,it, layoutRect, matrixScaleX,matrixScaleY)
+                }
             }
         }
 
@@ -255,6 +288,19 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
                     scrollY+scaleGestureDetector.focusY+20,paint)
 
         }
+    }
+
+    /**
+     * 绘制连接线
+     */
+    private fun drawConnectLine(canvas: Canvas,it: HierarchyNode,  layoutRect: Rect, matrixScaleY: Float, matrixScaleX: Float) {
+        val childRect = it.layoutRect
+        //线宽按比例缩放
+        linePaint.strokeWidth = collectLineStrokeWidth * matrixScaleX
+        canvas.drawLine(layoutRect.right * matrixScaleX,
+                (layoutRect.top + layoutRect.height() / 2f) * matrixScaleY,
+                childRect.left * matrixScaleX,
+                (childRect.top + childRect.height() / 2f) * matrixScaleY, linePaint)
     }
 
     private fun intersectsRect(rect1:Rect,rect2:Rect):Boolean{
@@ -374,57 +420,73 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     fun forEachIndexed(action:(Int,View)->Unit)=views.forEachIndexed(action)
 
     private fun nextHierarchyView(hierarchyNode:HierarchyNode):View?{
-        val adapter=adapter?:return null
-        val view=adapter.getView()
+        val adapter= hierarchyAdapter ?:return null
+        //装载父类,只用于inflate时,记录信息的父类,无其他作用
+        val view=adapter.getView(parent as ViewGroup)
         adapter.bindView(view,hierarchyNode)
         if(null==view.layoutParams){
             view.layoutParams=ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT)
         }
-        measureChildWithMargins(view,ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT)
         //记录node信息,因为这些view完全内维护,外围无法操作,所以不必操作tag信息
         view.tag=hierarchyNode
         return view
     }
 
     /**
-     * 视图对象
-     */
-    class HierarchyItem(val root:HierarchyNode){
-        //横向级
-        var horizontalLevel=0
-        //纵向级
-        var verticalLevel=0
-    }
-
-    /**
      * Created by cz on 2017/10/13.
      * 视图数据适配器
      */
-    open abstract class HierarchyAdapter(node:HierarchyNode) {
-        internal val item:HierarchyItem=HierarchyItem(node.children[0])
-
+    open abstract class HierarchyAdapter(val root:HierarchyNode) {
+        var horizontalDepth=0
         init {
-            //分析出控件信息树,层级关系
-            forEachHierarchyDepth(node)
+            //分析出控件深度信息树,层级关系
+            forEachHierarchy(root)
+            //分析出横向纵深
+            forEachHierarchyNodeHorizontalDepth(root)
         }
 
-        private fun forEachHierarchyDepth(node:HierarchyNode){
-            //横向层级判断
-            if(item.horizontalLevel<node.level){
-                item.horizontalLevel=node.level
+        private fun forEachHierarchy(node:HierarchyNode){
+            val stack= LinkedList<HierarchyNode>()
+            stack.add(node)
+            while(!stack.isEmpty()){
+                val child=stack.pollFirst()
+                stack.addAll(child.children)
+                //遍历深度
+                forEachHierarchyDepth(child,child)
+                child.startDepth=child.parent?.startDepth?:0
+                //记录排序起始深度
+                child.parent?.children?.takeWhile { it!=child }?.forEach { child.startDepth +=it.childDepth }
+                //排列完成后,同列内当前节点前的节点的排列深度
+                child.endDepth=child.startDepth+child.childDepth
             }
-            //纵向层级++
-            if(1==node.children.size){
-                item.verticalLevel++
-            } else if(0!=node.children.size){
-                item.verticalLevel+=node.children.size+1
-            }
-            node.children.forEach(this::forEachHierarchyDepth)
         }
+
+        /**
+         * 遍历节点深度
+         */
+        private fun forEachHierarchyDepth(node:HierarchyNode,eachNode:HierarchyNode){
+            if(eachNode.children.isEmpty()){
+                node.childDepth++
+            } else {
+                eachNode.children.forEach{ forEachHierarchyDepth(node,it) }
+            }
+        }
+
+        /**
+         * 遍历出横向纵深
+         */
+        private fun forEachHierarchyNodeHorizontalDepth(node:HierarchyNode){
+            if(horizontalDepth<node.level){
+                horizontalDepth=node.level
+            }
+            //递归遍历
+            node.children.forEach(this::forEachHierarchyNodeHorizontalDepth)
+        }
+
         /**
          * 获得绘制节点view
          */
-        abstract fun getView(): View
+        abstract fun getView(parent:ViewGroup): View
 
         /**
          * 绑定数据

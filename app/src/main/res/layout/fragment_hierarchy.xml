@@ -15,6 +15,10 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:hl_horizontalSpacing="80dp"
+        app:hl_verticalSpacing="20dp"
+        app:hl_connectLineStrokeWidth="2dp"
+        android:padding="20dp" />
 
 </android.support.constraint.ConstraintLayout>
