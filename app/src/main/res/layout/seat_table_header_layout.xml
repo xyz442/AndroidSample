@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:gravity="center_horizontal"
+    android:background="@android:color/white">
+
+    <TextView
+        android:id="@+id/seat1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="8dp"
+        android:drawableLeft="@mipmap/seat_gray"
+        android:text="可选"
+        android:textSize="10sp"
+        android:drawablePadding="4dp"
+        android:gravity="center_vertical"
+        android:textColor="@android:color/black"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@+id/seat2"
+        />
+
+    <TextView
+        android:id="@+id/seat2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="8dp"
+        android:text="己售"
+        android:textSize="10sp"
+        android:drawablePadding="4dp"
+        android:gravity="center_vertical"
+        android:textColor="@android:color/black"
+        android:drawableLeft="@mipmap/seat_sold"
+        app:layout_constraintLeft_toRightOf="@+id/seat1"
+        app:layout_constraintRight_toLeftOf="@+id/seat3"/>
+
+    <TextView
+        android:id="@+id/seat3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:drawableLeft="@mipmap/seat_green"
+        android:text="己选"
+        android:textSize="10sp"
+        android:drawablePadding="4dp"
+        android:gravity="center_vertical"
+        android:textColor="@android:color/black"
+        app:layout_constraintLeft_toRightOf="@+id/seat2"
+        app:layout_constraintRight_toRightOf="parent"/>
+
+</android.support.constraint.ConstraintLayout>

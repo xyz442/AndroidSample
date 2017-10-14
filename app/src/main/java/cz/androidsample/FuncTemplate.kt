@@ -6,6 +6,7 @@ import cz.androidsample.ui.anim.Animator1Activity
 import cz.androidsample.ui.hierarchy.Hierarchy1Activity
 import cz.androidsample.ui.hierarchy.Hierarchy2Activity
 import cz.androidsample.ui.hierarchy.Hierarchy3Activity
+import cz.androidsample.ui.hierarchy.SeatTableActivity
 import cz.androidsample.ui.layout.ConstraintActivity
 import cz.androidsample.ui.widget.MyImageViewActivity
 import cz.kotlinwidget.model.SampleItem
@@ -119,6 +120,12 @@ class FuncTemplate {
                         title = "ZoomImageView"
                         desc = "来源于FBReader的最精简的可缩放的图像控件演示"
                         clazz= MyImageViewActivity::class.java
+                    }
+                    item {
+                        pid=6
+                        title = "SeatTableView"
+                        desc = "一个电影选座控件"
+                        clazz= SeatTableActivity::class.java
                     }
                 }
             }

@@ -10,4 +10,10 @@
         <attr name="hl_previewWidth" format="dimension"/>
         <attr name="hl_previewHeight" format="dimension"/>
     </declare-styleable>
+
+    <declare-styleable name="SeatTable">
+        <attr name="st_previewWidth" format="dimension"/>
+        <attr name="st_previewHeight" format="dimension"/>
+    </declare-styleable>
+
 </resources>
