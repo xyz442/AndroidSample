@@ -19,6 +19,10 @@
         app:hl_horizontalSpacing="80dp"
         app:hl_verticalSpacing="20dp"
         app:hl_connectLineStrokeWidth="2dp"
+        app:hl_previewWidth="200dp"
+        app:hl_previewHeight="100dp"
+        app:hl_connectLineEffectSize="6dp"
+        app:hl_connectLineCornerPathEffect="6dp"
         android:padding="20dp" />
 
 </android.support.constraint.ConstraintLayout>

@@ -3,12 +3,16 @@ package cz.androidsample.ui.hierarchy.widget
 import android.content.Context
 import android.graphics.*
 import android.graphics.drawable.StateListDrawable
+import android.os.SystemClock
+import android.support.v4.content.ContextCompat
 import android.support.v4.view.ViewCompat
 import android.support.v4.widget.ScrollerCompat
 import android.util.AttributeSet
 import android.view.*
+import android.view.animation.Animation
 import cz.androidsample.DEBUG
 import cz.androidsample.R
+import cz.androidsample.debugLog
 import cz.androidsample.ui.hierarchy.model.HierarchyNode
 import java.util.*
 import kotlin.collections.ArrayList
@@ -17,6 +21,9 @@ import kotlin.collections.ArrayList
 /**
  * Created by cz on 2017/10/11.
  * 1:完成视图树绘制
+ * 2:完成区域间连接线配置
+ * 3:完成预览图展示,并显示矩阵区域
+ * 4:完成自由居中
  */
 class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
         View(context, attrs, defStyleAttr) ,ViewManager, ScaleGestureDetector.OnScaleGestureListener, GestureDetector.OnGestureListener {
@@ -28,8 +35,11 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     private val scaleGestureDetector = ScaleGestureDetector(context, this)
     private val gestureDetector = GestureDetector(context, this)
     private val tmpRect = Rect()
-    private val linePaint=Paint(Paint.ANTI_ALIAS_FLAG)
+    private val linePaint=Paint(Paint.ANTI_ALIAS_FLAG).apply { style=Paint.Style.STROKE }
+    private val linePath=Path()
     private var collectLineStrokeWidth =1f
+    private var connectLineCornerPathEffect =0f
+    private var connectLineEffectSize =0f
     private var horizontalSpacing:Float=0f
     private var verticalSpacing:Float=0f
     //当前屏幕显示区域
@@ -38,6 +48,15 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     private val scaleMatrix=Matrix()
     private val views=ArrayList<View>()
     private var hierarchyAdapter:HierarchyAdapter?=null
+    //预览图
+    private val previewPaint=Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color=Color.RED
+        strokeWidth=2f
+        style=Paint.Style.STROKE
+    }
+    private lateinit var previewBitmap:Bitmap
+    private var previewWidth=0f
+    private var previewHeight=0f
 
     init {
         context.obtainStyledAttributes(attrs, R.styleable.HierarchyLayout3).apply {
@@ -45,8 +64,21 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
             setVerticalSpacing(getDimension(R.styleable.HierarchyLayout3_hl_verticalSpacing,0f))
             setConnectLineColor(getColor(R.styleable.HierarchyLayout3_hl_connectLineColor,Color.WHITE))
             setConnectLineStrokeWidth(getDimension(R.styleable.HierarchyLayout3_hl_connectLineStrokeWidth,0f))
+            setConnectLineCornerPathEffect(getDimension(R.styleable.HierarchyLayout3_hl_connectLineCornerPathEffect,0f))
+            setConnectLineEffectSize(getDimension(R.styleable.HierarchyLayout3_hl_connectLineEffectSize,0f))
+            setPreViewWidth(getDimension(R.styleable.HierarchyLayout3_hl_previewWidth,0f))
+            setPreViewHeight(getDimension(R.styleable.HierarchyLayout3_hl_previewHeight,0f))
             recycle()
         }
+    }
+
+    fun setHorizontalSpacing(spacing: Float) {
+        this.horizontalSpacing=spacing
+        requestLayout()
+    }
+    fun setVerticalSpacing(spacing: Float) {
+        this.verticalSpacing=spacing
+        requestLayout()
     }
 
     fun setConnectLineColor(color: Int) {
@@ -59,13 +91,28 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         invalidate()
     }
 
-    fun setHorizontalSpacing(spacing: Float) {
-        this.horizontalSpacing=spacing
-        requestLayout()
+    /**
+     * 设置连接线曲线
+     */
+    fun setConnectLineCornerPathEffect(pathEffect: Float) {
+        this.connectLineCornerPathEffect=pathEffect
+        invalidate()
     }
-    fun setVerticalSpacing(spacing: Float) {
-        this.verticalSpacing=spacing
-        requestLayout()
+
+    /**
+     * 设置连接线曲线长度
+     */
+    fun  setConnectLineEffectSize(effectSize: Float) {
+        this.connectLineEffectSize=effectSize
+        invalidate()
+    }
+
+    private fun setPreViewWidth(width: Float) {
+        this.previewWidth=width
+    }
+
+    private fun setPreViewHeight(height: Float) {
+        this.previewHeight=height
     }
 
     open fun setAdapter(adapter:HierarchyAdapter){
@@ -93,64 +140,6 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
             addView(view,null)
             //遍历子节点
             node.children.forEach(this::addHierarchyNodeView)
-        }
-    }
-
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        views.forEach { measureChildWithMargins(it,MeasureSpec.getMode(widthMeasureSpec),MeasureSpec.getMode(heightMeasureSpec)) }
-    }
-
-    fun measureChildWithMargins(child: View, widthMode: Int, heightMode: Int) {
-        val lp = child.layoutParams
-        val widthSpec = getChildMeasureSpec(measuredWidth, widthMode, paddingLeft + paddingRight, lp.width)
-        val heightSpec = getChildMeasureSpec(measuredHeight, heightMode, paddingTop + paddingBottom, lp.height)
-        child.measure(widthSpec, heightSpec)
-    }
-
-
-    fun getChildMeasureSpec(parentSize: Int, parentMode: Int, padding: Int, childDimension: Int): Int {
-        val size = Math.max(0, parentSize - padding)
-        var resultSize = 0
-        var resultMode = 0
-        if (childDimension >= 0) {
-            resultSize = childDimension
-            resultMode = View.MeasureSpec.EXACTLY
-        } else {
-            if (childDimension == ViewGroup.LayoutParams.MATCH_PARENT) {
-                resultSize = size
-                resultMode = parentMode
-            } else if (childDimension == ViewGroup.LayoutParams.WRAP_CONTENT) {
-                resultSize = size
-                if (parentMode == View.MeasureSpec.AT_MOST || parentMode == View.MeasureSpec.EXACTLY) {
-                    resultMode = View.MeasureSpec.AT_MOST
-                } else {
-                    resultMode = View.MeasureSpec.UNSPECIFIED
-                }
-            }
-        }
-        return View.MeasureSpec.makeMeasureSpec(resultSize, resultMode)
-    }
-
-    override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        for(view in views){
-            val node=view.tag as HierarchyNode
-            val left=paddingLeft+node.level*horizontalSpacing+node.level*view.measuredWidth
-            val centerDepth=node.startDepth+(node.endDepth-node.startDepth)/2
-            val top=paddingTop+centerDepth*verticalSpacing+centerDepth *view.measuredHeight
-            view.layout(left.toInt(), top.toInt(), left.toInt()+view.measuredWidth, top.toInt()+view.measuredHeight)
-            //记录view排版矩阵
-            node.layoutRect.set(left.toInt(), top.toInt(), left.toInt()+view.measuredWidth, top.toInt()+view.measuredHeight)
-        }
-    }
-
-    private fun setChildPress(childView:View,press:Boolean){
-        childView.isPressed = press
-        val background=childView.background
-        if(null!=background&&background is StateListDrawable){
-            background.state = if(press) intArrayOf(android.R.attr.state_pressed) else intArrayOf(android.R.attr.state_empty)
-            background.jumpToCurrentState()
-            invalidate()
         }
     }
 
@@ -212,6 +201,91 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         return m[Matrix.MSCALE_Y]
     }
 
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        views.forEach { measureChildWithMargins(it,MeasureSpec.getMode(widthMeasureSpec),MeasureSpec.getMode(heightMeasureSpec)) }
+    }
+
+    fun measureChildWithMargins(child: View, widthMode: Int, heightMode: Int) {
+        val lp = child.layoutParams
+        val widthSpec = getChildMeasureSpec(measuredWidth, widthMode, paddingLeft + paddingRight, lp.width)
+        val heightSpec = getChildMeasureSpec(measuredHeight, heightMode, paddingTop + paddingBottom, lp.height)
+        child.measure(widthSpec, heightSpec)
+    }
+
+
+    fun getChildMeasureSpec(parentSize: Int, parentMode: Int, padding: Int, childDimension: Int): Int {
+        val size = Math.max(0, parentSize - padding)
+        var resultSize = 0
+        var resultMode = 0
+        if (childDimension >= 0) {
+            resultSize = childDimension
+            resultMode = View.MeasureSpec.EXACTLY
+        } else {
+            if (childDimension == ViewGroup.LayoutParams.MATCH_PARENT) {
+                resultSize = size
+                resultMode = parentMode
+            } else if (childDimension == ViewGroup.LayoutParams.WRAP_CONTENT) {
+                resultSize = size
+                if (parentMode == View.MeasureSpec.AT_MOST || parentMode == View.MeasureSpec.EXACTLY) {
+                    resultMode = View.MeasureSpec.AT_MOST
+                } else {
+                    resultMode = View.MeasureSpec.UNSPECIFIED
+                }
+            }
+        }
+        return View.MeasureSpec.makeMeasureSpec(resultSize, resultMode)
+    }
+
+    override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
+        super.onLayout(changed, l, t, r, b)
+        views.forEachIndexed { index, view ->
+            val node=view.tag as HierarchyNode
+            val left=paddingLeft+node.level*horizontalSpacing+node.level*view.measuredWidth
+            val centerDepth=node.startDepth+(node.endDepth-node.startDepth)/2
+            val top=paddingTop+centerDepth*verticalSpacing+centerDepth *view.measuredHeight
+            view.layout(left.toInt(), top.toInt(), left.toInt()+view.measuredWidth, top.toInt()+view.measuredHeight)
+            //记录view排版矩阵
+            node.layoutRect.set(left.toInt(), top.toInt(), left.toInt()+view.measuredWidth, top.toInt()+view.measuredHeight)
+            //使屏幕居中
+            if(0==index){
+                scrollTo(0,computeVerticalScrollRange()/2)
+            }
+        }
+        //初始化预览绘制层
+        initPreviewHierarchy()
+        debugLog("onLayout:l $t:$ r:$r b:$b")
+    }
+
+    private fun initPreviewHierarchy(){
+        //绘制宽高
+        val measuredWidth = computeHorizontalScrollRange() + width
+        val measuredHeight = computeVerticalScrollRange() + height
+        //此处按宽高比例重新设置previewHeight,因为配置比例与实际比例会有冲突,所以保留宽,高度自适应
+        previewHeight=measuredWidth*1f/measuredHeight*previewWidth
+        //计算出预览图缩放比例
+        previewBitmap = Bitmap.createBitmap(previewWidth.toInt(), previewHeight.toInt(), Bitmap.Config.ARGB_4444)
+        //绘制预览图
+        val matrixScaleX = previewWidth / measuredWidth
+        val matrixScaleY = previewHeight / measuredHeight
+        //TODO 此处计算精度损失,暂时导致预览图与实际图存在一定比例不同.待修正
+        val scale=Math.min(matrixScaleX,matrixScaleY)
+        drawHierarchy(Canvas(previewBitmap),scale,scale, true)
+        debugLog("initPreviewHierarchy:${measuredWidth*1.0/measuredHeight} $matrixScaleX $matrixScaleY")
+        //initPreviewHierarchy:0.9689243 0.065789476 0.061764095 计算精度损失...  matrixScaleX应该等于matrixScaleY
+    }
+
+    private fun setChildPress(childView:View,press:Boolean){
+        childView.isPressed = press
+        val background=childView.background
+        if(null!=background&&background is StateListDrawable){
+            background.state = if(press) intArrayOf(android.R.attr.state_pressed) else intArrayOf(android.R.attr.state_empty)
+            background.jumpToCurrentState()
+            invalidate()
+        }
+    }
+
     override fun onScaleBegin(detector: ScaleGestureDetector?): Boolean {
         return true
     }
@@ -239,39 +313,15 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        val st=System.currentTimeMillis()
         //当前屏幕所占矩阵
         val matrixScaleX = getMatrixScaleX()
         val matrixScaleY = getMatrixScaleY()
-        screenRect.set(scrollX,scrollY,scrollX+width,scrollY+height)
-        forEachIndexed { index,childView->
-            //是否绘制,仅确定,当前控件所在矩阵,与当前显示矩阵是否相交,如果不相交,不进行绘制
-            tmpRect.set((childView.left*matrixScaleX).toInt(),
-                    (childView.top*matrixScaleY).toInt(),
-                    (childView.right*matrixScaleX).toInt(),
-                    (childView.bottom*matrixScaleY).toInt())
-            if(intersectsRect(screenRect, tmpRect)){
-                canvas.save()
-                //按比例放大,并绘制
-                canvas.scale(matrixScaleX,matrixScaleY)
-                canvas.translate(childView.left.toFloat(), childView.top.toFloat())
-                childView.draw(canvas)
-                canvas.restore()
-
-                //绘连接线
-                val node=childView.tag as HierarchyNode
-                val layoutRect=node.layoutRect
-                //检测父节点是否在当前屏幕内,不在也需要绘制连接线
-                val parentNode=node.parent
-                if(null!=parentNode){
-                    drawConnectLine(canvas,node, parentNode.layoutRect, matrixScaleX,matrixScaleY)
-                }
-                //绘制子连接线
-                node.children.forEach {
-                    drawConnectLine(canvas,it, layoutRect, matrixScaleX,matrixScaleY)
-                }
-            }
-        }
-
+        //绘制视图
+        drawHierarchy(canvas,matrixScaleX, matrixScaleY)
+        //绘制预览图
+        drawPreView(canvas,matrixScaleX,matrixScaleY)
+        //绘制调试缩放中心点
         if(DEBUG){
             val paint=Paint()
             paint.color=Color.RED
@@ -288,6 +338,64 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
                     scrollY+scaleGestureDetector.focusY+20,paint)
 
         }
+        debugLog("onDraw:${System.currentTimeMillis()-st}")
+    }
+
+    /**
+     * 绘制视图层级
+     * @param canvas 绘制canvas对象,如果传入预览对象的canvas,则会绘制到bitmap上
+     * @param drawPreview 绘制预览图
+     */
+    private fun drawHierarchy(canvas: Canvas,matrixScaleX: Float, matrixScaleY: Float,drawPreview:Boolean=false) {
+        screenRect.set(scrollX, scrollY, scrollX + width, scrollY + height)
+        forEachChild { childView ->
+            //是否绘制,仅确定,当前控件所在矩阵,与当前显示矩阵是否相交,如果不相交,不进行绘制
+            tmpRect.set((childView.left * matrixScaleX).toInt(),
+                    (childView.top * matrixScaleY).toInt(),
+                    (childView.right * matrixScaleX).toInt(),
+                    (childView.bottom * matrixScaleY).toInt())
+            if (drawPreview||intersectsRect(screenRect, tmpRect)) {
+                canvas.save()
+                //按比例放大,并绘制
+                canvas.scale(matrixScaleX, matrixScaleY)
+                canvas.translate(childView.left.toFloat(), childView.top.toFloat())
+                childView.draw(canvas)
+                canvas.restore()
+
+                //绘连接线
+                val node = childView.tag as HierarchyNode
+                val layoutRect = node.layoutRect
+                //检测父节点是否在当前屏幕内,不在也需要绘制连接线
+                val parentNode = node.parent
+                if (null != parentNode) {
+                    drawConnectLine(canvas, node, parentNode.layoutRect, matrixScaleX, matrixScaleY)
+                }
+                //绘制子连接线
+                node.children.forEach {
+                    drawConnectLine(canvas, it, layoutRect, matrixScaleX, matrixScaleY)
+                }
+            }
+        }
+    }
+
+    /**
+     * 绘制预览图
+     */
+    private fun drawPreView(canvas: Canvas, matrixScaleX: Float, matrixScaleY: Float) {
+        //绘制预览bitmap
+        canvas.drawBitmap(previewBitmap,scrollX*1f,scrollY*1f,null)
+        //当前绘制区域大小
+        val measuredWidth=computeHorizontalScrollRange()+width
+        val measuredHeight=computeVerticalScrollRange()+height
+        //预览尺寸比例
+        val matrixScaleX = previewWidth/measuredWidth
+        val matrixScaleY = previewHeight/measuredHeight
+        //绘制起始位置
+        val left=scrollX+scrollX*matrixScaleX
+        val top=scrollY+scrollY*matrixScaleY
+        //绘当前屏幕范围
+        canvas.drawRect(left,top,left+width*matrixScaleX,top+height*matrixScaleY,previewPaint)
+        debugLog("drawPreView:$left $top $matrixScaleX $matrixScaleY")
     }
 
     /**
@@ -296,11 +404,21 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     private fun drawConnectLine(canvas: Canvas,it: HierarchyNode,  layoutRect: Rect, matrixScaleY: Float, matrixScaleX: Float) {
         val childRect = it.layoutRect
         //线宽按比例缩放
+        val connectLineCornerPathEffect= connectLineCornerPathEffect *matrixScaleX
+        val connectLineEffectSize = connectLineEffectSize * matrixScaleX
         linePaint.strokeWidth = collectLineStrokeWidth * matrixScaleX
-        canvas.drawLine(layoutRect.right * matrixScaleX,
-                (layoutRect.top + layoutRect.height() / 2f) * matrixScaleY,
-                childRect.left * matrixScaleX,
-                (childRect.top + childRect.height() / 2f) * matrixScaleY, linePaint)
+        linePaint.pathEffect=CornerPathEffect(connectLineCornerPathEffect)
+        linePath.reset()
+        //移到绘制处
+        val left=layoutRect.right * matrixScaleX
+        val leftTop=(layoutRect.top + layoutRect.height() / 2f) * matrixScaleY
+        val right=childRect.left * matrixScaleX
+        val rightTop=(childRect.top + childRect.height() / 2f) * matrixScaleY
+        linePath.moveTo(left,leftTop)
+        linePath.lineTo(left+connectLineEffectSize,leftTop)
+        linePath.lineTo(right-connectLineEffectSize,rightTop)
+        linePath.lineTo(right+connectLineCornerPathEffect,rightTop)
+        canvas.drawPath(linePath,linePaint)
     }
 
     private fun intersectsRect(rect1:Rect,rect2:Rect):Boolean{

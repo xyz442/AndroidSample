@@ -5,5 +5,9 @@
         <attr name="hl_verticalSpacing" format="dimension"/>
         <attr name="hl_connectLineColor" format="color"/>
         <attr name="hl_connectLineStrokeWidth" format="dimension"/>
+        <attr name="hl_connectLineCornerPathEffect" format="dimension"/>
+        <attr name="hl_connectLineEffectSize" format="dimension"/>
+        <attr name="hl_previewWidth" format="dimension"/>
+        <attr name="hl_previewHeight" format="dimension"/>
     </declare-styleable>
 </resources>
