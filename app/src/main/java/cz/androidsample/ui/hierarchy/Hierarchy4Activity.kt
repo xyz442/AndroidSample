@@ -31,6 +31,7 @@ class Hierarchy4Activity : ToolBarActivity() {
             }
             supportFragmentManager.
                     beginTransaction().
+                    addToBackStack(null).
                     add(R.id.fragmentContainer, Hierarchy4Fragment.newInstance(root)).commit()
         }
     }

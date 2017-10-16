@@ -54,11 +54,11 @@ class MySeatTableAdapter(val context: Context): SeatTable.SeatTableAdapter() {
     }
 
     override fun getSeatColumnCount(): Int {
-        return 20
+        return 60
     }
 
     override fun getSeatRowCount(): Int {
-        return 20
+        return 80
     }
 
     override fun getHorizontalSpacing(column: Int):Int {

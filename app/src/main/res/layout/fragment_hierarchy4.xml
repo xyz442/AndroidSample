@@ -22,6 +22,8 @@
         app:hl4_previewWidth="200dp"
         app:hl4_connectLineEffectSize="6dp"
         app:hl4_connectLineCornerPathEffect="6dp"
+        app:hl4_hierarchyMaxScale="4"
+        app:hl4_hierarchyMinScale="0.2"
         android:padding="20dp" />
 
     <Button

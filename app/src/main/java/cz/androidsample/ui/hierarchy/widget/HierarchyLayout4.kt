@@ -1,5 +1,7 @@
 package cz.androidsample.ui.hierarchy.widget
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
@@ -31,8 +33,6 @@ class HierarchyLayout4(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         View(context, attrs, defStyleAttr), ScaleGestureDetector.OnScaleGestureListener, GestureDetector.OnGestureListener {
     constructor(context: Context, attrs: AttributeSet?):this(context,attrs,0)
     constructor(context: Context):this(context,null,0)
-    private var MAX_SCALE=2.0f
-    private var MIN_SCALE=1.0f
     private val viewFlinger=ViewFlinger()
     private val scaleGestureDetector = ScaleGestureDetector(context, this)
     private val gestureDetector = GestureDetector(context, this)
@@ -59,6 +59,15 @@ class HierarchyLayout4(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     //是否为固定尺寸计算,如果是固定尺寸,会选择第0个控件的尺寸进行计算,这样在控件达到1000以上,性能相差会非常大
     //如果不为固定尺寸计算,会计算出每一个控件具体大小.有多少会控件会运算多少次measure,大概效果为4000 400毫秒,但onMeasure会回调多次
     private var hasFixSize=false
+
+    //缩放限制区域
+    private var hierarchyMaxScale=2.0f
+    private var hierarchyMinScale=1.0f
+    //缩放动画对象
+    private var zoomAnimator:ValueAnimator?=null
+    //缩放聚焦点,因为缩放过程中,会改变其值,为了体验平滑,记录最初值
+    private var scaleFocusX =0f
+    private var scaleFocusY =0f
     //预览图
     private val previewPaint=Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color=Color.RED
@@ -78,6 +87,8 @@ class HierarchyLayout4(context: Context, attrs: AttributeSet?, defStyleAttr: Int
             setConnectLineCornerPathEffect(getDimension(R.styleable.HierarchyLayout4_hl4_connectLineCornerPathEffect,0f))
             setConnectLineEffectSize(getDimension(R.styleable.HierarchyLayout4_hl4_connectLineEffectSize,0f))
             setPreViewWidth(getDimension(R.styleable.HierarchyLayout4_hl4_previewWidth,0f))
+            setHierarchyMaxScale(getFloat(R.styleable.HierarchyLayout4_hl4_hierarchyMaxScale,2f))
+            setHierarchyMinScale(getFloat(R.styleable.HierarchyLayout4_hl4_hierarchyMinScale,0.6f))
             setHasFixSize(getBoolean(R.styleable.HierarchyLayout4_hl4_setHasFixedSize,true))
             recycle()
         }
@@ -117,6 +128,14 @@ class HierarchyLayout4(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     fun setConnectLineEffectSize(effectSize: Float) {
         this.connectLineEffectSize=effectSize
         invalidate()
+    }
+
+    private fun setHierarchyMaxScale(hierarchyMaxScale: Float) {
+        this.hierarchyMaxScale=hierarchyMaxScale
+    }
+
+    private fun setHierarchyMinScale(hierarchyMinScale: Float) {
+        this.hierarchyMinScale=hierarchyMinScale
     }
 
     private fun setPreViewWidth(width: Float) {
@@ -228,9 +247,7 @@ class HierarchyLayout4(context: Context, attrs: AttributeSet?, defStyleAttr: Int
             if(verticalRange<node.layoutRect.bottom){
                 verticalRange=node.layoutRect.bottom+paddingBottom
             }
-            debugLog("onMeasure:${view.measuredWidth} ${view.measuredHeight}")
         }
-        debugLog("onMeasure:${System.currentTimeMillis()-st} horizontalRange:$horizontalRange verticalRange:$verticalRange ${view.measuredWidth} ${view.measuredHeight}")
     }
 
 
@@ -267,7 +284,6 @@ class HierarchyLayout4(context: Context, attrs: AttributeSet?, defStyleAttr: Int
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        val st=System.currentTimeMillis()
         //绘制宽高
         val measuredWidth = computeHorizontalScrollRange() + width
         val measuredHeight = computeVerticalScrollRange() + height
@@ -279,7 +295,6 @@ class HierarchyLayout4(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         val matrixScaleX = previewWidth / measuredWidth
         val matrixScaleY = previewHeight / measuredHeight
         drawPreviewHierarchy(Canvas(previewBitmap),matrixScaleX,matrixScaleY)
-        debugLog("onSizeChanged:${System.currentTimeMillis()-st}")
     }
 
     override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
@@ -348,23 +363,95 @@ class HierarchyLayout4(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     /**
      * 设置当前屏幕缩放值
      */
-    fun setHierarchyScale(scale:Float){
-        debugLog("setHierarchyScale:$scale")
-        val valueAnimator = ValueAnimator.ofFloat(getMatrixScaleX(), scale)
-        valueAnimator.addUpdateListener { animation ->
-            val matrixScale=getMatrixScaleX()
-            val animatedValue=animation.animatedValue as Float
-            scaleMatrix.setScale(animatedValue,animatedValue)
-            scaleHierarchyScroll(matrixScale,measuredWidth/2f,measuredHeight/2f)
+    fun setHierarchyScale(scale:Float)=setHierarchyScaleInner(scale,width/2f,height/2f)
+
+    fun setHierarchyScaleInner(scale: Float,focusX: Float,focusY: Float,postAction:(()->Unit)?=null){
+        cancelZoomAnimator()
+        zoomAnimator = ValueAnimator.ofFloat(getMatrixScaleX(), scale).apply {
+            duration=200
+            addUpdateListener { animation ->
+                val matrixScale=getMatrixScaleX()
+                val animatedValue=animation.animatedValue as Float
+                scaleMatrix.setScale(animatedValue,animatedValue)
+                scaleHierarchyScroll(matrixScale,focusX,focusY)
+            }
+            addListener(object :AnimatorListenerAdapter(){
+                override fun onAnimationEnd(animation: Animator?) {
+                    super.onAnimationEnd(animation)
+                    postAction?.invoke()
+                }
+            })
+            start()
         }
-        valueAnimator.start()
     }
 
-    override fun onScaleBegin(detector: ScaleGestureDetector?): Boolean {
+    /**
+     * 终止缩放动画
+     */
+    private fun cancelZoomAnimator() {
+        val animator=zoomAnimator?:return
+        animator.removeAllUpdateListeners()
+        animator.removeAllListeners()
+        animator.cancel()
+    }
+
+    /**
+     * 缩放动画是否动行,用于与手势onFling区分状态
+     */
+    private fun zoomAnimatorRunning():Boolean{
+        var isRunning=false
+        if(null!=zoomAnimator){
+            isRunning=zoomAnimator?.isRunning?:false
+        }
+        return isRunning
+    }
+
+    override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
+        cancelZoomAnimator()
+        viewFlinger.abortAnimation()
+        scaleFocusX =detector.focusX
+        scaleFocusY =detector.focusY
         return true
     }
 
-    override fun onScaleEnd(detector: ScaleGestureDetector?){
+    override fun onScale(detector: ScaleGestureDetector): Boolean {
+        //原始缩放比例
+        val matrixScaleX = getMatrixScaleX()
+        //缩放矩阵
+        scaleMatrix.postScale(detector.scaleFactor, detector.scaleFactor, scaleFocusX,scaleFocusY)
+        //传入原始比例,进行计算,一定需要上面原始比例
+        scaleHierarchyScroll(matrixScaleX, scaleFocusX,scaleFocusY)
+        return true
+    }
+
+    override fun onScaleEnd(detector: ScaleGestureDetector){
+        //回弹缩放
+        val matrixScaleX = getMatrixScaleX()
+        if(hierarchyMinScale>matrixScaleX){
+            setHierarchyScaleInner(hierarchyMinScale, scaleFocusX,scaleFocusY,this::checkBorderAndScroll)
+        } else if(hierarchyMaxScale<matrixScaleX){
+            setHierarchyScaleInner(hierarchyMaxScale, scaleFocusX,scaleFocusY,this::checkBorderAndScroll)
+        } else {
+            checkBorderAndScroll()
+        }
+    }
+
+    /**
+     * 缩放视图时,自动滚动位置
+     */
+    private fun scaleHierarchyScroll(matrixScale:Float, focusX:Float, focusY:Float) {
+        //计算出放大中心点
+        val scrollX = ((scrollX + focusX) / matrixScale * getMatrixScaleX())
+        val scrollY = ((scrollY + focusY) / matrixScale * getMatrixScaleY())
+        //动态滚动至缩放中心点
+        scrollTo(((scrollX - focusX)).toInt(), ((scrollY - focusY)).toInt())
+        ViewCompat.postInvalidateOnAnimation(this)
+    }
+
+    /**
+     * 检测边界,并自动滚动到正常边界
+     */
+    private fun checkBorderAndScroll(){
         //缩放完毕后,检测当前屏幕位置,如果有一部分在范围外,自动滚动到范围内
         var destX=0
         var destY=0
@@ -381,43 +468,7 @@ class HierarchyLayout4(context: Context, attrs: AttributeSet?, defStyleAttr: Int
             destY=verticalScrollRange-scrollY
         }
         //开始滚动
-//        viewFlinger.startScroll(scrollX,scrollY,destX,destY)
-        //回弹缩放
-        val matrixScaleX = getMatrixScaleX()
-        if(MIN_SCALE>matrixScaleX){
-            setHierarchyScale(MIN_SCALE)
-        } else if(MAX_SCALE<matrixScaleX){
-            setHierarchyScale(MAX_SCALE)
-        }
-    }
-
-    override fun onScale(detector: ScaleGestureDetector): Boolean {
-        //固定放大比例代码,隐藏后,加入弹回缩放效果
-//        var scaleFactor=detector.scaleFactor
-//        if (MIN_SCALE > scaleFactor * matrixScaleX) {
-//            scaleFactor = MIN_SCALE / matrixScaleX
-//        } else if (MAX_SCALE < scaleFactor * matrixScaleX) {
-//            scaleFactor = MAX_SCALE / matrixScaleX
-//        }
-        //原始缩放比例
-        val matrixScaleX = getMatrixScaleX()
-        //缩放矩阵
-        scaleMatrix.postScale(detector.scaleFactor, detector.scaleFactor, detector.focusX,detector.focusY)
-        //传入原始比例,进行计算,一定需要上面原始比例
-        scaleHierarchyScroll(matrixScaleX,detector.focusX,detector.focusY)
-        return true
-    }
-
-    /**
-     * 缩放视图时,自动滚动位置
-     */
-    private fun scaleHierarchyScroll(matrixScale:Float, focusX:Float, focusY:Float) {
-        //计算出放大中心点
-        val scrollX = ((scrollX + focusX) / matrixScale * getMatrixScaleX())
-        val scrollY = ((scrollY + focusY) / matrixScale * getMatrixScaleY())
-        //动态滚动至缩放中心点
-        scrollTo(((scrollX - focusX)).toInt(), ((scrollY - focusY)).toInt())
-        ViewCompat.postInvalidateOnAnimation(this)
+        viewFlinger.startScroll(scrollX,scrollY,destX,destY)
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -564,8 +615,13 @@ class HierarchyLayout4(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     }
 
     override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean {
-        viewFlinger.onFling(velocityX,velocityY)
-        return true
+        debugLog("onFling:${zoomAnimatorRunning()}")
+        if(zoomAnimatorRunning()){
+            return false
+        } else {
+            viewFlinger.onFling(velocityX,velocityY)
+            return true
+        }
     }
 
 
@@ -646,7 +702,6 @@ class HierarchyLayout4(context: Context, attrs: AttributeSet?, defStyleAttr: Int
 
         fun startScroll(startX: Int, startY: Int, dx: Int, dy: Int) {
             scroller.startScroll(startX, startY, dx, dy)
-            debugLog("startScroll:$startX $startY $dx $dy")
             postOnAnimation()
         }
 
@@ -654,12 +709,12 @@ class HierarchyLayout4(context: Context, attrs: AttributeSet?, defStyleAttr: Int
          * 终止滚动
          */
         fun abortAnimation(){
-            debugLog("abortAnimation")
             scroller.abortAnimation()
             postInvalidate()
         }
 
         fun onFling(velocityX: Float, velocityY: Float) {
+            debugLog("onFling:$velocityX $velocityY")
             scroller.fling(scrollX,scrollY,-velocityX.toInt(),-velocityY.toInt(),0,computeHorizontalScrollRange(),0,computeVerticalScrollRange())
             postOnAnimation()
         }

@@ -19,13 +19,17 @@
         <attr name="hl4_connectLineStrokeWidth" format="dimension"/>
         <attr name="hl4_connectLineCornerPathEffect" format="dimension"/>
         <attr name="hl4_connectLineEffectSize" format="dimension"/>
+        <attr name="hl4_hierarchyMinScale" format="float"/>
+        <attr name="hl4_hierarchyMaxScale" format="float"/>
         <attr name="hl4_setHasFixedSize" format="boolean"/>
         <attr name="hl4_previewWidth" format="dimension"/>
     </declare-styleable>
 
     <declare-styleable name="SeatTable">
         <attr name="st_previewWidth" format="dimension"/>
-        <attr name="st_previewHeight" format="dimension"/>
+        <attr name="st_hierarchyMinScale" format="float"/>
+        <attr name="st_hierarchyMaxScale" format="float"/>
+        <attr name="st_setHasFixedSize" format="boolean"/>
     </declare-styleable>
 
 </resources>

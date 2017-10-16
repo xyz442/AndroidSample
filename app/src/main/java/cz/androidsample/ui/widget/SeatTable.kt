@@ -1,5 +1,6 @@
 package cz.androidsample.ui.widget
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
 import android.graphics.drawable.StateListDrawable
@@ -21,7 +22,7 @@ import java.util.*
  * Created by cz on 2017/10/10.
  */
 class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
-        View(context, attrs, defStyleAttr) , ViewManager, ScaleGestureDetector.OnScaleGestureListener, GestureDetector.OnGestureListener {
+        View(context, attrs, defStyleAttr) , ScaleGestureDetector.OnScaleGestureListener, GestureDetector.OnGestureListener {
 
     constructor(context: Context, attrs: AttributeSet?):this(context,attrs,0)
     constructor(context: Context):this(context,null,0)
@@ -47,7 +48,22 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
     //可滚动区域大小,涉及动态计算,所以保存值
     private var horizontalRange=0
     private var verticalRange=0
+    //所有座位信息
+    private lateinit var seatArray:Array<Array<SeatNodeInfo>>
+    private val recyclerBin=RecyclerBin()
     private var adapter:SeatTableAdapter?=null
+    //是否为固定尺寸计算,如果是固定尺寸,会选择第0个控件的尺寸进行计算,这样在控件达到1000以上,性能相差会非常大
+    //如果不为固定尺寸计算,会计算出每一个控件具体大小.有多少会控件会运算多少次measure,大概效果为4000 400毫秒,但onMeasure会回调多次
+    private var hasFixSize=false
+
+    //缩放限制区域
+    private var hierarchyMaxScale=2.0f
+    private var hierarchyMinScale=1.0f
+    //缩放动画对象
+    private var zoomAnimator: ValueAnimator?=null
+    //缩放聚焦点,因为缩放过程中,会改变其值,为了体验平滑,记录最初值
+    private var scaleFocusX =0f
+    private var scaleFocusY =0f
     //缩略图
     private val previewPaint=Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color=Color.RED
@@ -56,12 +72,13 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
     }
     private lateinit var previewBitmap:Bitmap
     private var previewWidth=0f
-    private var previewHeight=0f
 
     init {
         context.obtainStyledAttributes(attrs, R.styleable.SeatTable).apply {
             setPreViewWidth(getDimension(R.styleable.SeatTable_st_previewWidth,0f))
-            setPreViewHeight(getDimension(R.styleable.SeatTable_st_previewHeight,0f))
+            setHierarchyMaxScale(getFloat(R.styleable.HierarchyLayout4_hl4_hierarchyMaxScale,2f))
+            setHierarchyMinScale(getFloat(R.styleable.HierarchyLayout4_hl4_hierarchyMinScale,0.6f))
+            setHasFixSize(getBoolean(R.styleable.HierarchyLayout4_hl4_setHasFixedSize,true))
             recycle()
         }
     }
@@ -70,8 +87,16 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
         this.previewWidth=width
     }
 
-    private fun setPreViewHeight(height: Float) {
-        this.previewHeight=height
+    private fun setHierarchyMaxScale(hierarchyMaxScale: Float) {
+        this.hierarchyMaxScale=hierarchyMaxScale
+    }
+
+    private fun setHierarchyMinScale(hierarchyMinScale: Float) {
+        this.hierarchyMinScale=hierarchyMinScale
+    }
+
+    private fun setHasFixSize(hasFixSize: Boolean) {
+        this.hasFixSize=hasFixSize
     }
 
     /**
@@ -84,25 +109,19 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
             requestLayout()
         }
         adapter= newAdapter
-        //执行计算,获得矩阵前信息/屏幕信息/座位以及整个影院大小信息
-        val columnCount = newAdapter.getSeatColumnCount()
-        val rowCount = newAdapter.getSeatRowCount()
         //屏幕附加信息
         seatLayout = newAdapter.getHeaderSeatLayout(parent as ViewGroup)
         //屏幕布局
         screenView = newAdapter.getHeaderScreenView(parent as ViewGroup)
-        //TODO 添加所有位置view信息
-        for(row in 0..rowCount-1){
-            for(column in 0..columnCount-1){
-                val seatView = newAdapter.getSeatView(parent as ViewGroup, row, column)
-                newAdapter.bindSeatView(parent as ViewGroup,seatView,row,column)
-                addView(seatView,null)
-            }
-            //添加列指示器
-            val numberView=newAdapter.getSeatNumberView(parent as ViewGroup)
-            newAdapter.bindSeatNumberView(numberView,row)
-            numberLayout.addView(numberView)
+        //执行计算,获得矩阵前信息/屏幕信息/座位以及整个影院大小信息
+        val columnCount = newAdapter.getSeatColumnCount()
+        val rowCount = newAdapter.getSeatRowCount()
+        seatArray = Array(rowCount){ row->
+            (0..columnCount-1).map {SeatNodeInfo(row,it) }.toTypedArray()
         }
+        val seatView = recyclerBin.newViewWithMeasured(seatArray[0][0])
+        newAdapter.bindSeatView(parent as ViewGroup,seatView,0,0)
+        addView(seatView)
         newAdapter.bindNumberLayout(numberLayout)
     }
 
@@ -118,16 +137,26 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
             measureChildWithMargins(view,widthMode,heightMode)
         }
         //计算整个电影院大小
+        val itemView=getFirstView()
+        var left=paddingLeft
+        var top=paddingTop+seatLayout.measuredHeight+screenView.measuredHeight
+        seatArray.forEachIndexed { row, array ->
+            array.forEachIndexed { column, item->
+                //排版同列控件
+                item.layoutRect.set(left,top,left+itemView.measuredWidth,top+itemView.measuredHeight)
+                left += adapter.getHorizontalSpacing(column)+itemView.measuredWidth
+            }
+            //整行换行,计算左,上偏移信息
+            left=paddingLeft
+            top+=itemView.measuredHeight+adapter.getVerticalSpacing(row)
+        }
         horizontalRange=paddingLeft+paddingRight
         verticalRange=paddingTop+paddingBottom+screenView.measuredHeight
-        if(0<getChildCount()){
-            val childView = getChildAt(0)
-            (0..adapter.getSeatColumnCount()-1).forEach {
-                horizontalRange += adapter.getHorizontalSpacing(it)+childView.measuredWidth
-            }
-            (0..adapter.getSeatRowCount()-1).forEach {
-                verticalRange += adapter.getVerticalSpacing(it)+childView.measuredHeight
-            }
+        (0..adapter.getSeatColumnCount()-1).forEach {
+            horizontalRange += adapter.getHorizontalSpacing(it)+itemView.measuredWidth
+        }
+        (0..adapter.getSeatRowCount()-1).forEach {
+            verticalRange += adapter.getVerticalSpacing(it)+itemView.measuredHeight
         }
         //测量指示器
         for(index in 0..numberLayout.childCount-1){
@@ -144,7 +173,6 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
         val heightSpec = getChildMeasureSpec(measuredHeight, heightMode,if(ignorePadding) 0 else paddingTop + paddingBottom, lp.height)
         child.measure(widthSpec, heightSpec)
     }
-
 
     fun getChildMeasureSpec(parentSize: Int, parentMode: Int, padding: Int, childDimension: Int): Int {
         val size = Math.max(0, parentSize - padding)
@@ -170,62 +198,71 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        val adapter=adapter?:return
+        adapter?:return
         //排版顶部描述
         seatLayout.layout(0,0,seatLayout.measuredWidth,seatLayout.measuredHeight)
+        val top=seatLayout.measuredHeight+paddingTop
         //排版屏幕位置
-        screenView.layout(0,0,screenView.measuredWidth,screenView.measuredHeight)
-        //排版所有座位位置
-        var left=paddingLeft
-        var top=paddingTop+seatLayout.measuredHeight+screenView.measuredHeight
-        numberLayout.layout(left,top,left+numberLayout.measuredWidth,verticalRange)
-        val columnCount = adapter.getSeatColumnCount()
-        (1..getChildCount()).forEach {
-            val row=(it/columnCount)
-            val column=it%columnCount
-            val childView=getChildAt(it-1)
-            //排版左侧指示器
-            if(1==it%columnCount){
-                val numberView = numberLayout.getChildAt(row)
-                val numberTop=top+(childView.measuredHeight-numberView.measuredHeight)/2-(paddingTop+seatLayout.measuredHeight+screenView.measuredHeight)
-                numberView.layout(0,numberTop,numberView.measuredWidth,numberTop+numberView.measuredHeight)
-                left+=numberLayout.measuredWidth
-            }
-            //排版同列控件
-            childView.layout(left,top,left+childView.measuredWidth,top+childView.measuredHeight)
-            left += adapter.getHorizontalSpacing(column)+childView.measuredWidth
-            if(0==it%columnCount){
-                //整行换行,计算左,上偏移信息
-                left=paddingLeft
-                top+=childView.measuredHeight+adapter.getVerticalSpacing(row)
-            }
-        }
-        //初始化预览图
-        initPreviewBitmap()
+        screenView.layout((horizontalRange-screenView.measuredWidth)/2, top,
+                (horizontalRange+screenView.measuredWidth)/2, top+screenView.measuredHeight)
         debugLog("onLayout:${numberLayout.measuredWidth} ${numberLayout.measuredHeight}")
     }
 
-    /**
-     * 初始化预览视图
-     */
-    private fun initPreviewBitmap() {
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
         //绘制宽高
         val measuredWidth = computeHorizontalScrollRange() + width
         val measuredHeight = computeVerticalScrollRange() + height
         //此处按宽高比例重新设置previewHeight,因为配置比例与实际比例会有冲突,所以保留宽,高度自适应
-        previewHeight = measuredWidth * 1f / measuredHeight * previewWidth
+        val previewHeight=previewWidth/measuredWidth*measuredHeight
         //计算出预览图缩放比例
         previewBitmap = Bitmap.createBitmap(previewWidth.toInt(), previewHeight.toInt(), Bitmap.Config.ARGB_4444)
         //绘制预览图
         val matrixScaleX = previewWidth / measuredWidth
         val matrixScaleY = previewHeight / measuredHeight
-        //TODO 此处计算精度损失,暂时导致预览图与实际图存在一定比例不同.待修正
-        val scale = Math.min(matrixScaleX, matrixScaleY)
-        drawSeatRange(Canvas(previewBitmap), scale, scale, true)
-        debugLog("initPreviewBitmap:${measuredWidth * 1.0 / measuredHeight} $matrixScaleX $matrixScaleY")
-        //initPr
+        drawSeatRange(Canvas(previewBitmap),matrixScaleX,matrixScaleY,true)
+        //横向滚到中间
+        scrollTo(computeHorizontalScrollRange()/2,0)
     }
 
+    override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
+        super.onScrollChanged(l, t, oldl, oldt)
+        //滚动时检测当前屏需要控件
+        val adapter=adapter?:return
+        val st=System.currentTimeMillis()
+        val matrixScaleX = getMatrixScaleX()
+        val matrixScaleY = getMatrixScaleY()
+        //移除当前屏内所有控件
+        val parent=parent as ViewGroup
+        //此处优化细节为,直接通过缩放比,以及控件尺寸,确定当前屏幕在,整个二维节点内的行与列,减少大量数量时的大量运算,仅适用于电影票选座
+        screenRect.set(scrollX, scrollY, scrollX + width, scrollY + height)
+
+        seatArray.forEachIndexed{ row, array->
+            array.forEachIndexed { column,item->
+                val layoutRect=item.layoutRect
+                //是否绘制,仅确定,当前控件所在矩阵,与当前显示矩阵是否相交,如果不相交,不进行绘制
+                tmpRect.set((layoutRect.left * matrixScaleX).toInt(),
+                        (layoutRect.top * matrixScaleY).toInt(),
+                        (layoutRect.right * matrixScaleX).toInt(),
+                        (layoutRect.bottom * matrixScaleY).toInt())
+                if (intersectsRect(screenRect, tmpRect)) {
+                    var view = findViewByTag(item)
+                    if (null != view) {
+                        adapter.bindSeatView(parent,view, row,column)
+                    } else {
+                        //取一个新的控件,并运算
+                        view = recyclerBin.newViewWithMeasured(item)
+                        //添加控件
+                        addView(view)
+                    }
+                    view.tag = item
+                    //直接排,不排在指定矩阵内
+                    view.layout(layoutRect.left, layoutRect.top, layoutRect.right, layoutRect.bottom)
+                }
+            }
+        }
+        debugLog("onScrollChanged:${System.currentTimeMillis()-st}")
+    }
     private fun setChildPress(childView:View,press:Boolean){
         childView.isPressed = press
         val background=childView.background
@@ -235,6 +272,10 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
             invalidate()
         }
     }
+    /**
+     * 获得第一个基准控件,作长宽模板使用
+     */
+    fun getFirstView()= views[0]
 
     fun getChildCount()=views.size
 
@@ -242,19 +283,18 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
 
     fun indexOfChild(view:View)=views.indexOf(view)
 
-    override fun addView(view: View, params: ViewGroup.LayoutParams?) {
-        if(null!=params){
-            view.layoutParams=params
+    /**
+     * 根据tag查找view,用于利用node逆向查找view,无法复写findViewWithTag方法,因为为final
+     */
+    private fun findViewByTag(tag:Any):View?{
+        return views.find { it.tag==tag }
+    }
+
+    private fun addView(view: View) {
+        if(null!=view.layoutParams){
+            view.layoutParams=ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT)
         }
         views.add(view)
-    }
-
-    override fun updateViewLayout(view: View, params: ViewGroup.LayoutParams?) {
-        view.layoutParams=params
-    }
-
-    override fun removeView(view: View) {
-        views.remove(view)
     }
 
     override fun computeHorizontalScrollRange(): Int {
@@ -311,7 +351,7 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
         //绘当前座位描述
         drawSeatLayout(canvas)
         //绘缩略图
-        drawPreView(canvas,matrixScaleX,matrixScaleY)
+//        drawPreView(canvas,matrixScaleX,matrixScaleY)
         debugLog("onDraw:${System.currentTimeMillis()-st}")
 
         if(DEBUG){
@@ -349,14 +389,15 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
      * 绘屏幕
      */
     private fun drawScreen(canvas: Canvas,screenRect:Rect,matrixScaleX: Float, matrixScaleY: Float) {
-        val top=paddingTop+seatLayout.measuredHeight
-        val left=(horizontalRange-screenView.measuredWidth)/2
-        tmpRect.set(left,top,left+screenView.measuredWidth,top+screenView.measuredHeight)
+        tmpRect.set((screenView.left * matrixScaleX).toInt(),
+                (screenView.top * matrixScaleY).toInt(),
+                (screenView.right * matrixScaleX).toInt(),
+                (screenView.bottom * matrixScaleY).toInt())
         if (intersectsRect(screenRect, tmpRect)) {
             //如果屏幕在当前显示范围内,进行绘制
             canvas.save()
             canvas.scale(matrixScaleX, matrixScaleY)
-            canvas.translate(left*1f,top*1f)
+            canvas.translate(screenView.left*1f,screenView.top*1f)
             screenView.draw(canvas)
             canvas.restore()
         }
@@ -403,7 +444,6 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
         }
     }
 
-
     /**
      * 绘制预览图
      */
@@ -415,7 +455,6 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
         val measuredHeight=computeVerticalScrollRange()+height
         //预览尺寸比例
         val matrixScaleX = previewWidth/measuredWidth
-        val matrixScaleY = previewHeight/measuredHeight
         //绘制起始位置
         val left=scrollX+scrollX*matrixScaleX
         val top=scrollY+scrollY*matrixScaleY
@@ -540,6 +579,29 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
     fun forEachChild(action:(View)->Unit)=views.forEach(action)
 
     fun forEachIndexed(action:(Int,View)->Unit)=views.forEachIndexed(action)
+
+    inner class SeatNodeInfo(val row:Int,val column:Int){
+        val layoutRect=Rect()
+    }
+
+    inner class RecyclerBin{
+        val scrapViews= mutableListOf<View>()
+
+        fun addScarpView(view:View){
+            scrapViews.add(view)
+        }
+
+        fun newViewWithMeasured(node: SeatNodeInfo):View{
+            val adapter= adapter ?:throw NullPointerException("获取View时Adapter不能为空!")
+            val parent=parent as ViewGroup
+            val view=adapter.getSeatView(parent,node.row,node.column)
+            adapter.bindSeatView(parent,view,node.row,node.column)
+            measureChildWithMargins(view, MeasureSpec.AT_MOST, MeasureSpec.AT_MOST)
+            view.tag=node
+            return view
+        }
+
+    }
     /**
      *
      */
