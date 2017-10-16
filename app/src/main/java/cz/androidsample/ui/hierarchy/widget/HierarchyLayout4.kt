@@ -1,15 +1,13 @@
 package cz.androidsample.ui.hierarchy.widget
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
 import android.graphics.drawable.StateListDrawable
-import android.os.SystemClock
-import android.support.v4.content.ContextCompat
 import android.support.v4.view.ViewCompat
 import android.support.v4.widget.ScrollerCompat
 import android.util.AttributeSet
 import android.view.*
-import android.view.animation.Animation
 import cz.androidsample.DEBUG
 import cz.androidsample.R
 import cz.androidsample.debugLog
@@ -19,35 +17,48 @@ import kotlin.collections.ArrayList
 
 
 /**
- * Created by cz on 2017/10/11.
- * 1:完成视图树绘制
- * 2:完成区域间连接线配置
- * 3:完成预览图展示,并显示矩阵区域
- * 4:完成自由居中
+ * Created by cz on 2017/10/16.
+ * 此版本主要为了优化性能,主要有两个思路
+ * 1:全局只给定一个view,所有信息,再设定一个信息包装对象来记录点击,背景,长按等.
+ * 2:以类似listView控件复用原理,直接采取延持加载,以及控件复用机制.增强性能
+ *
+ * 本版本使用第二个方案,主要完成
+ * 1:增加控件延持加载机制
+ * 2:增加新的缩略图机制
+ * 3:增加动画缩放,以及放大后,如果越界,自动回滚机制
  */
-class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
-        View(context, attrs, defStyleAttr) ,ViewManager, ScaleGestureDetector.OnScaleGestureListener, GestureDetector.OnGestureListener {
+class HierarchyLayout4(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
+        View(context, attrs, defStyleAttr), ScaleGestureDetector.OnScaleGestureListener, GestureDetector.OnGestureListener {
     constructor(context: Context, attrs: AttributeSet?):this(context,attrs,0)
     constructor(context: Context):this(context,null,0)
-    private var MAX_SCALE=3.0f
-    private var MIN_SCALE=0.2f
-    private val scroller=ScrollerCompat.create(context)
+    private var MAX_SCALE=2.0f
+    private var MIN_SCALE=1.0f
+    private val viewFlinger=ViewFlinger()
     private val scaleGestureDetector = ScaleGestureDetector(context, this)
     private val gestureDetector = GestureDetector(context, this)
     private val tmpRect = Rect()
     private val linePaint=Paint(Paint.ANTI_ALIAS_FLAG).apply { style=Paint.Style.STROKE }
     private val linePath=Path()
+    //这俩个字段,是为了确保弯曲线随比例放大缩小
     private var collectLineStrokeWidth =1f
     private var connectLineCornerPathEffect =0f
     private var connectLineEffectSize =0f
+    //横纵向间隔空间
     private var horizontalSpacing:Float=0f
     private var verticalSpacing:Float=0f
+    //所有节点信息
+    private val hierarchyNoeItems= mutableListOf<HierarchyNode>()
     //当前屏幕显示区域
     private val screenRect= Rect()
     private var m = FloatArray(9)
     private val scaleMatrix=Matrix()
     private val views=ArrayList<View>()
     private var hierarchyAdapter:HierarchyAdapter?=null
+    private var horizontalRange=0
+    private var verticalRange=0
+    //是否为固定尺寸计算,如果是固定尺寸,会选择第0个控件的尺寸进行计算,这样在控件达到1000以上,性能相差会非常大
+    //如果不为固定尺寸计算,会计算出每一个控件具体大小.有多少会控件会运算多少次measure,大概效果为4000 400毫秒,但onMeasure会回调多次
+    private var hasFixSize=false
     //预览图
     private val previewPaint=Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color=Color.RED
@@ -59,15 +70,15 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     private var previewHeight=0f
 
     init {
-        context.obtainStyledAttributes(attrs, R.styleable.HierarchyLayout3).apply {
-            setHorizontalSpacing(getDimension(R.styleable.HierarchyLayout3_hl_horizontalSpacing,0f))
-            setVerticalSpacing(getDimension(R.styleable.HierarchyLayout3_hl_verticalSpacing,0f))
-            setConnectLineColor(getColor(R.styleable.HierarchyLayout3_hl_connectLineColor,Color.WHITE))
-            setConnectLineStrokeWidth(getDimension(R.styleable.HierarchyLayout3_hl_connectLineStrokeWidth,0f))
-            setConnectLineCornerPathEffect(getDimension(R.styleable.HierarchyLayout3_hl_connectLineCornerPathEffect,0f))
-            setConnectLineEffectSize(getDimension(R.styleable.HierarchyLayout3_hl_connectLineEffectSize,0f))
-            setPreViewWidth(getDimension(R.styleable.HierarchyLayout3_hl_previewWidth,0f))
-            setPreViewHeight(getDimension(R.styleable.HierarchyLayout3_hl_previewHeight,0f))
+        context.obtainStyledAttributes(attrs, R.styleable.HierarchyLayout4).apply {
+            setHorizontalSpacing(getDimension(R.styleable.HierarchyLayout4_hl4_horizontalSpacing,0f))
+            setVerticalSpacing(getDimension(R.styleable.HierarchyLayout4_hl4_verticalSpacing,0f))
+            setConnectLineColor(getColor(R.styleable.HierarchyLayout4_hl4_connectLineColor,Color.WHITE))
+            setConnectLineStrokeWidth(getDimension(R.styleable.HierarchyLayout4_hl4_connectLineStrokeWidth,0f))
+            setConnectLineCornerPathEffect(getDimension(R.styleable.HierarchyLayout4_hl4_connectLineCornerPathEffect,0f))
+            setConnectLineEffectSize(getDimension(R.styleable.HierarchyLayout4_hl4_connectLineEffectSize,0f))
+            setPreViewWidth(getDimension(R.styleable.HierarchyLayout4_hl4_previewWidth,0f))
+            setHasFixSize(getBoolean(R.styleable.HierarchyLayout4_hl4_setHasFixedSize,true))
             recycle()
         }
     }
@@ -76,6 +87,7 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         this.horizontalSpacing=spacing
         requestLayout()
     }
+
     fun setVerticalSpacing(spacing: Float) {
         this.verticalSpacing=spacing
         requestLayout()
@@ -102,7 +114,7 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     /**
      * 设置连接线曲线长度
      */
-    fun  setConnectLineEffectSize(effectSize: Float) {
+    fun setConnectLineEffectSize(effectSize: Float) {
         this.connectLineEffectSize=effectSize
         invalidate()
     }
@@ -111,8 +123,8 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         this.previewWidth=width
     }
 
-    private fun setPreViewHeight(height: Float) {
-        this.previewHeight=height
+    private fun setHasFixSize(hasFixSize: Boolean) {
+        this.hasFixSize=hasFixSize
     }
 
     open fun setAdapter(adapter:HierarchyAdapter){
@@ -122,10 +134,20 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
             views.clear()
             requestLayout()
         }
-        //重新排版控件树
+        //重新设置数据适配器
         hierarchyAdapter = adapter
-        //遍历节点树
+        //清空所有节点
+        hierarchyNoeItems.clear()
+        //遍历节点树,并添加到hierarchyNoeItems内
         addHierarchyNodeView(adapter.root)
+        /*
+         添加第1个控件,此处第一个控件设计很复杂,因为如果需要做缩略图,一般来说是需要把整个控件树全都做出来,
+         也就是第三个示例的做法,但里如果复用view的话,就不好采用那种方式,否则就必须一开始就取出所有控件,并排版了.这就没意义做复用了
+         所以这里,以一个取巧的思路,全局一开始,会开始new出一个控件出来,以后的整个缩略图,完全以这个控件为原型初始化,实际效果一样的
+        */
+        addView(newViewWithMeasured(adapter.root))
+        //使屏幕居中
+        post { scrollTo(0,computeVerticalScrollRange()/2) }
     }
 
     /**
@@ -134,61 +156,37 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
      */
     private fun addHierarchyNodeView(node:HierarchyNode){
         //排版空间树
-        val view=nextHierarchyView(node)
-        if(null!=view){
-            //添加并排版
-            addView(view,null)
-            //遍历子节点
-            node.children.forEach(this::addHierarchyNodeView)
-        }
+        hierarchyNoeItems.add(node)
+        //遍历子节点
+        node.children.forEach(this::addHierarchyNodeView)
+    }
+    /**
+     * 获得第一个基准控件,作长宽模板使用
+     */
+    fun getFirstView()= views[0]
+
+    fun getChildAt(index:Int)= views[index]
+
+    /**
+     * 根据tag查找view,用于利用node逆向查找view,无法复写findViewWithTag方法,因为为final
+     */
+    private fun findViewByTag(tag:Any):View?{
+        return views.find { it.tag==tag }
     }
 
-    fun getChildCount()=views.size
-
-    fun getChildAt(index:Int)=views[index]
-
-    fun indexOfChild(view:View)=views.indexOf(view)
-
-    override fun addView(view: View, params: ViewGroup.LayoutParams?) {
-        if(null!=params){
-            view.layoutParams=params
+    private fun addView(view: View) {
+        if(null==view.layoutParams){
+            view.layoutParams=ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT)
         }
         views.add(view)
-        requestLayout()
-    }
-
-    override fun updateViewLayout(view: View, params: ViewGroup.LayoutParams?) {
-        view.layoutParams=params
-        requestLayout()
-    }
-
-    override fun removeView(view: View) {
-        views.remove(view)
-        requestLayout()
     }
 
     override fun computeHorizontalScrollRange(): Int {
-        val adapter=hierarchyAdapter?:return 0
-        val depth=adapter.horizontalDepth
-        var horizontalScrollRange=paddingLeft+paddingRight
-        val childCount = getChildCount()
-        if(0<childCount){
-            val childView=getChildAt(0)
-            horizontalScrollRange+= (depth*horizontalSpacing+(depth+1)*childView.measuredWidth).toInt()
-        }
-        return Math.max(0,(horizontalScrollRange*getMatrixScaleX()-width).toInt())
+        return Math.max(0f,horizontalRange*getMatrixScaleX()-width).toInt()
     }
 
     override fun computeVerticalScrollRange(): Int {
-        val adapter=hierarchyAdapter?:return 0
-        var verticalScrollRange=paddingTop+paddingBottom
-        val childCount = getChildCount()
-        if(0<childCount){
-            val childView=getChildAt(0)
-            val depth=adapter.root.childDepth
-            verticalScrollRange= ((depth+1)*verticalSpacing+depth*childView.measuredHeight).toInt()
-        }
-        return Math.max(0,(verticalScrollRange*getMatrixScaleY()-height).toInt())
+        return Math.max(0f,verticalRange*getMatrixScaleY()-height).toInt()
     }
 
     private fun getMatrixScaleX(): Float {
@@ -201,13 +199,40 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         return m[Matrix.MSCALE_Y]
     }
 
-
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        val adapter=hierarchyAdapter?:return
+        val st=System.currentTimeMillis()
+        //测量己有控件大小
         views.forEach { measureChildWithMargins(it,MeasureSpec.getMode(widthMeasureSpec),MeasureSpec.getMode(heightMeasureSpec)) }
-        val view=getChildAt(0)
-        debugLog("onMeasure:${computeHorizontalScrollRange()+width} verticalRange:${computeVerticalScrollRange()+height} ${view.measuredWidth} ${view.measuredHeight}")
+        //测量当前屏幕尺寸大小,以一个控件为基准,测量出所有控件尺寸,以及可占用空间大小
+        val view=getFirstView()//基准计算控件
+        hierarchyNoeItems.forEachIndexed { _, node ->
+            //绑定数据
+            //在非固定尺寸情况下,计算控件不同信息大小
+            if(!hasFixSize){
+                adapter.bindView(view,node)
+                //计算大小,此处测量耗时如果不测量,耗时3-4毫秒,测量耗时30-40毫秒,控件44个,所以为了性能考虑,应该让每一个控件大小一致,然后设置hasFixSize=true!
+                measureChildWithMargins(view,MeasureSpec.getMode(widthMeasureSpec),MeasureSpec.getMode(heightMeasureSpec))
+            }
+            val left=paddingLeft+node.level*horizontalSpacing+node.level*view.measuredWidth
+            val centerDepth=node.startDepth+(node.endDepth-node.startDepth)/2
+            val top=paddingTop+centerDepth*verticalSpacing+centerDepth *view.measuredHeight
+            //记录view排版矩阵
+            node.layoutRect.set(left.toInt(), top.toInt(), left.toInt()+view.measuredWidth, top.toInt()+view.measuredHeight)
+            //记录最大节点右侧
+            if(horizontalRange<node.layoutRect.right){
+                horizontalRange=node.layoutRect.right+paddingRight
+            }
+            //记录最大节点底部位置
+            if(verticalRange<node.layoutRect.bottom){
+                verticalRange=node.layoutRect.bottom+paddingBottom
+            }
+            debugLog("onMeasure:${view.measuredWidth} ${view.measuredHeight}")
+        }
+        debugLog("onMeasure:${System.currentTimeMillis()-st} horizontalRange:$horizontalRange verticalRange:$verticalRange ${view.measuredWidth} ${view.measuredHeight}")
     }
+
 
     fun measureChildWithMargins(child: View, widthMode: Int, heightMode: Int) {
         val lp = child.layoutParams
@@ -240,42 +265,74 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         return View.MeasureSpec.makeMeasureSpec(resultSize, resultMode)
     }
 
-    override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        super.onLayout(changed, l, t, r, b)
-        views.forEachIndexed { index, view ->
-            val node=view.tag as HierarchyNode
-            val left=paddingLeft+node.level*horizontalSpacing+node.level*view.measuredWidth
-            val centerDepth=node.startDepth+(node.endDepth-node.startDepth)/2
-            val top=paddingTop+centerDepth*verticalSpacing+centerDepth *view.measuredHeight
-            view.layout(left.toInt(), top.toInt(), left.toInt()+view.measuredWidth, top.toInt()+view.measuredHeight)
-            //记录view排版矩阵
-            node.layoutRect.set(left.toInt(), top.toInt(), left.toInt()+view.measuredWidth, top.toInt()+view.measuredHeight)
-            //使屏幕居中
-            if(0==index){
-                scrollTo(0,computeVerticalScrollRange()/2)
-            }
-        }
-        //初始化预览绘制层
-        initPreviewHierarchy()
-        debugLog("onLayout:l $t:$ r:$r b:$b")
-    }
-
-    private fun initPreviewHierarchy(){
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        val st=System.currentTimeMillis()
         //绘制宽高
         val measuredWidth = computeHorizontalScrollRange() + width
         val measuredHeight = computeVerticalScrollRange() + height
         //此处按宽高比例重新设置previewHeight,因为配置比例与实际比例会有冲突,所以保留宽,高度自适应
-        previewHeight=measuredWidth*1f/measuredHeight*previewWidth
+        previewHeight=previewWidth/measuredWidth*measuredHeight
         //计算出预览图缩放比例
         previewBitmap = Bitmap.createBitmap(previewWidth.toInt(), previewHeight.toInt(), Bitmap.Config.ARGB_4444)
         //绘制预览图
         val matrixScaleX = previewWidth / measuredWidth
         val matrixScaleY = previewHeight / measuredHeight
-        //TODO 此处计算精度损失,暂时导致预览图与实际图存在一定比例不同.待修正
-        val scale=Math.min(matrixScaleX,matrixScaleY)
-        drawHierarchy(Canvas(previewBitmap),scale,scale, true)
-        debugLog("initPreviewHierarchy:${measuredWidth*1.0/measuredHeight} $matrixScaleX $matrixScaleY")
-        //initPreviewHierarchy:0.9689243 0.065789476 0.061764095 计算精度损失...  matrixScaleX应该等于matrixScaleY
+        drawPreviewHierarchy(Canvas(previewBitmap),matrixScaleX,matrixScaleY)
+        debugLog("onSizeChanged:${System.currentTimeMillis()-st}")
+    }
+
+    override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
+        super.onScrollChanged(l, t, oldl, oldt)
+        val adapter=hierarchyAdapter?:return
+        val st=System.currentTimeMillis()
+        val matrixScaleX = getMatrixScaleX()
+        val matrixScaleY = getMatrixScaleY()
+        //移除当前屏内所有控件
+        screenRect.set(scrollX, scrollY, scrollX + width, scrollY + height)
+        hierarchyNoeItems.forEach{ node ->
+            val layoutRect=node.layoutRect
+            //是否绘制,仅确定,当前控件所在矩阵,与当前显示矩阵是否相交,如果不相交,不进行绘制
+            tmpRect.set((layoutRect.left * matrixScaleX).toInt(),
+                    (layoutRect.top * matrixScaleY).toInt(),
+                    (layoutRect.right * matrixScaleX).toInt(),
+                    (layoutRect.bottom * matrixScaleY).toInt())
+            if (intersectsRect(screenRect, tmpRect)) {
+                var view=findViewByTag(node)
+                if(null!=view){
+                    adapter.bindView(view,node)
+                } else{
+                    //取一个新的控件,并运算
+                    view=newViewWithMeasured(node)
+                    //添加控件
+                    addView(view)
+                }
+                view.tag=node
+                //直接排,不排在指定矩阵内
+                view.layout(layoutRect.left,layoutRect.top,layoutRect.right,layoutRect.bottom)
+            }
+        }
+        debugLog("onScrollChanged:${System.currentTimeMillis()-st}")
+    }
+
+
+    /**
+     * 绘制缩略图
+     * @param canvas 绘制canvas对象,传入对象为预览canvas,则会绘制到bitmap上
+     */
+    private fun drawPreviewHierarchy(canvas: Canvas,matrixScaleX: Float, matrixScaleY: Float) {
+        val firstView = getFirstView()
+        hierarchyNoeItems.forEach{ node ->
+            val layoutRect=node.layoutRect
+            if(!hasFixSize){
+                measureChildWithMargins(firstView,MeasureSpec.AT_MOST,MeasureSpec.AT_MOST)
+            }
+            firstView.layout(layoutRect.left,layoutRect.top,layoutRect.right,layoutRect.bottom)
+            //记录节点信息
+            firstView.tag=node
+            //这里不用排版,不用顾忌不排版后点击错乱问题
+            drawHierarchyView(canvas,firstView,matrixScaleX,matrixScaleY)
+        }
     }
 
     private fun setChildPress(childView:View,press:Boolean){
@@ -288,29 +345,79 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         }
     }
 
+    /**
+     * 设置当前屏幕缩放值
+     */
+    fun setHierarchyScale(scale:Float){
+        debugLog("setHierarchyScale:$scale")
+        val valueAnimator = ValueAnimator.ofFloat(getMatrixScaleX(), scale)
+        valueAnimator.addUpdateListener { animation ->
+            val matrixScale=getMatrixScaleX()
+            val animatedValue=animation.animatedValue as Float
+            scaleMatrix.setScale(animatedValue,animatedValue)
+            scaleHierarchyScroll(matrixScale,measuredWidth/2f,measuredHeight/2f)
+        }
+        valueAnimator.start()
+    }
+
     override fun onScaleBegin(detector: ScaleGestureDetector?): Boolean {
         return true
     }
 
-    override fun onScaleEnd(detector: ScaleGestureDetector?) =Unit
+    override fun onScaleEnd(detector: ScaleGestureDetector?){
+        //缩放完毕后,检测当前屏幕位置,如果有一部分在范围外,自动滚动到范围内
+        var destX=0
+        var destY=0
+        val horizontalScrollRange = computeHorizontalScrollRange()
+        val verticalScrollRange = computeVerticalScrollRange()
+        if(0>scrollX){
+            destX=-scrollX
+        } else if(horizontalScrollRange<scrollX){
+            destX=horizontalScrollRange-scrollX
+        }
+        if(0>scrollY){
+            destY=-scrollY
+        } else if(verticalScrollRange<scrollY){
+            destY=verticalScrollRange-scrollY
+        }
+        //开始滚动
+//        viewFlinger.startScroll(scrollX,scrollY,destX,destY)
+        //回弹缩放
+        val matrixScaleX = getMatrixScaleX()
+        if(MIN_SCALE>matrixScaleX){
+            setHierarchyScale(MIN_SCALE)
+        } else if(MAX_SCALE<matrixScaleX){
+            setHierarchyScale(MAX_SCALE)
+        }
+    }
 
     override fun onScale(detector: ScaleGestureDetector): Boolean {
-        var scaleFactor=detector.scaleFactor
+        //固定放大比例代码,隐藏后,加入弹回缩放效果
+//        var scaleFactor=detector.scaleFactor
+//        if (MIN_SCALE > scaleFactor * matrixScaleX) {
+//            scaleFactor = MIN_SCALE / matrixScaleX
+//        } else if (MAX_SCALE < scaleFactor * matrixScaleX) {
+//            scaleFactor = MAX_SCALE / matrixScaleX
+//        }
+        //原始缩放比例
         val matrixScaleX = getMatrixScaleX()
-        val matrixScaleY = getMatrixScaleY()
-        if(MIN_SCALE>scaleFactor*matrixScaleX){
-            scaleFactor=MIN_SCALE/matrixScaleX
-        } else if(MAX_SCALE<scaleFactor*matrixScaleX){
-            scaleFactor=MAX_SCALE/matrixScaleX
-        }
-        scaleMatrix.postScale(scaleFactor, scaleFactor, detector.focusX, detector.focusY)
-        //计算出放大中心点
-        val scrollX=((scrollX+detector.focusX)/matrixScaleX*getMatrixScaleX())
-        val scrollY=((scrollY+detector.focusY)/matrixScaleY*getMatrixScaleY())
-        //动态滚动至缩放中心点
-        scrollTo(((scrollX-detector.focusX)).toInt(), ((scrollY-detector.focusY)).toInt())
-        ViewCompat.postInvalidateOnAnimation(this)
+        //缩放矩阵
+        scaleMatrix.postScale(detector.scaleFactor, detector.scaleFactor, detector.focusX,detector.focusY)
+        //传入原始比例,进行计算,一定需要上面原始比例
+        scaleHierarchyScroll(matrixScaleX,detector.focusX,detector.focusY)
         return true
+    }
+
+    /**
+     * 缩放视图时,自动滚动位置
+     */
+    private fun scaleHierarchyScroll(matrixScale:Float, focusX:Float, focusY:Float) {
+        //计算出放大中心点
+        val scrollX = ((scrollX + focusX) / matrixScale * getMatrixScaleX())
+        val scrollY = ((scrollY + focusY) / matrixScale * getMatrixScaleY())
+        //动态滚动至缩放中心点
+        scrollTo(((scrollX - focusX)).toInt(), ((scrollY - focusY)).toInt())
+        ViewCompat.postInvalidateOnAnimation(this)
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -320,9 +427,9 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         val matrixScaleX = getMatrixScaleX()
         val matrixScaleY = getMatrixScaleY()
         //绘制视图
-        drawHierarchy(canvas,matrixScaleX, matrixScaleY)
+        forEachChild { drawHierarchyView(canvas,it,matrixScaleX, matrixScaleY) }
         //绘制预览图
-        drawPreView(canvas,matrixScaleX,matrixScaleY)
+        drawPreView(canvas)
         //绘制调试缩放中心点
         if(DEBUG){
             val paint=Paint()
@@ -346,44 +453,33 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     /**
      * 绘制视图层级
      * @param canvas 绘制canvas对象,如果传入预览对象的canvas,则会绘制到bitmap上
-     * @param drawPreview 绘制预览图
      */
-    private fun drawHierarchy(canvas: Canvas,matrixScaleX: Float, matrixScaleY: Float,drawPreview:Boolean=false) {
-        screenRect.set(scrollX, scrollY, scrollX + width, scrollY + height)
-        forEachChild { childView ->
-            //是否绘制,仅确定,当前控件所在矩阵,与当前显示矩阵是否相交,如果不相交,不进行绘制
-            tmpRect.set((childView.left * matrixScaleX).toInt(),
-                    (childView.top * matrixScaleY).toInt(),
-                    (childView.right * matrixScaleX).toInt(),
-                    (childView.bottom * matrixScaleY).toInt())
-            if (drawPreview||intersectsRect(screenRect, tmpRect)) {
-                canvas.save()
-                //按比例放大,并绘制
-                canvas.scale(matrixScaleX, matrixScaleY)
-                canvas.translate(childView.left.toFloat(), childView.top.toFloat())
-                childView.draw(canvas)
-                canvas.restore()
-
-                //绘连接线
-                val node = childView.tag as HierarchyNode
-                val layoutRect = node.layoutRect
-                //检测父节点是否在当前屏幕内,不在也需要绘制连接线
-                val parentNode = node.parent
-                if (null != parentNode) {
-                    drawConnectLine(canvas, node, parentNode.layoutRect, matrixScaleX, matrixScaleY)
-                }
-                //绘制子连接线
-                node.children.forEach {
-                    drawConnectLine(canvas, it, layoutRect, matrixScaleX, matrixScaleY)
-                }
-            }
+    private fun drawHierarchyView(canvas: Canvas,view:View, matrixScaleX: Float, matrixScaleY: Float) {
+        val node=view.tag as HierarchyNode
+        canvas.save()
+        //按比例放大,并绘制
+        canvas.scale(matrixScaleX, matrixScaleY)
+        canvas.translate(node.layoutRect.left.toFloat(), node.layoutRect.top.toFloat())
+        //进行绘制
+        view.draw(canvas)
+        canvas.restore()
+        //绘连接线
+        val layoutRect = node.layoutRect
+        //检测父节点是否在当前屏幕内,不在也需要绘制连接线
+        val parentNode = node.parent
+        if (null != parentNode) {
+            drawConnectLine(canvas, node, parentNode.layoutRect, matrixScaleX, matrixScaleY)
+        }
+        //绘制子连接线
+        node.children.forEach {
+            drawConnectLine(canvas, it, layoutRect, matrixScaleX, matrixScaleY)
         }
     }
 
     /**
      * 绘制预览图
      */
-    private fun drawPreView(canvas: Canvas, matrixScaleX: Float, matrixScaleY: Float) {
+    private fun drawPreView(canvas: Canvas) {
         //绘制预览bitmap
         canvas.drawBitmap(previewBitmap,scrollX*1f,scrollY*1f,null)
         //当前绘制区域大小
@@ -397,7 +493,6 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         val top=scrollY+scrollY*matrixScaleY
         //绘当前屏幕范围
         canvas.drawRect(left,top,left+width*matrixScaleX,top+height*matrixScaleY,previewPaint)
-        debugLog("drawPreView:$left $top $matrixScaleX $matrixScaleY")
     }
 
     /**
@@ -451,7 +546,7 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
 
 
     override fun onDown(e: MotionEvent): Boolean {
-        scroller.abortAnimation()
+        viewFlinger.abortAnimation()
         val x=scrollX+e.x.toInt()
         val y=scrollY+e.y.toInt()
         val matrixScaleX = getMatrixScaleX()
@@ -469,18 +564,10 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     }
 
     override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean {
-        scroller.fling(scrollX,scrollY,-velocityX.toInt(),-velocityY.toInt(),0,computeHorizontalScrollRange(),0,computeVerticalScrollRange())
-        invalidate()
+        viewFlinger.onFling(velocityX,velocityY)
         return true
     }
 
-    override fun computeScroll() {
-        super.computeScroll()
-        if(!scroller.isFinished&&scroller.computeScrollOffset()){
-            scrollTo(scroller.currX,scroller.currY)
-            ViewCompat.postInvalidateOnAnimation(this)
-        }
-    }
 
     override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
         //当正在进行缩放时,不触发滚动
@@ -537,19 +624,50 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
 
     fun forEachChild(action:(View)->Unit)=views.forEach(action)
 
-    fun forEachIndexed(action:(Int,View)->Unit)=views.forEachIndexed(action)
-
-    private fun nextHierarchyView(hierarchyNode:HierarchyNode):View?{
-        val adapter= hierarchyAdapter ?:return null
-        //装载父类,只用于inflate时,记录信息的父类,无其他作用
+    fun newViewWithMeasured(node:HierarchyNode):View{
+        val adapter= hierarchyAdapter ?:throw NullPointerException("获取View时Adapter不能为空!")
         val view=adapter.getView(parent as ViewGroup)
-        adapter.bindView(view,hierarchyNode)
-        if(null==view.layoutParams){
-            view.layoutParams=ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT)
-        }
-        //记录node信息,因为这些view完全内维护,外围无法操作,所以不必操作tag信息
-        view.tag=hierarchyNode
+        adapter.bindView(view,node)
+        measureChildWithMargins(view, MeasureSpec.AT_MOST, MeasureSpec.AT_MOST)
+        view.tag=node
         return view
+    }
+
+    inner class ViewFlinger:Runnable{
+        private val scroller=ScrollerCompat.create(context)
+
+        override fun run() {
+            if(!scroller.isFinished&&scroller.computeScrollOffset()){
+                scrollTo(scroller.currX,scroller.currY)
+                postInvalidate()
+                postOnAnimation()
+            }
+        }
+
+        fun startScroll(startX: Int, startY: Int, dx: Int, dy: Int) {
+            scroller.startScroll(startX, startY, dx, dy)
+            debugLog("startScroll:$startX $startY $dx $dy")
+            postOnAnimation()
+        }
+
+        /**
+         * 终止滚动
+         */
+        fun abortAnimation(){
+            debugLog("abortAnimation")
+            scroller.abortAnimation()
+            postInvalidate()
+        }
+
+        fun onFling(velocityX: Float, velocityY: Float) {
+            scroller.fling(scrollX,scrollY,-velocityX.toInt(),-velocityY.toInt(),0,computeHorizontalScrollRange(),0,computeVerticalScrollRange())
+            postOnAnimation()
+        }
+
+        fun postOnAnimation() {
+            removeCallbacks(this)
+            ViewCompat.postOnAnimation(this@HierarchyLayout4, this)
+        }
     }
 
     /**

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black"
+    android:clickable="true"
+    tools:context="cz.androidsample.ui.hierarchy.Hierarchy2Activity">
+
+    <cz.androidsample.ui.hierarchy.widget.HierarchyLayout4
+        android:id="@+id/hierarchyView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:hl4_horizontalSpacing="80dp"
+        app:hl4_verticalSpacing="20dp"
+        app:hl4_connectLineStrokeWidth="2dp"
+        app:hl4_previewWidth="200dp"
+        app:hl4_connectLineEffectSize="6dp"
+        app:hl4_connectLineCornerPathEffect="6dp"
+        android:padding="20dp" />
+
+    <Button
+        android:id="@+id/buttonScale"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Scale"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_margin="20dp"/>
+
+</android.support.constraint.ConstraintLayout>

@@ -1,42 +1,33 @@
-package cz.androidsample.ui.hierarchy.widget
+package cz.androidsample.ui.widget
 
 import android.content.Context
 import android.graphics.*
 import android.graphics.drawable.StateListDrawable
-import android.os.SystemClock
-import android.support.v4.content.ContextCompat
 import android.support.v4.view.ViewCompat
 import android.support.v4.widget.ScrollerCompat
 import android.util.AttributeSet
 import android.view.*
-import android.view.animation.Animation
 import cz.androidsample.DEBUG
 import cz.androidsample.R
 import cz.androidsample.debugLog
 import cz.androidsample.ui.hierarchy.model.HierarchyNode
 import java.util.*
-import kotlin.collections.ArrayList
-
 
 /**
- * Created by cz on 2017/10/11.
- * 1:完成视图树绘制
- * 2:完成区域间连接线配置
- * 3:完成预览图展示,并显示矩阵区域
- * 4:完成自由居中
+ * Created by cz on 2017/10/16.
  */
-class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
-        View(context, attrs, defStyleAttr) ,ViewManager, ScaleGestureDetector.OnScaleGestureListener, GestureDetector.OnGestureListener {
+class BaseHierarchyView (context: Context, attrs: AttributeSet?, defStyleAttr: Int):
+        View(context, attrs, defStyleAttr) , ScaleGestureDetector.OnScaleGestureListener, GestureDetector.OnGestureListener {
     constructor(context: Context, attrs: AttributeSet?):this(context,attrs,0)
     constructor(context: Context):this(context,null,0)
     private var MAX_SCALE=3.0f
     private var MIN_SCALE=0.2f
-    private val scroller=ScrollerCompat.create(context)
+    private val scroller= ScrollerCompat.create(context)
     private val scaleGestureDetector = ScaleGestureDetector(context, this)
     private val gestureDetector = GestureDetector(context, this)
     private val tmpRect = Rect()
-    private val linePaint=Paint(Paint.ANTI_ALIAS_FLAG).apply { style=Paint.Style.STROKE }
-    private val linePath=Path()
+    private val linePaint= Paint(Paint.ANTI_ALIAS_FLAG).apply { style= Paint.Style.STROKE }
+    private val linePath= Path()
     private var collectLineStrokeWidth =1f
     private var connectLineCornerPathEffect =0f
     private var connectLineEffectSize =0f
@@ -45,16 +36,16 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     //当前屏幕显示区域
     private val screenRect= Rect()
     private var m = FloatArray(9)
-    private val scaleMatrix=Matrix()
+    private val scaleMatrix= Matrix()
     private val views=ArrayList<View>()
     private var hierarchyAdapter:HierarchyAdapter?=null
     //预览图
-    private val previewPaint=Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color=Color.RED
+    private val previewPaint= Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color= Color.RED
         strokeWidth=2f
-        style=Paint.Style.STROKE
+        style= Paint.Style.STROKE
     }
-    private lateinit var previewBitmap:Bitmap
+    private lateinit var previewBitmap: Bitmap
     private var previewWidth=0f
     private var previewHeight=0f
 
@@ -62,7 +53,7 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         context.obtainStyledAttributes(attrs, R.styleable.HierarchyLayout3).apply {
             setHorizontalSpacing(getDimension(R.styleable.HierarchyLayout3_hl_horizontalSpacing,0f))
             setVerticalSpacing(getDimension(R.styleable.HierarchyLayout3_hl_verticalSpacing,0f))
-            setConnectLineColor(getColor(R.styleable.HierarchyLayout3_hl_connectLineColor,Color.WHITE))
+            setConnectLineColor(getColor(R.styleable.HierarchyLayout3_hl_connectLineColor, Color.WHITE))
             setConnectLineStrokeWidth(getDimension(R.styleable.HierarchyLayout3_hl_connectLineStrokeWidth,0f))
             setConnectLineCornerPathEffect(getDimension(R.styleable.HierarchyLayout3_hl_connectLineCornerPathEffect,0f))
             setConnectLineEffectSize(getDimension(R.styleable.HierarchyLayout3_hl_connectLineEffectSize,0f))
@@ -132,12 +123,12 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
      * 遍历当前节点信息
      * @param node 当前操作节点
      */
-    private fun addHierarchyNodeView(node:HierarchyNode){
+    private fun addHierarchyNodeView(node: HierarchyNode){
         //排版空间树
         val view=nextHierarchyView(node)
         if(null!=view){
             //添加并排版
-            addView(view,null)
+//            addView(view,null)
             //遍历子节点
             node.children.forEach(this::addHierarchyNodeView)
         }
@@ -148,24 +139,6 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     fun getChildAt(index:Int)=views[index]
 
     fun indexOfChild(view:View)=views.indexOf(view)
-
-    override fun addView(view: View, params: ViewGroup.LayoutParams?) {
-        if(null!=params){
-            view.layoutParams=params
-        }
-        views.add(view)
-        requestLayout()
-    }
-
-    override fun updateViewLayout(view: View, params: ViewGroup.LayoutParams?) {
-        view.layoutParams=params
-        requestLayout()
-    }
-
-    override fun removeView(view: View) {
-        views.remove(view)
-        requestLayout()
-    }
 
     override fun computeHorizontalScrollRange(): Int {
         val adapter=hierarchyAdapter?:return 0
@@ -205,8 +178,6 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
         views.forEach { measureChildWithMargins(it,MeasureSpec.getMode(widthMeasureSpec),MeasureSpec.getMode(heightMeasureSpec)) }
-        val view=getChildAt(0)
-        debugLog("onMeasure:${computeHorizontalScrollRange()+width} verticalRange:${computeVerticalScrollRange()+height} ${view.measuredWidth} ${view.measuredHeight}")
     }
 
     fun measureChildWithMargins(child: View, widthMode: Int, heightMode: Int) {
@@ -325,8 +296,8 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         drawPreView(canvas,matrixScaleX,matrixScaleY)
         //绘制调试缩放中心点
         if(DEBUG){
-            val paint=Paint()
-            paint.color=Color.RED
+            val paint= Paint()
+            paint.color= Color.RED
             paint.strokeWidth=4f
             //画焦点横线
             canvas.drawLine(scrollX+scaleGestureDetector.focusX-20,
@@ -348,7 +319,7 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
      * @param canvas 绘制canvas对象,如果传入预览对象的canvas,则会绘制到bitmap上
      * @param drawPreview 绘制预览图
      */
-    private fun drawHierarchy(canvas: Canvas,matrixScaleX: Float, matrixScaleY: Float,drawPreview:Boolean=false) {
+    private fun drawHierarchy(canvas: Canvas, matrixScaleX: Float, matrixScaleY: Float, drawPreview:Boolean=false) {
         screenRect.set(scrollX, scrollY, scrollX + width, scrollY + height)
         forEachChild { childView ->
             //是否绘制,仅确定,当前控件所在矩阵,与当前显示矩阵是否相交,如果不相交,不进行绘制
@@ -403,13 +374,13 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     /**
      * 绘制连接线
      */
-    private fun drawConnectLine(canvas: Canvas,it: HierarchyNode,  layoutRect: Rect, matrixScaleY: Float, matrixScaleX: Float) {
+    private fun drawConnectLine(canvas: Canvas, it: HierarchyNode, layoutRect: Rect, matrixScaleY: Float, matrixScaleX: Float) {
         val childRect = it.layoutRect
         //线宽按比例缩放
         val connectLineCornerPathEffect= connectLineCornerPathEffect *matrixScaleX
         val connectLineEffectSize = connectLineEffectSize * matrixScaleX
         linePaint.strokeWidth = collectLineStrokeWidth * matrixScaleX
-        linePaint.pathEffect=CornerPathEffect(connectLineCornerPathEffect)
+        linePaint.pathEffect= CornerPathEffect(connectLineCornerPathEffect)
         linePath.reset()
         //移到绘制处
         val left=layoutRect.right * matrixScaleX
@@ -423,7 +394,7 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         canvas.drawPath(linePath,linePaint)
     }
 
-    private fun intersectsRect(rect1:Rect,rect2:Rect):Boolean{
+    private fun intersectsRect(rect1: Rect, rect2: Rect):Boolean{
         return rect1.left < rect2.right && rect2.left < rect1.right && rect1.top < rect2.bottom && rect2.top < rect1.bottom;
     }
 
@@ -539,13 +510,13 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
 
     fun forEachIndexed(action:(Int,View)->Unit)=views.forEachIndexed(action)
 
-    private fun nextHierarchyView(hierarchyNode:HierarchyNode):View?{
+    private fun nextHierarchyView(hierarchyNode: HierarchyNode):View?{
         val adapter= hierarchyAdapter ?:return null
         //装载父类,只用于inflate时,记录信息的父类,无其他作用
         val view=adapter.getView(parent as ViewGroup)
         adapter.bindView(view,hierarchyNode)
         if(null==view.layoutParams){
-            view.layoutParams=ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT)
+            view.layoutParams= ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         }
         //记录node信息,因为这些view完全内维护,外围无法操作,所以不必操作tag信息
         view.tag=hierarchyNode
@@ -556,7 +527,7 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
      * Created by cz on 2017/10/13.
      * 视图数据适配器
      */
-    open abstract class HierarchyAdapter(val root:HierarchyNode) {
+    open abstract class HierarchyAdapter(val root: HierarchyNode) {
         var horizontalDepth=0
         init {
             //分析出控件深度信息树,层级关系
@@ -565,7 +536,7 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
             forEachHierarchyNodeHorizontalDepth(root)
         }
 
-        private fun forEachHierarchy(node:HierarchyNode){
+        private fun forEachHierarchy(node: HierarchyNode){
             val stack= LinkedList<HierarchyNode>()
             stack.add(node)
             while(!stack.isEmpty()){
@@ -584,7 +555,7 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         /**
          * 遍历节点深度
          */
-        private fun forEachHierarchyDepth(node:HierarchyNode,eachNode:HierarchyNode){
+        private fun forEachHierarchyDepth(node: HierarchyNode, eachNode: HierarchyNode){
             if(eachNode.children.isEmpty()){
                 node.childDepth++
             } else {
@@ -595,7 +566,7 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         /**
          * 遍历出横向纵深
          */
-        private fun forEachHierarchyNodeHorizontalDepth(node:HierarchyNode){
+        private fun forEachHierarchyNodeHorizontalDepth(node: HierarchyNode){
             if(horizontalDepth<node.level){
                 horizontalDepth=node.level
             }
@@ -606,13 +577,12 @@ class HierarchyLayout3(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         /**
          * 获得绘制节点view
          */
-        abstract fun getView(parent:ViewGroup): View
+        abstract fun getView(parent: ViewGroup): View
 
         /**
          * 绑定数据
          */
         abstract fun bindView(view:View,node: HierarchyNode)
     }
-
 
 }
