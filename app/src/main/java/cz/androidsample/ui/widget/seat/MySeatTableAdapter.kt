@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import cz.androidsample.R
+import cz.androidsample.debugLog
 import cz.androidsample.ui.widget.SeatTable
 import org.jetbrains.anko.backgroundResource
 import org.jetbrains.anko.find
@@ -17,7 +18,7 @@ import java.text.NumberFormat
 /**
  * Created by cz on 2017/10/14.
  */
-class MySeatTableAdapter(val context: Context): SeatTable.SeatTableAdapter() {
+class MySeatTableAdapter(val context: Context, table: SeatTable): SeatTable.SeatTableAdapter(table) {
     val decimalFormat=DecimalFormat("00")
     val layoutInflater:LayoutInflater =LayoutInflater.from(context)
 
@@ -35,7 +36,7 @@ class MySeatTableAdapter(val context: Context): SeatTable.SeatTableAdapter() {
 
     override fun bindSeatNumberView(view: View, row: Int) {
         super.bindSeatNumberView(view, row)
-        view.find<TextView>(R.id.numberText).text=decimalFormat.format(row)
+        view.find<TextView>(R.id.numberText).text=decimalFormat.format(row+1)
     }
 
     override fun bindNumberLayout(numberLayout: ViewGroup) {
@@ -49,16 +50,22 @@ class MySeatTableAdapter(val context: Context): SeatTable.SeatTableAdapter() {
 
     override fun bindSeatView(parent: ViewGroup, view: View, row: Int, column: Int) {
         view.setOnClickListener {
+            val item=getSeatNodeByView(it)
+            setItemSelected(item.row,item.column,!item.select)
             Toast.makeText(context,"Row:$row Column:$column",Toast.LENGTH_SHORT).show()
+        }
+        view.setOnLongClickListener {
+            Toast.makeText(context,"长按:$row Column:$column",Toast.LENGTH_SHORT).show()
+            true
         }
     }
 
     override fun getSeatColumnCount(): Int {
-        return 60
+        return 340
     }
 
     override fun getSeatRowCount(): Int {
-        return 80
+        return 360
     }
 
     override fun getHorizontalSpacing(column: Int):Int {
@@ -73,6 +80,11 @@ class MySeatTableAdapter(val context: Context): SeatTable.SeatTableAdapter() {
             return 108
         }
         return 36
+    }
+
+    override fun isSeatVisible(row: Int, column: Int): Boolean {
+        //设定第10排,4->10个座位不可见
+        return !(10==row&&(column in 4..10))
     }
 
 }

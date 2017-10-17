@@ -15,6 +15,6 @@ class SeatTableActivity : ToolBarActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_seat_table)
         setTitle(intent.getStringExtra("title"))
-        seatTable.setAdapter(MySeatTableAdapter(this))
+        seatTable.setAdapter(MySeatTableAdapter(this,seatTable))
     }
 }

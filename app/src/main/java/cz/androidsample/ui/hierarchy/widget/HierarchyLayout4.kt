@@ -547,26 +547,16 @@ class HierarchyLayout4(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     }
 
     /**
-     * 绘制连接线
+     * 绘制连接线,发现drawPath,在某些机型上存在绘制的问题.所以改为画直线
      */
     private fun drawConnectLine(canvas: Canvas,it: HierarchyNode,  layoutRect: Rect, matrixScaleY: Float, matrixScaleX: Float) {
-        val childRect = it.layoutRect
         //线宽按比例缩放
-        val connectLineCornerPathEffect= connectLineCornerPathEffect *matrixScaleX
-        val connectLineEffectSize = connectLineEffectSize * matrixScaleX
+        val childRect = it.layoutRect
         linePaint.strokeWidth = collectLineStrokeWidth * matrixScaleX
-        linePaint.pathEffect=CornerPathEffect(connectLineCornerPathEffect)
-        linePath.reset()
-        //移到绘制处
-        val left=layoutRect.right * matrixScaleX
-        val leftTop=(layoutRect.top + layoutRect.height() / 2f) * matrixScaleY
-        val right=childRect.left * matrixScaleX
-        val rightTop=(childRect.top + childRect.height() / 2f) * matrixScaleY
-        linePath.moveTo(left,leftTop)
-        linePath.lineTo(left+connectLineEffectSize,leftTop)
-        linePath.lineTo(right-connectLineEffectSize,rightTop)
-        linePath.lineTo(right,rightTop)
-        canvas.drawPath(linePath,linePaint)
+        canvas.drawLine(layoutRect.right*matrixScaleX,
+                layoutRect.centerY()*matrixScaleY,
+                childRect.left*matrixScaleX,
+                childRect.centerY()*matrixScaleY,linePaint)
     }
 
     private fun intersectsRect(rect1:Rect,rect2:Rect):Boolean{
@@ -576,6 +566,7 @@ class HierarchyLayout4(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     override fun onTouchEvent(event: MotionEvent): Boolean {
         scaleGestureDetector.onTouchEvent(event)
         gestureDetector.onTouchEvent(event)
+        debugLog("onTouchEvent")
         return true
     }
 
@@ -626,6 +617,7 @@ class HierarchyLayout4(context: Context, attrs: AttributeSet?, defStyleAttr: Int
 
 
     override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
+        debugLog("onScroll")
         //当正在进行缩放时,不触发滚动
         if(scaleGestureDetector.isInProgress){
             return false

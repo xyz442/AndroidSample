@@ -7,4 +7,5 @@
     <color name="lightWhite">#EFEFEF</color>
     <color name="divide">#ECECEC</color>
     <color name="gray">#605a5a</color>
+    <color name="alphaGray">#BB605a5a</color>
 </resources>

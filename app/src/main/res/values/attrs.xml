@@ -30,6 +30,7 @@
         <attr name="st_hierarchyMinScale" format="float"/>
         <attr name="st_hierarchyMaxScale" format="float"/>
         <attr name="st_setHasFixedSize" format="boolean"/>
+        <attr name="st_thumbBackgroundDrawable" format="reference"/>
     </declare-styleable>
 
 </resources>
