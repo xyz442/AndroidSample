@@ -1,6 +1,7 @@
 package cz.androidsample.ui.widget.seat
 
 import android.content.Context
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,6 +10,7 @@ import android.widget.Toast
 import cz.androidsample.R
 import cz.androidsample.debugLog
 import cz.androidsample.ui.widget.SeatTable
+import org.jetbrains.anko.backgroundColor
 import org.jetbrains.anko.backgroundResource
 import org.jetbrains.anko.find
 import org.jetbrains.anko.sdk25.coroutines.onClick
@@ -18,7 +20,7 @@ import java.text.NumberFormat
 /**
  * Created by cz on 2017/10/14.
  */
-class MySeatTableAdapter(val context: Context, table: SeatTable): SeatTable.SeatTableAdapter(table) {
+class MySeatTableAdapter(val context: Context, table: SeatTable,val row:Int,val column:Int): SeatTable.SeatTableAdapter(table) {
     val decimalFormat=DecimalFormat("00")
     val layoutInflater:LayoutInflater =LayoutInflater.from(context)
 
@@ -61,11 +63,11 @@ class MySeatTableAdapter(val context: Context, table: SeatTable): SeatTable.Seat
     }
 
     override fun getSeatColumnCount(): Int {
-        return 340
+        return column
     }
 
     override fun getSeatRowCount(): Int {
-        return 360
+        return row
     }
 
     override fun getHorizontalSpacing(column: Int):Int {

@@ -6,4 +6,12 @@
     <string name="sample2_info">演示铺满列表后,滚动列表时,加载列表其他项</string>
     <string name="sample3">示例3</string>
     <string name="sample3_info">演示滚动后,加载更多,以及回收无用控件</string>
+    <string name="app_alert">应用提示</string>
+    <string name="seat_table_info">请选择不同数据量进行测试</string>
+    <string-array name="seat_array">
+        <item>海量数据:720*720=518400</item>
+        <item>大量数据:340*360=122400</item>
+        <item>中量数据:120*140=16800</item>
+        <item>少量数据:25*40=1000</item>
+    </string-array>
 </resources>

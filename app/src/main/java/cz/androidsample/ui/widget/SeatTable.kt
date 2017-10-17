@@ -74,7 +74,7 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
         strokeWidth=2f
         style=Paint.Style.STROKE
     }
-    private lateinit var previewBitmap:Bitmap
+    private var previewBitmap:Bitmap?=null
     private var previewWidth=0f
 
     init {
@@ -114,11 +114,8 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
      * 设置数据适配器
      */
     fun setAdapter(newAdapter: SeatTableAdapter){
-        if(null!=adapter){
-            adapter=null
-            views.clear()
-            requestLayout()
-        }
+        //重置table
+        resetSeatTable()
         adapter= newAdapter
         //屏幕附加信息
         seatLayout = newAdapter.getHeaderSeatLayout(parent as ViewGroup)
@@ -135,11 +132,30 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
             //添加节点信息
             (0..columnCount-1).map {SeatNodeInfo(row,it) }.toTypedArray()
         }
-
         val seatView = recyclerBin.newViewWithMeasured(seatArray[0][0])
         newAdapter.bindSeatView(parent as ViewGroup,seatView,0,0)
         addView(seatView)
         newAdapter.bindNumberLayout(numberLayout)
+        requestLayout()
+    }
+
+    /**
+     * 重置所有信息
+     */
+    private fun resetSeatTable() {
+        if (null != adapter) {
+            adapter = null
+            //清空指示器
+            numberLayout.removeAllViews()
+            //清除所有缓存
+            recyclerBin.recyclerAll()
+            //清空预览图
+            previewBitmap = null
+            //重置matrix
+            scaleMatrix.reset()
+            //清空缓存控件
+            views.clear()
+        }
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -161,7 +177,6 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
         val screenTop = seatLayout.measuredHeight + paddingTop
         screenView.layout((horizontalRange - screenView.measuredWidth) / 2, screenTop,
                 (horizontalRange + screenView.measuredWidth) / 2, screenTop + screenView.measuredHeight)
-
         //排版指示器布局
         numberLayout.layout(paddingLeft,
                 screenTop + screenView.measuredHeight,
@@ -188,9 +203,9 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
             //排序序列
             val numberView = numberLayout.getChildAt(row)
             numberView.layout((numberView.measuredWidth-numberLayout.measuredWidth)/2,
-                    top-numberLayout.top+(numberView.measuredHeight-itemView.measuredHeight)/2,
+                    top-numberLayout.top+(itemView.measuredHeight-numberView.measuredHeight)/2,
                     (numberView.measuredWidth+numberLayout.measuredWidth)/2,
-                    top-numberLayout.top+(numberView.measuredHeight+itemView.measuredHeight)/2)
+                    top-numberLayout.top+(itemView.measuredHeight+numberView.measuredHeight)/2)
             //整行换行,计算左,上偏移信息
             left = paddingLeft+numberLayout.measuredWidth
             top += itemView.measuredHeight + adapter.getVerticalSpacing(row)
@@ -255,26 +270,37 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
      */
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
+        debugLog("onSizeChanged:$w $h")
         //这里异步更新
-        doAsync {
-            val st=System.currentTimeMillis()
-            //绘制宽高
-            val measuredWidth = computeHorizontalScrollRange() + width
-            val measuredHeight = computeVerticalScrollRange() + height
-            //此处按宽高比例重新设置previewHeight,因为配置比例与实际比例会有冲突,所以保留宽,高度自适应
-            val previewHeight=previewWidth/measuredWidth*measuredHeight
-            //计算出预览图缩放比例
-            previewBitmap = Bitmap.createBitmap(previewWidth.toInt(), previewHeight.toInt(), Bitmap.Config.ARGB_4444)
-            //绘制预览图
-            val matrixScaleX = previewWidth / measuredWidth
-            val matrixScaleY = previewHeight / measuredHeight
-            drawPreviewSeatRange(Canvas(previewBitmap),matrixScaleX,matrixScaleY)
-            //绘完毕后,通知刷新
-            postInvalidate()
-            debugLog("onSizeChanged:${System.currentTimeMillis()-st}")
+        initPreviewBitmap()
+    }
+
+    /**
+     * 异步初始化预览图
+     */
+    private fun initPreviewBitmap() {
+        //绘制宽高
+        val measuredWidth = computeHorizontalScrollRange() + width
+        val measuredHeight = computeVerticalScrollRange() + height
+        //当measuredWidth/measuredHeight为0时,不进行预览图初始化
+        if(0<measuredWidth&&0<measuredHeight){
+            doAsync {
+                val st = System.currentTimeMillis()
+                //此处按宽高比例重新设置previewHeight,因为配置比例与实际比例会有冲突,所以保留宽,高度自适应
+                val previewHeight = previewWidth / measuredWidth * measuredHeight
+                //计算出预览图缩放比例
+                previewBitmap = Bitmap.createBitmap(previewWidth.toInt(), previewHeight.toInt(), Bitmap.Config.ARGB_4444)
+                //绘制预览图
+                val matrixScaleX = previewWidth / measuredWidth
+                val matrixScaleY = previewHeight / measuredHeight
+                drawPreviewSeatRange(Canvas(previewBitmap), matrixScaleX, matrixScaleY)
+                //绘完毕后,通知刷新
+                postInvalidate()
+                debugLog("onSizeChanged:${System.currentTimeMillis() - st}")
+            }
+            //横向滚到中间
+            scrollTo(computeHorizontalScrollRange() / 2, 0)
         }
-        //横向滚到中间
-        scrollTo(computeHorizontalScrollRange()/2,0)
     }
 
     override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
@@ -354,7 +380,7 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
         thumbBackgroundDrawable?.setBounds(0,0,canvas.width,canvas.height)
         thumbBackgroundDrawable?.draw(canvas)
         //绘序列
-        drawNumberIndicator(canvas,matrixScaleX,matrixScaleY)
+        drawNumberIndicator(canvas,matrixScaleX,matrixScaleY,true)
         //绘屏幕
         drawScreen(canvas,screenRect,matrixScaleX,matrixScaleY,true)
         //绘所有座位描述
@@ -554,6 +580,7 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        adapter?:return
         val st=System.currentTimeMillis()
         //当前屏幕所占矩阵
         val matrixScaleX = getMatrixScaleX()
@@ -611,10 +638,14 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
     /**
      * 绘左侧指示器
      */
-    private fun drawNumberIndicator(canvas: Canvas, matrixScaleX: Float, matrixScaleY: Float) {
+    private fun drawNumberIndicator(canvas: Canvas, matrixScaleX: Float, matrixScaleY: Float,drawPreview: Boolean=false) {
         canvas.save()
         canvas.scale(matrixScaleX, matrixScaleY)
-        canvas.translate(scrollX/matrixScaleX+numberLayout.left, numberLayout.top.toFloat())
+        if(drawPreview){
+            canvas.translate(numberLayout.left*1f, numberLayout.top.toFloat())
+        } else {
+            canvas.translate(scrollX/matrixScaleX+numberLayout.left, numberLayout.top.toFloat())
+        }
         numberLayout.draw(canvas)
         canvas.restore()
     }
@@ -650,7 +681,12 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
         canvas.save()
         val offsetHeight=seatLayout.height*1f
         canvas.translate(0f, offsetHeight)
-        canvas.drawBitmap(previewBitmap,scrollX*1f,scrollY*1f,null)
+        if(null==previewBitmap){
+            //异步初始化预览图
+            initPreviewBitmap()
+        } else {
+            canvas.drawBitmap(previewBitmap,scrollX*1f,scrollY*1f,null)
+        }
         //当前绘制区域大小
         val measuredWidth=computeHorizontalScrollRange()+width
         //预览尺寸比例
@@ -799,12 +835,18 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
         val scrapViews= LinkedList<View>()
 
         fun addScarpView(view:View){
+            view.isSelected=false
+            view.isPressed=false
             scrapViews.add(view)
         }
 
         fun detachAndScrapAttachedViews(){
             views.forEach(this::addScarpView)
             views.clear()
+        }
+
+        fun recyclerAll(){
+            scrapViews.clear()
         }
 
         fun newViewWithMeasured(node: SeatNodeInfo):View{
