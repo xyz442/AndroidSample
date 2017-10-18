@@ -1,5 +1,6 @@
-package cz.androidsample.ui.hierarchy
+package cz.androidsample.ui.widget.seat
 
+import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.view.Menu
@@ -7,17 +8,15 @@ import android.view.MenuItem
 
 import cz.androidsample.R
 import cz.androidsample.annotation.ToolBar
-import cz.androidsample.ui.widget.seat.MySeatTableAdapter
 import cz.volunteerunion.ui.ToolBarActivity
-import kotlinx.android.synthetic.main.activity_seat_table.*
+import kotlinx.android.synthetic.main.activity_seat_table2.*
 
 @ToolBar
-class SeatTableActivity : ToolBarActivity() {
+class SeatTable2Activity : ToolBarActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_seat_table)
-        setTitle(intent.getStringExtra("title"))
+        setContentView(R.layout.activity_seat_table2)
         showSelectDialog()
     }
 
@@ -30,10 +29,10 @@ class SeatTableActivity : ToolBarActivity() {
                 setCancelable(false).
                 setItems(resources.getStringArray(R.array.seat_array),{_, which ->
                     when(which){
-                        0->seatTable.setAdapter(MySeatTableAdapter(this, seatTable, 720, 720))
-                        1->seatTable.setAdapter(MySeatTableAdapter(this, seatTable, 340, 360))
-                        2->seatTable.setAdapter(MySeatTableAdapter(this, seatTable, 120, 140))
-                        3->seatTable.setAdapter(MySeatTableAdapter(this, seatTable, 25, 40))
+                        0->seatTable.setAdapter(MySeatTableAdapter2(this, seatTable, 40000, 60000))
+                        1->seatTable.setAdapter(MySeatTableAdapter2(this, seatTable, 4000, 6000))
+                        2->seatTable.setAdapter(MySeatTableAdapter2(this, seatTable, 400, 600))
+                        3->seatTable.setAdapter(MySeatTableAdapter2(this, seatTable, 40, 60))
                     }
                 }).setPositiveButton(android.R.string.cancel, { dialog, _ -> dialog.dismiss()}).show()
     }
@@ -50,5 +49,4 @@ class SeatTableActivity : ToolBarActivity() {
         }
         return super.onOptionsItemSelected(item)
     }
-
 }

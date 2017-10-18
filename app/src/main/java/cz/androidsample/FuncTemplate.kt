@@ -6,6 +6,7 @@ import cz.androidsample.ui.anim.Animator1Activity
 import cz.androidsample.ui.hierarchy.*
 import cz.androidsample.ui.layout.ConstraintActivity
 import cz.androidsample.ui.widget.MyImageViewActivity
+import cz.androidsample.ui.widget.seat.SeatTable2Activity
 import cz.kotlinwidget.model.SampleItem
 import cz.layoutmanagersample.ui.Sample1Activity
 import cz.layoutmanagersample.ui.Sample2Activity
@@ -126,9 +127,15 @@ class FuncTemplate {
                     }
                     item {
                         pid=6
-                        title = "SeatTableView"
-                        desc = "一个电影选座控件"
-                        clazz= SeatTableActivity::class.java
+                        title = "SeatTableView1"
+                        desc = "一个电影选座控件,实现基本功能"
+                        clazz= SeatTable1Activity::class.java
+                    }
+                    item {
+                        pid=6
+                        title = "SeatTableView2"
+                        desc = "一个电影选座控件,进行了很多运算优化,用以测试亿级数据"
+                        clazz= SeatTable2Activity::class.java
                     }
                 }
             }

@@ -1,7 +1,6 @@
 package cz.androidsample.ui.widget.seat
 
 import android.content.Context
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,18 +8,16 @@ import android.widget.TextView
 import android.widget.Toast
 import cz.androidsample.R
 import cz.androidsample.debugLog
-import cz.androidsample.ui.widget.SeatTable
-import org.jetbrains.anko.backgroundColor
+import cz.androidsample.ui.widget.SeatTable1
+import cz.androidsample.ui.widget.SeatTable2
 import org.jetbrains.anko.backgroundResource
 import org.jetbrains.anko.find
-import org.jetbrains.anko.sdk25.coroutines.onClick
 import java.text.DecimalFormat
-import java.text.NumberFormat
 
 /**
  * Created by cz on 2017/10/14.
  */
-class MySeatTableAdapter(val context: Context, table: SeatTable,val row:Int,val column:Int): SeatTable.SeatTableAdapter(table) {
+class MySeatTableAdapter2(val context: Context, table: SeatTable2, val row:Int, val column:Int): SeatTable2.SeatTableAdapter(table) {
     val decimalFormat=DecimalFormat("00")
     val layoutInflater:LayoutInflater =LayoutInflater.from(context)
 
@@ -52,8 +49,7 @@ class MySeatTableAdapter(val context: Context, table: SeatTable,val row:Int,val 
 
     override fun bindSeatView(parent: ViewGroup, view: View, row: Int, column: Int) {
         view.setOnClickListener {
-            val item=getSeatNodeByView(it)
-            setItemSelected(item.row,item.column,!item.select)
+            setSeatItemViewSelect(it,!isSeatItemViewSelected(it))
             Toast.makeText(context,"Row:$row Column:$column",Toast.LENGTH_SHORT).show()
         }
         view.setOnLongClickListener {
@@ -71,14 +67,14 @@ class MySeatTableAdapter(val context: Context, table: SeatTable,val row:Int,val 
     }
 
     override fun getHorizontalSpacing(column: Int):Int {
-        if(3==column){
+        if(0==row%20||3==row){
             return 60
         }
         return 20
     }
 
     override fun getVerticalSpacing(row: Int):Int {
-        if(6==row){
+        if(0==row%100||6==row){
             return 108
         }
         return 36

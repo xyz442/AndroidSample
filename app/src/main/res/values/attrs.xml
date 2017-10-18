@@ -25,7 +25,7 @@
         <attr name="hl4_previewWidth" format="dimension"/>
     </declare-styleable>
 
-    <declare-styleable name="SeatTable">
+    <declare-styleable name="SeatTable1">
         <attr name="st_previewWidth" format="dimension"/>
         <attr name="st_hierarchyMinScale" format="float"/>
         <attr name="st_hierarchyMaxScale" format="float"/>

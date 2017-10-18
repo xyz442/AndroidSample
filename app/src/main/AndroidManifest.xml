@@ -26,8 +26,9 @@
         <activity android:name=".ui.hierarchy.Hierarchy2Activity" />
         <activity android:name=".ui.widget.MyImageViewActivity" />
         <activity android:name=".ui.hierarchy.Hierarchy3Activity" />
-        <activity android:name=".ui.hierarchy.SeatTableActivity" />
-        <activity android:name=".ui.hierarchy.Hierarchy4Activity"></activity>
+        <activity android:name=".ui.hierarchy.SeatTable1Activity" />
+        <activity android:name=".ui.hierarchy.Hierarchy4Activity" />
+        <activity android:name=".ui.widget.seat.SeatTable2Activity"></activity>
     </application>
 
 </manifest>

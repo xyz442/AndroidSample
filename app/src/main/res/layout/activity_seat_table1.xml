@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="cz.androidsample.ui.hierarchy.Hierarchy1Activity">
+
+    <cz.androidsample.ui.widget.SeatTable1
+        android:id="@+id/seatTable"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="4dp"
+        app:st_previewWidth="200dp"
+        app:st_thumbBackgroundDrawable="@color/alphaGray"/>
+</LinearLayout>

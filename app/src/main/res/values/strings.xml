@@ -9,9 +9,9 @@
     <string name="app_alert">应用提示</string>
     <string name="seat_table_info">请选择不同数据量进行测试</string>
     <string-array name="seat_array">
-        <item>海量数据:720*720=518400</item>
-        <item>大量数据:340*360=122400</item>
-        <item>中量数据:120*140=16800</item>
-        <item>少量数据:25*40=1000</item>
+        <item>海量数据:40000*60000=24亿</item>
+        <item>大量量数据:4000*6000=2400万</item>
+        <item>中量数据:400*600=24万</item>
+        <item>少量数据:40*60=2400</item>
     </string-array>
 </resources>

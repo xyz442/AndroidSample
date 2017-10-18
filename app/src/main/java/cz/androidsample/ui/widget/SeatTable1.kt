@@ -6,7 +6,6 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
 import android.graphics.drawable.Drawable
-import android.graphics.drawable.StateListDrawable
 import android.support.v4.view.ViewCompat
 import android.support.v4.widget.ScrollerCompat
 import android.util.AttributeSet
@@ -23,9 +22,12 @@ import java.util.*
  */
 
 /**
- * Created by cz on 2017/10/10.
+ * Created by cz on 2017/10/14.
+ * 1:完成所有布局展示
+ * 2:完成控件滚动回收
+ * 3:完成预览图展示
  */
-class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
+class SeatTable1(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
         View(context, attrs, defStyleAttr) , ScaleGestureDetector.OnScaleGestureListener, GestureDetector.OnGestureListener {
 
     constructor(context: Context, attrs: AttributeSet?):this(context,attrs,0)
@@ -59,7 +61,9 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
     private var hasFixSize=false
 
     //缩放限制区域
-    private var hierarchyMaxScale=2.0f
+    private var hierarchySpringBackMinScale=0.6f
+    private var hierarchySpringBackMaxScale=2.4f
+    private var hierarchyMaxScale=1.6f
     private var hierarchyMinScale=1.0f
     //缩放动画对象
     private var zoomAnimator: ValueAnimator?=null
@@ -78,12 +82,12 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
     private var previewWidth=0f
 
     init {
-        context.obtainStyledAttributes(attrs, R.styleable.SeatTable).apply {
-            setPreViewWidth(getDimension(R.styleable.SeatTable_st_previewWidth,0f))
-            setHierarchyMaxScale(getFloat(R.styleable.SeatTable_st_hierarchyMaxScale,2f))
-            setHierarchyMinScale(getFloat(R.styleable.SeatTable_st_hierarchyMinScale,0.8f))
-            setHasFixSize(getBoolean(R.styleable.SeatTable_st_setHasFixedSize,true))
-            setThumbBackgroundDrawable(getDrawable(R.styleable.SeatTable_st_thumbBackgroundDrawable))
+        context.obtainStyledAttributes(attrs, R.styleable.SeatTable1).apply {
+            setPreViewWidth(getDimension(R.styleable.SeatTable1_st_previewWidth,0f))
+            setHierarchyMaxScale(getFloat(R.styleable.SeatTable1_st_hierarchyMaxScale,2f))
+            setHierarchyMinScale(getFloat(R.styleable.SeatTable1_st_hierarchyMinScale,0.8f))
+            setHasFixSize(getBoolean(R.styleable.SeatTable1_st_setHasFixedSize,true))
+            setThumbBackgroundDrawable(getDrawable(R.styleable.SeatTable1_st_thumbBackgroundDrawable))
             recycle()
         }
     }
@@ -536,8 +540,14 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
     override fun onScale(detector: ScaleGestureDetector): Boolean {
         //原始缩放比例
         val matrixScaleX = getMatrixScaleX()
+        var scaleFactor = detector.scaleFactor
+        if(hierarchySpringBackMinScale>scaleFactor*matrixScaleX){
+            scaleFactor=hierarchySpringBackMinScale/matrixScaleX
+        } else if(hierarchySpringBackMaxScale<scaleFactor*matrixScaleX){
+            scaleFactor=hierarchySpringBackMaxScale/matrixScaleX
+        }
         //缩放矩阵
-        scaleMatrix.postScale(detector.scaleFactor, detector.scaleFactor, scaleFocusX,scaleFocusY)
+        scaleMatrix.postScale(scaleFactor, scaleFactor, scaleFocusX,scaleFocusY)
         //传入原始比例,进行计算,一定需要上面原始比例
         scaleHierarchyScroll(matrixScaleX, scaleFocusX,scaleFocusY)
         return true
@@ -690,12 +700,13 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
         //当前绘制区域大小
         val measuredWidth=computeHorizontalScrollRange()+width
         //预览尺寸比例
-        val matrixScaleX = previewWidth/measuredWidth
+        val matrixScaleX = previewWidth*1f/measuredWidth
         //绘制起始位置
         val left=scrollX+scrollX*matrixScaleX
         val top=scrollY+(scrollY+offsetHeight)*matrixScaleX
         //绘当前屏幕范围
-        canvas.drawRect(left,top,left+width*matrixScaleX,top+(height-offsetHeight)*matrixScaleX,previewPaint)
+        canvas.drawRect(left,top,
+                left+width*matrixScaleX,top+(height-offsetHeight)*matrixScaleX,previewPaint)
         canvas.restore()
     }
 
@@ -907,13 +918,13 @@ class SeatTable(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
 
         fun postOnAnimation() {
             removeCallbacks(this)
-            ViewCompat.postOnAnimation(this@SeatTable, this)
+            ViewCompat.postOnAnimation(this@SeatTable1, this)
         }
     }
     /**
      *
      */
-    abstract class SeatTableAdapter(val table:SeatTable){
+    abstract class SeatTableAdapter(val table: SeatTable1){
         /**
          * 获得顶部座位
          */

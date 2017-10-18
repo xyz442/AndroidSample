@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     tools:context="cz.androidsample.ui.hierarchy.Hierarchy1Activity">
 
-    <cz.androidsample.ui.widget.SeatTable
+    <cz.androidsample.ui.widget.SeatTable2
         android:id="@+id/seatTable"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
