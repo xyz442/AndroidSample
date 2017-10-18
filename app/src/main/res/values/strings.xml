@@ -12,6 +12,6 @@
         <item>海量数据:40000*60000=24亿</item>
         <item>大量量数据:4000*6000=2400万</item>
         <item>中量数据:400*600=24万</item>
-        <item>少量数据:40*60=2400</item>
+        <item>少量数据:12*24=288</item>
     </string-array>
 </resources>

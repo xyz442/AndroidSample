@@ -1,6 +1,7 @@
 package cz.androidsample.ui.widget.seat
 
 import android.content.Context
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,10 +9,12 @@ import android.widget.TextView
 import android.widget.Toast
 import cz.androidsample.R
 import cz.androidsample.debugLog
+import cz.androidsample.ui.widget.SeatNumberIndicator
 import cz.androidsample.ui.widget.SeatTable1
 import cz.androidsample.ui.widget.SeatTable2
 import org.jetbrains.anko.backgroundResource
 import org.jetbrains.anko.find
+import org.jetbrains.anko.textColor
 import java.text.DecimalFormat
 
 /**
@@ -35,10 +38,16 @@ class MySeatTableAdapter2(val context: Context, table: SeatTable2, val row:Int, 
 
     override fun bindSeatNumberView(view: View, row: Int) {
         super.bindSeatNumberView(view, row)
-        view.find<TextView>(R.id.numberText).text=decimalFormat.format(row+1)
+        val textView=view.find<TextView>(R.id.numberText)
+        textView.text=decimalFormat.format(row+1)
+        if(row in 0..4){
+            textView.textColor= Color.RED
+        } else {
+            textView.textColor=Color.WHITE
+        }
     }
 
-    override fun bindNumberLayout(numberLayout: ViewGroup) {
+    override fun bindNumberLayout(numberLayout: View) {
         super.bindNumberLayout(numberLayout)
         numberLayout.backgroundResource=R.drawable.number_indicator_shape
     }
@@ -67,17 +76,17 @@ class MySeatTableAdapter2(val context: Context, table: SeatTable2, val row:Int, 
     }
 
     override fun getHorizontalSpacing(column: Int):Int {
-        if(0==row%20||3==row){
+        if(3==column){
             return 60
         }
-        return 20
+        return 10
     }
 
     override fun getVerticalSpacing(row: Int):Int {
-        if(0==row%100||6==row){
+        if(6==row){
             return 108
         }
-        return 36
+        return 18
     }
 
     override fun isSeatVisible(row: Int, column: Int): Boolean {
