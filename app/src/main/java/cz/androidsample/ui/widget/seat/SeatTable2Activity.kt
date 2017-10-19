@@ -17,7 +17,7 @@ class SeatTable2Activity : ToolBarActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_seat_table2)
-//        seatTable.setAdapter(MySeatTableAdapter2(this, seatTable, 12, 24))
+        seatTable.setAdapter(MySeatTableAdapter2(this, seatTable, 400, 600))
         showSelectDialog()
     }
 
@@ -35,6 +35,8 @@ class SeatTable2Activity : ToolBarActivity() {
                         2->seatTable.setAdapter(MySeatTableAdapter2(this, seatTable, 400, 600))
                         3->seatTable.setAdapter(MySeatTableAdapter2(this, seatTable, 12, 24))
                     }
+                    //重置后滚回中间
+                    seatTable.scrollToCenter()
                 }).setPositiveButton(android.R.string.cancel, { dialog, _ -> dialog.dismiss()}).show()
     }
 
