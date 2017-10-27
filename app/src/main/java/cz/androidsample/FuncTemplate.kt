@@ -5,6 +5,7 @@ import cz.androidsample.ui.FlipImgActivity
 import cz.androidsample.ui.anim.Animator1Activity
 import cz.androidsample.ui.hierarchy.*
 import cz.androidsample.ui.layout.ConstraintActivity
+import cz.androidsample.ui.widget.GuideLayoutActivity
 import cz.androidsample.ui.widget.MyImageViewActivity
 import cz.androidsample.ui.widget.seat.SeatTable2Activity
 import cz.kotlinwidget.model.SampleItem
@@ -112,6 +113,12 @@ class FuncTemplate {
                         title = "ConstraintLayout"
                         desc = "演示ConstraintLayout使用"
                         clazz= ConstraintActivity::class.java
+                    }
+                    item {
+                        pid=5
+                        title = "GuideLayout"
+                        desc = "演示GuideLayout使用,一个用dsl,简化的元素配置"
+                        clazz= GuideLayoutActivity::class.java
                     }
                 }
                 item {

@@ -13,6 +13,8 @@ class ConstraintActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_constraint)
+        val layoutParams=button1.layoutParams
+        println(layoutParams)
         button5.onClick {
             button4.visibility=View.GONE
         }

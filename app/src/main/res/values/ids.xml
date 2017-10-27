@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="text1" type="id"/>
+    <item name="text2" type="id"/>
+    <item name="text3" type="id"/>
+    <item name="text4" type="id"/>
+    <item name="text5" type="id"/>
+    <item name="text6" type="id"/>
+    <item name="text7" type="id"/>
+    <item name="text8" type="id"/>
+    <item name="text9" type="id"/>
+    <item name="text10" type="id"/>
+
+
+    <item name="image1" type="id"/>
+    <item name="image2" type="id"/>
+    <item name="image3" type="id"/>
+    <item name="image4" type="id"/>
+    <item name="image5" type="id"/>
+    <item name="image6" type="id"/>
+    <item name="image7" type="id"/>
+    <item name="image8" type="id"/>
+    <item name="image9" type="id"/>
+    <item name="image10" type="id"/>
+    <item name="image11" type="id"/>
+    <item name="image12" type="id"/>
+    <item name="image13" type="id"/>
+    <item name="image14" type="id"/>
+    <item name="image15" type="id"/>
+    <item name="image16" type="id"/>
+    <item name="image17" type="id"/>
+    <item name="image18" type="id"/>
+    <item name="image19" type="id"/>
+    <item name="image20" type="id"/>
+</resources>
