@@ -2,19 +2,32 @@ package cz.androidsample.ui.widget.element
 
 import android.content.Context
 import android.util.TypedValue
+import cz.androidsample.ui.widget.element.animator.ElementAnimatorSet
+import cz.androidsample.ui.widget.element.animator.ElementLayoutAnimatorSet
 
 /**
  * Created by cz on 2017/10/26.
  */
 class ElementLayout(val context:Context){
-    val elements = mutableListOf<Element<*>>()
+    internal val elements = mutableListOf<Element<*>>()
+    var animator:ElementLayoutAnimatorSet?=null
     /**
      * 添加一个元素
      */
     fun addElement(element:Element<*>){
-        elements.add(element)
+        this.elements.add(element)
+    }
+
+    /**
+     * 根据id 查找一个元素
+     */
+    fun findElement(id:String):Element<*>?{
+        return elements.find { it.id==id }
     }
 
     fun dp(value:Float):Int=TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,value,context.resources.displayMetrics).toInt()
+    fun dp(value:Int):Int=TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,value.toFloat(),context.resources.displayMetrics).toInt()
+
     fun sp(value:Float)=TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP,value,context.resources.displayMetrics)
+    fun sp(value:Int)=TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP,value.toFloat(),context.resources.displayMetrics)
 }

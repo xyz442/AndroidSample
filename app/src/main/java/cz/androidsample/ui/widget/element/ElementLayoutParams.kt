@@ -5,11 +5,12 @@ package cz.androidsample.ui.widget.element
  */
 class ElementLayoutParams(var width:Int=WRAP_CONTENT, var height:Int=WRAP_CONTENT) {
     companion object {
-        val MATCH_PARENT=-1
+        val MATCH_PARENT=0
         val WRAP_CONTENT=-2
     }
-    val MATCH_PARENT=-1
+    val MATCH_PARENT=0
     val WRAP_CONTENT=-2
+    val PARENT_ID ="parent"
     val PARENT=0
 
     val LEFT=0x01
@@ -34,6 +35,6 @@ class ElementLayoutParams(var width:Int=WRAP_CONTENT, var height:Int=WRAP_CONTEN
     var rightMargin =0
     var bottomMargin =0
     //相对关系,默认依赖为父容器
-    var align= PARENT
+    var align= PARENT_ID
     var alignRule =LEFT or TOP
 }

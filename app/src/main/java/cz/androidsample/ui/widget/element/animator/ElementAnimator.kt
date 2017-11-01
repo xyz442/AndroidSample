@@ -1,70 +1,157 @@
 package cz.androidsample.ui.widget.element.animator
 
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.view.View
+import android.view.animation.Interpolator
 import android.view.animation.LinearInterpolator
+import cz.androidsample.ui.widget.element.PageLayout
 
 /**
  * Created by cz on 2017/10/26.
  * 元素动画配置
  */
-class ElementAnimator{
-    companion object {
-        val ALPHA=0x01
-        val TRANSLATION_X=0x02
-        val TRANSLATION_Y=0x04
-        val TRANSLATION_Z=0x08
-        val ROTATION=0x10
-        val ROTATION_X=0x20
-        val ROTATION_Y=0x40
-        val SCALE_X=0x80
-        val SCALE_Y=0x100
+abstract class ElementAnimator:Animator(){
+    //动画执行时间
+    var duration:Long=300
+    //动画插值器
+    var interpolator:Interpolator= LinearInterpolator()
+}
+
+/**
+ * 透明转换
+ */
+class AlphaElementAnimator(val start:Float,val end:Float) : ElementAnimator(){
+    override fun convert(parent:PageLayout, target: View): android.animation.Animator {
+        val animator = ObjectAnimator.ofFloat(target, "alpha",start, end)
+        setElementAnimator(this,animator)
+        return animator
     }
-    private var flag=0
-    var duration=300
-    var delay=0
-    var alpha=1f
-        set(value) {
-            field=value
-            flag+= ALPHA
-        }
-    var translationX:Float=0f
-        set(value) {
-            field=value
-            flag+= TRANSLATION_X
-        }
-    var translationY:Float=0f
-        set(value) {
-            field=value
-            flag+= TRANSLATION_Y
-        }
-    var translationZ:Float=0f
-        set(value) {
-            field=value
-            flag+= TRANSLATION_Z
-        }
-    var rotation:Float=0f
-        set(value) {
-            field=value
-            flag+= ROTATION
-        }
-    var rotationX:Float=0f
-        set(value) {
-            field=value
-            flag+= ROTATION_X
-        }
-    var rotationY:Float=0f
-        set(value) {
-            field=value
-            flag+= ROTATION_Y
-        }
-    var scaleX:Float=1f
-        set(value) {
-            field=value
-            flag+= SCALE_X
-        }
-    var scaleY:Float=1f
-        set(value) {
-            field=value
-            flag+= SCALE_Y
-        }
-    var interpolator= LinearInterpolator()
+}
+
+/**
+ * 旋转
+ */
+class RotationElementAnimator(val start:Float,val end:Float) : ElementAnimator() {
+    override fun convert(parent:PageLayout, target: View): android.animation.Animator {
+        val animator = ObjectAnimator.ofFloat(target, "rotation",start,end)
+        setElementAnimator(this,animator)
+        return animator
+    }
+}
+
+
+/**
+ * 旋转
+ */
+class RotationXElementAnimator(val start:Float, val end:Float) : ElementAnimator() {
+    override fun convert(parent:PageLayout, target: View): android.animation.Animator {
+        val animator = ObjectAnimator.ofFloat(target, "rotationX",start, end)
+        setElementAnimator(this,animator)
+        return animator
+    }
+}
+
+/**
+ * 旋转
+ */
+class RotationYElementAnimator(val start:Float, val end:Float) : ElementAnimator() {
+    override fun convert(parent:PageLayout, target: View): android.animation.Animator {
+        val animator = ObjectAnimator.ofFloat(target, "rotationY",start, end)
+        setElementAnimator(this,animator)
+        return animator
+    }
+}
+
+/**
+ * 百分比平移
+ */
+class TranslationXPercentAnimator(val end:Float, val start:Float) : ElementAnimator() {
+    override fun convert(parent:PageLayout, target: View): android.animation.Animator {
+        val animator = ObjectAnimator.ofFloat(target, "translationX",parent.width* start, parent.width*end)
+        setElementAnimator(this,animator)
+        return animator
+    }
+}
+
+/**
+ * 百分比平移
+ */
+class TranslationYPercentAnimator(val end:Float, val start:Float) : ElementAnimator() {
+    override fun convert(parent:PageLayout, target: View): android.animation.Animator {
+        val animator = ObjectAnimator.ofFloat(target, "translationY", parent.height* start,parent.height*end)
+        setElementAnimator(this,animator)
+        return animator
+    }
+}
+
+/**
+ * 横向平移
+ */
+class TranslationXElementAnimator(val start:Float, val end:Float) : ElementAnimator() {
+    override fun convert(parent: PageLayout, target: View): android.animation.Animator {
+        val animator = ObjectAnimator.ofFloat(target, "translationX",start, end)
+        setElementAnimator(this,animator)
+        return animator
+    }
+}
+
+/**
+ * 纵向平移
+ */
+class TranslationYElementAnimator(val start:Float, val end:Float) : ElementAnimator() {
+    override fun convert(parent: PageLayout, target: View): android.animation.Animator {
+        val animator = ObjectAnimator.ofFloat(target, "translationY",start, end)
+        setElementAnimator(this,animator)
+        return animator
+    }
+}
+
+class ScaleElementAnimator(val start:Float, val end:Float):ElementAnimator() {
+    override fun convert(parent: PageLayout, target: View): android.animation.Animator {
+        val animatorSet= AnimatorSet()
+        animatorSet.startDelay=delay
+        val animator1 = ObjectAnimator.ofFloat(target, "scaleX",start, end)
+        animator1.duration=duration
+        animator1.interpolator=interpolator
+        animator1.repeatMode=repeatMode
+        animator1.repeatCount=repeatCount
+        val animator2 = ObjectAnimator.ofFloat(target, "scaleY",start, end)
+        animator2.duration=duration
+        animator2.interpolator=interpolator
+        animator2.repeatMode=repeatMode
+        animator2.repeatCount=repeatCount
+        animatorSet.playTogether(animator1,animator2)
+        return animatorSet
+    }
+}
+
+/**
+ * 横向缩放
+ */
+class ScaleXElementAnimator(val start:Float, val end:Float):ElementAnimator() {
+    override fun convert(parent: PageLayout, target: View): android.animation.Animator {
+        val animator = ObjectAnimator.ofFloat(target, "scaleX",start, end)
+        setElementAnimator(this,animator)
+        return animator
+    }
+}
+
+/**
+ * 纵向缩放
+ */
+class ScaleYElementAnimator(val start:Float, val end:Float):ElementAnimator() {
+    override fun convert(parent: PageLayout, target: View): android.animation.Animator {
+        val animator = ObjectAnimator.ofFloat(target, "scaleY",start, end)
+        setElementAnimator(this,animator)
+        return animator
+    }
+}
+
+private inline fun setElementAnimator(elementAnimator: ElementAnimator,animator: ObjectAnimator) {
+    animator.repeatCount = elementAnimator.repeatCount
+    animator.repeatMode = elementAnimator.repeatMode
+    animator.duration = elementAnimator.duration
+    animator.startDelay = elementAnimator.delay
+    animator.interpolator = elementAnimator.interpolator
 }

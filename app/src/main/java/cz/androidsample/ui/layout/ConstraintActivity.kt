@@ -15,8 +15,5 @@ class ConstraintActivity : AppCompatActivity() {
         setContentView(R.layout.activity_constraint)
         val layoutParams=button1.layoutParams
         println(layoutParams)
-        button5.onClick {
-            button4.visibility=View.GONE
-        }
     }
 }

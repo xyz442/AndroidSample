@@ -5,7 +5,6 @@ import android.graphics.drawable.Drawable
 import android.support.constraint.ConstraintLayout
 import android.view.View
 import cz.androidsample.debugLog
-import cz.androidsample.ui.widget.element.animator.ElementAnimator
 import cz.androidsample.ui.widget.element.animator.ElementAnimatorSet
 import org.jetbrains.anko.backgroundColor
 import org.jetbrains.anko.backgroundDrawable
@@ -17,7 +16,7 @@ import org.jetbrains.anko.backgroundResource
 
 open class Element<V:View>{
     val INVALID =-1
-    var id= View.NO_ID
+    var id:String=String()
     //背景资源
     var backgroundResources:Int= INVALID
     //背景颜色
@@ -31,7 +30,7 @@ open class Element<V:View>{
     var paddingBottom=0
     var padding=0
     var layoutParams=ElementLayoutParams()
-
+    var animator:ElementAnimatorSet?=null
     /**
      * 创建view
      */
@@ -48,7 +47,8 @@ open class Element<V:View>{
 
     open fun initView(view:V){
         //设置id
-        view.id=id
+        view.id=System.identityHashCode(id)
+        debugLog("initView:$id viewId:${view.id}")
         //设置背景
         setBackground(view)
         //设置内边距
@@ -94,13 +94,19 @@ open class Element<V:View>{
         constrainLayoutParams.topMargin=if(0==layoutParams.topMargin) layoutParams.margin else layoutParams.topMargin
         constrainLayoutParams.rightMargin=if(0==layoutParams.rightMargin) layoutParams.margin else layoutParams.rightMargin
         constrainLayoutParams.bottomMargin=if(0==layoutParams.bottomMargin) layoutParams.margin else layoutParams.bottomMargin
+        //以tag计算id
+        var align=layoutParams.PARENT
+        if(layoutParams.PARENT_ID !=layoutParams.align){
+            align=System.identityHashCode(layoutParams.align)
+        }
+        debugLog("setLayoutParams:$align align:${layoutParams.align}")
         if(layoutParams.width==layoutParams.MATCH_PARENT){
-            layoutParams.width=0
-            constrainLayoutParams.horizontalWeight=1f
+            constrainLayoutParams.leftToLeft=layoutParams.PARENT
+            constrainLayoutParams.rightToRight=layoutParams.PARENT
         }
         if(layoutParams.height==layoutParams.MATCH_PARENT){
-            layoutParams.height=0
-            constrainLayoutParams.verticalWeight=1f
+            constrainLayoutParams.leftToLeft=layoutParams.PARENT
+            constrainLayoutParams.rightToRight=layoutParams.PARENT
         }
         //横向占比
         if(0f!=layoutParams.horizontalPercent){
@@ -116,53 +122,36 @@ open class Element<V:View>{
         }
         //方向左
         if(0!=(layoutParams.LEFT and layoutParams.alignRule)){
-            constrainLayoutParams.leftToLeft=layoutParams.align
+            constrainLayoutParams.leftToLeft=align
         } else if(0!=(layoutParams.LEFT_RIGHT and layoutParams.alignRule)){
-            constrainLayoutParams.leftToRight=layoutParams.align
+            constrainLayoutParams.leftToRight=align
         }
         //方向上
         if(0!=(layoutParams.TOP and layoutParams.alignRule)){
-            constrainLayoutParams.topToTop=layoutParams.align
+            constrainLayoutParams.topToTop=align
         } else if(0!=(layoutParams.TOP_BOTTOM and layoutParams.alignRule)){
-            constrainLayoutParams.topToBottom=layoutParams.align
+            constrainLayoutParams.topToBottom=align
         }
         //方向右
         if(0!=(layoutParams.RIGHT and layoutParams.alignRule)){
-            constrainLayoutParams.rightToRight=layoutParams.align
+            constrainLayoutParams.rightToRight=align
         } else if(0!=(layoutParams.RIGHT_LEFT and layoutParams.alignRule)){
-            constrainLayoutParams.rightToLeft=layoutParams.align
+            constrainLayoutParams.rightToLeft=align
         }
         //方向下
         if(0!=(layoutParams.BOTTOM and layoutParams.alignRule)){
-            constrainLayoutParams.bottomToBottom=layoutParams.align
+            constrainLayoutParams.bottomToBottom=align
         } else if(0!=(layoutParams.BOTTOM_TOP and layoutParams.alignRule)){
-            constrainLayoutParams.bottomToTop=layoutParams.align
+            constrainLayoutParams.bottomToTop=align
         }
+        constrainLayoutParams.validate()
         view.layoutParams=constrainLayoutParams
     }
-
-
-    fun addAnimator(animator:ElementAnimator){
-    }
-
 
     /**
      * 原始的lparams
      */
     fun Element<V>.lparams(source: ElementLayoutParams.()->Unit) {
         layoutParams=ElementLayoutParams().apply(source)
-    }
-    /**
-     * 扩展元素动画
-     */
-    fun Element<V>.animator(init: ElementAnimator.()->Unit){
-        ElementAnimator().apply(init)
-    }
-
-    /**
-     * 扩展元素动画
-     */
-    fun Element<V>.animatorSet(init: ElementAnimatorSet.()->Unit){
-        ElementAnimatorSet().apply(init)
     }
 }

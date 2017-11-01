@@ -11,13 +11,24 @@ class Page(val context: Context){
     private val pageLayout= PageLayout(context)
 
     fun layout(init: ElementLayout.()->Unit):PageLayout{
-        val layout=ElementLayout(context).apply(init)
-        pageLayout.addElementLayout(layout)
+        val elementLayout = ElementLayout(context).apply(init)
+        //初始化
+        pageLayout.addElementLayout(elementLayout)
         return pageLayout
     }
 
-    fun include(layout:ElementLayout){
-        pageLayout.addElementLayout(layout)
+    /**
+     * 分页滑动偏移事件
+     */
+    fun onPageOffset(){
+
+    }
+
+    /**
+     * 分页选中
+     */
+    fun onPageSelected(position:Int){
+
     }
 
 }
