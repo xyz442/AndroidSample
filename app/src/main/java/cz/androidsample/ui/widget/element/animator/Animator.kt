@@ -30,9 +30,8 @@ abstract class Animator(val repeatCount:Int=0,val repeatMode:Int=ValueAnimator.R
     /**
      * 动画组节点
      */
-    class Node(val animator:Animator?){
+    class Node(val animator:Animator?,var parent:Node?=null){
         var animatorEnd:(()->Unit)?=null
-        val friend= mutableListOf<Node>()
         val child= mutableListOf<Node>()
     }
 }

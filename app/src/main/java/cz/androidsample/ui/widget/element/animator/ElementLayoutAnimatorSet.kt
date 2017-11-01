@@ -10,7 +10,7 @@ import cz.androidsample.ui.widget.element.PageLayout
  * 元素组的动画控制,主要控制每个控件的动画执行顺序,以及延持回调等
  */
 class ElementLayoutAnimatorSet(val layout: ElementLayout):ElementAnimatorSet() {
-    internal var root=Animator.Node(null)
+    private var root=Animator.Node(null)
     /**
      * 获取一个元素动画对象
      * @param elementId:元素id
@@ -29,20 +29,6 @@ class ElementLayoutAnimatorSet(val layout: ElementLayout):ElementAnimatorSet() {
         return animator
     }
 
-
-    override fun getNodeAnimator(node: Node, parent: PageLayout, target: View): android.animation.Animator? {
-        var itemAnimator:android.animation.Animator?=null
-        //初始化动画信息
-        val animator = node.animator
-        if (null != animator&&null!=animator.elementId) {
-            val target = parent.findElement(animator.elementId)
-            //转换动画
-            itemAnimator = node.animator.convert(parent, target)
-        }
-        return itemAnimator
-    }
-
-
     private fun findElementAnimator(elementId: String): ElementAnimatorSet {
         val element = layout.findElement(elementId)
         return element?.animator?:throw NullPointerException("Element animator is null!")
@@ -50,7 +36,7 @@ class ElementLayoutAnimatorSet(val layout: ElementLayout):ElementAnimatorSet() {
 
     inner class Builder(animator:Animator){
         //从根节点取此节点
-        var current=Node(animator)
+        var current=Node(animator,root)
         init {
             //添加到根节点
             root.child.add(current)
@@ -62,7 +48,7 @@ class ElementLayoutAnimatorSet(val layout: ElementLayout):ElementAnimatorSet() {
         fun after(elementId:String):Builder{
             //从集内移除
             val elementAnimator = findElementAnimator(elementId)
-            val node=Animator.Node(elementAnimator)
+            val node=Animator.Node(elementAnimator,current)
             current.child.add(node)
             current=node
             return this
@@ -73,8 +59,9 @@ class ElementLayoutAnimatorSet(val layout: ElementLayout):ElementAnimatorSet() {
          */
         fun with(elementId:String):Builder{
             val elementAnimator = findElementAnimator(elementId)
-            val node=Animator.Node(elementAnimator)
-            current.friend.add(node)
+            val parentNode=current.parent
+            val node=Animator.Node(elementAnimator,parentNode)
+            parentNode?.child?.add(node)
             current=node
             return this
         }

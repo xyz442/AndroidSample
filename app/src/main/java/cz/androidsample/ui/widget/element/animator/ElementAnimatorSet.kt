@@ -1,6 +1,8 @@
 package cz.androidsample.ui.widget.element.animator
 
+import android.animation.AnimatorListenerAdapter
 import android.animation.AnimatorSet
+import android.util.Log
 import android.view.View
 import cz.androidsample.ui.widget.element.PageLayout
 
@@ -17,7 +19,9 @@ open class ElementAnimatorSet:Animator(){
      * 直接操作的动画元素
      */
     fun addAnimator(animator:ElementAnimator){
-        root.child.add(Node(animator))
+        //子元素动画记录父元素id
+        animator.elementId=elementId
+        root.child.add(Node(animator,root))
     }
 
     /**
@@ -32,34 +36,20 @@ open class ElementAnimatorSet:Animator(){
     /**
      * 遍历动画组节点
      */
-    protected fun forEachAnimatorNode(parent: PageLayout,target: View,
-                                    animatorSet:AnimatorSet,node:Animator.Node){
-        //上一次执行节点
-        var lastFriendAnimator:android.animation.Animator?=null
-        //遍历朋友节点
-        node.friend.forEach {
-            val itemAnimator = getNodeAnimator(it, parent, target)
-            animatorSet.playTogether(itemAnimator)
-            lastFriendAnimator=itemAnimator
-            //递归遍历所有节点
-            forEachAnimatorNode(parent,target,animatorSet,it)
-        }
+    protected fun forEachAnimatorNode(parent: PageLayout,target: View, animatorSet:AnimatorSet,node:Animator.Node){
         //遍历子节点,每个孩子节点,都要等当前节点执行完再执行
-        var lastAnimator:android.animation.Animator?=null
         if(!node.child.isEmpty()){
             val childAnimatorSet=AnimatorSet()
+            //排序子节点动画
+            var lastAnimator:android.animation.Animator?=null
             node.child.forEach {
-                val itemAnimator=getNodeAnimator(it, parent, target)
-                if(null==lastFriendAnimator){
-                    animatorSet.playTogether(itemAnimator)
-                } else {
-                    animatorSet.play(lastFriendAnimator).before(itemAnimator)
-                }
-                lastAnimator=itemAnimator
+                val itemAnimator=getNodeAnimator(it, parent)
+                animatorSet.playTogether(itemAnimator)
                 //遍历子节点
                 forEachAnimatorNode(parent,target,childAnimatorSet,it)
+                //记录子节点
+                lastAnimator=itemAnimator
             }
-            //编排子节点执行顺序
             animatorSet.play(lastAnimator).before(childAnimatorSet)
         }
     }
@@ -67,12 +57,27 @@ open class ElementAnimatorSet:Animator(){
     /**
      * 根据节点获取到指定的
      */
-    protected open fun getNodeAnimator(node: Node, parent: PageLayout, target: View):android.animation.Animator? {
+    private fun getNodeAnimator(node: Node, parent: PageLayout): android.animation.Animator? {
         var itemAnimator:android.animation.Animator?=null
         //初始化动画信息
-        if (null != node.animator) {
-            //转换动画
-            itemAnimator = node.animator.convert(parent, target)
+        val animator = node.animator
+        if (null != animator&&null!=animator.elementId) {
+            val target = parent.findElement(animator.elementId)
+            if(null==target){
+                Log.w("Guide","Can't find element:${animator.elementId}")
+            } else {
+                //转换动画
+                itemAnimator = node.animator.convert(parent, target)
+                //添加动画结束监听
+                if(null!=node.animatorEnd){
+                    itemAnimator?.addListener(object: AnimatorListenerAdapter(){
+                        override fun onAnimationEnd(animation: android.animation.Animator?) {
+                            super.onAnimationEnd(animation)
+                            node.animatorEnd?.invoke()
+                        }
+                    })
+                }
+            }
         }
         return itemAnimator
     }
@@ -93,6 +98,8 @@ open class ElementAnimatorSet:Animator(){
         fun after(animator:ElementAnimator):Builder{
             //从集内移除
             var node=getAnimatorNode(animator)
+            //记录新的节点
+            node.parent=current
             current.child.add(node)
             current=node
             return this
@@ -103,7 +110,9 @@ open class ElementAnimatorSet:Animator(){
          */
         fun with(animator:ElementAnimator):Builder{
             var node = getAnimatorNode(animator)
-            current.friend.add(node)
+            node.parent=current.parent
+            current.parent?.child?.add(node)
+            current=node
             return this
         }
 

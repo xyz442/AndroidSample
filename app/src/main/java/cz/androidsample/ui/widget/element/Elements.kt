@@ -6,6 +6,8 @@ import cz.androidsample.ui.widget.element.animator.*
 /**
  * Created by cz on 2017/10/26.
  */
+val TAG="Guide"
+
 /**
  * 扩展text元素
  */
@@ -31,9 +33,10 @@ inline fun ElementLayout.animator(init:ElementLayoutAnimatorSet.()->Unit){
  * 扩展图片元素
  */
 inline fun Element<*>.animator(init: ElementAnimatorSet.()->Unit){
-    val animatorSet = ElementAnimatorSet().apply(init)
+    val animatorSet = ElementAnimatorSet()
     //记录id
     animatorSet.elementId=id
+    animatorSet.apply(init)
     //赋予动画元素
     animator=animatorSet
 }

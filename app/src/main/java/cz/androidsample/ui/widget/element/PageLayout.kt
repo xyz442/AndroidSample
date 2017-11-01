@@ -1,9 +1,11 @@
 package cz.androidsample.ui.widget.element
 
+import android.animation.Animator
 import android.animation.AnimatorSet
 import android.content.Context
 import android.support.constraint.ConstraintLayout
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 
 /**
@@ -14,6 +16,7 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Co
     constructor(context: Context, attrs: AttributeSet?):this(context,attrs,0)
     constructor(context: Context):this(context,null,0)
 
+    private var pageAnimator: Animator?=null
     /**
      * 添加元素
      */
@@ -29,21 +32,23 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Co
         post {
             //执行当前页所有动画元素
             val elementAnimator = layout.animator
-            if(null!=elementAnimator){
+            //记录分页动画
+            pageAnimator=if(null!=elementAnimator){
                 //转换为对象动画
-                val animator = elementAnimator.convert(this, this)
-                //执行整体动画组
-                animator.start()
+                elementAnimator.convert(this, this)
             } else {
+                Log.w(TAG,"当前分页没有使用定义动画组,并行执行所有元素动画!")
                 //没有控制组,直接执行全部动画
                 val animator=AnimatorSet()
                 layout.elements.forEach {
                     if(null!=it.id&&null!=it.animator){
                         val target=findElement(it.id)
-                        animator.playTogether(it.animator?.convert(this,target))
+                        if(null!=target){
+                            animator.playTogether(it.animator?.convert(this,target))
+                        }
                     }
                 }
-                animator.start()
+                animator
             }
         }
     }
@@ -51,8 +56,6 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Co
     /**
      * 查找元素控件
      */
-    fun findElement(id:String?): View{
-        return findViewById(System.identityHashCode(id))?:throw NullPointerException("Can't found element id:$id!")
-    }
+    fun findElement(id:String?): View?=findViewById(System.identityHashCode(id))
 
 }
