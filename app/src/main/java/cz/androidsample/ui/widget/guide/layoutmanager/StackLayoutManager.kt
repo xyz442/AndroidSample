@@ -1,15 +1,20 @@
 package cz.androidsample.ui.widget.guide.layoutmanager
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ValueAnimator
 import android.content.Context
 import android.view.View
 import android.widget.Scroller
 
 /**
- * Created by cz on 2017/11/1.
- * 按页排序对象,类似viewPager
+ * Created by cz on 2017/11/2.
+ * 重叠排序对象
  */
-class PagerLayoutManager(context: Context): GuideLayoutManager(context) {
+class StackLayoutManager(context: Context): GuideLayoutManager(context) {
     private var viewFlinger =ViewFlinger(context)
+    //堆栈的平移距离
+    private var stackScrollX=0
     /**
      * 终止滚动
      */
@@ -25,15 +30,17 @@ class PagerLayoutManager(context: Context): GuideLayoutManager(context) {
         val paddingTop = paddingTop
         for (i in 0..childCount - 1) {
             val child = getChildAt(i)
-            val viewPosition = getViewPosition(child)
-            if (child.visibility != View.GONE&&-1!=viewPosition) {
-                var childLeft = paddingLeft +  width * viewPosition
-                child.layout(childLeft, paddingTop, childLeft + child.measuredWidth, paddingTop + child.measuredHeight)
+            if (child.visibility != View.GONE) {
+                val position = getViewPosition(child)
+                if(-1!=position){
+                    child.layout(paddingLeft, paddingTop, width-paddingRight, height-paddingBottom)
+                }
             }
         }
     }
 
     override fun setCurrentItem(position: Int, smoothScroll: Boolean,velocity: Int) {
+        //目标位置不能与滚动位置一致
         if (smoothScroll) {
             smoothScrollTo(position, velocity)
         } else {
@@ -45,7 +52,7 @@ class PagerLayoutManager(context: Context): GuideLayoutManager(context) {
     internal fun smoothScrollTo(position: Int, velocity: Int) {
         if (childCount == 0) return
         var velocity = velocity
-        val dx = position*width - scrollX
+        val dx = position*width - stackScrollX
         if (dx == 0) {
             completeScrolled()
             setScrollState(SCROLL_STATE_IDLE)
@@ -53,21 +60,27 @@ class PagerLayoutManager(context: Context): GuideLayoutManager(context) {
             setScrollState(SCROLL_STATE_SETTLING)
             //按标记设定滚动时间
             val duration:Int= getScrollDuration(dx,width/2 ,velocity)
-            viewFlinger.startScroll(scrollX, 0, dx, 0, duration)
+            viewFlinger.startScroll(stackScrollX, 0, dx, 0, duration)
             post(viewFlinger)
             invalidate()
         }
     }
 
-    override fun preScrollOffset(xOffset: Int, yOffset: Int, consumed: IntArray): Boolean {
-        return true
-    }
-
-    override fun onScrolled(xOffset: Int, yOffset: Int) {
-        scrollBy(xOffset,yOffset)
-    }
-
-    override fun getDecoratedScrollX(): Int =scrollX
+    override fun getDecoratedScrollX(): Int =stackScrollX
 
     override fun getDecoratedScrollY(): Int =0
+
+    /**
+     * 不滚动
+     */
+    override fun preScrollOffset(xOffset: Int, yOffset: Int, consumed: IntArray): Boolean {
+        stackScrollX+=xOffset
+        return false
+    }
+
+    /**
+     * 不滚动
+     */
+    override fun onScrolled(xOffset: Int, yOffset: Int) =Unit
+
 }

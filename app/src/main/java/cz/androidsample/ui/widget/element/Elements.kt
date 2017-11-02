@@ -2,6 +2,7 @@ package cz.androidsample.ui.widget.element
 
 import android.view.animation.Interpolator
 import cz.androidsample.ui.widget.element.animator.*
+import cz.androidsample.ui.widget.guide.GuideLayout
 
 /**
  * Created by cz on 2017/10/26.
@@ -39,6 +40,38 @@ inline fun Element<*>.animator(init: ElementAnimatorSet.()->Unit){
     animatorSet.apply(init)
     //赋予动画元素
     animator=animatorSet
+}
+
+/**
+ * 扩展引导布局前景
+ */
+inline fun GuideLayout.foregroundLayout(init: ElementLayout.()->Unit){
+    val pageLayout= PageLayout(context)
+    val elementLayout =ElementLayout(context).apply(init)
+    //转换动画
+    val animator = elementLayout.animator?.convert(pageLayout, pageLayout)
+    //初始化
+    pageLayout.addElementLayout(elementLayout)
+    //设置背景布局
+    setGuideBackgroundLayout(pageLayout)
+    //执行动画
+    post { animator?.start() }
+}
+
+/**
+ * 扩展引导背景布局
+ */
+inline fun GuideLayout.backgroundLayout(init: ElementLayout.()->Unit){
+    val pageLayout= PageLayout(context)
+    val elementLayout = ElementLayout(context).apply(init)
+    //转换动画
+    val animator = elementLayout.animator?.convert(pageLayout, pageLayout)
+    //初始化
+    pageLayout.addElementLayout(elementLayout)
+    //设置背景布局
+    setGuideBackgroundLayout(pageLayout)
+    //执行动画
+    post { animator?.start() }
 }
 
 

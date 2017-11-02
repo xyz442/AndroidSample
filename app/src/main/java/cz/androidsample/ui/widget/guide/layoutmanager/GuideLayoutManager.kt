@@ -2,6 +2,7 @@ package cz.androidsample.ui.widget.guide.layoutmanager
 
 import android.content.Context
 import android.view.View
+import android.widget.Scroller
 import cz.androidsample.ui.widget.guide.GuideLayout
 
 /**
@@ -32,6 +33,10 @@ abstract class GuideLayoutManager(val context: Context) {
         get() = layout.scrollX
     val scrollY:Int
         get() = layout.scrollX
+    val currentPosition:Int
+        get() = layout.getCurrentPosition()
+    val pageCount:Int
+        get() = layout.getPageCount()
     /**
      * 获得指定位置控件
      */
@@ -41,7 +46,6 @@ abstract class GuideLayoutManager(val context: Context) {
      * 滚动到指定位置
      */
     protected fun scrollTo(x:Int, y:Int)=layout.scrollTo(x,y)
-
     /**
      * 滚动相对量
      */
@@ -59,14 +63,6 @@ abstract class GuideLayoutManager(val context: Context) {
      */
     protected fun setScrollState(state:Int)=layout.setScrollState(state)
 
-    /**
-     * 设置页滚动速率
-     */
-    protected fun setPageScrolled(position:Int,pageOffset:Float,offsetPixels:Int) {
-        layout.setPageScrolled(position,pageOffset,offsetPixels)
-    }
-
-    protected fun setPageSelected(position:Int)=layout.setPageSelected(position)
     /**
      * 获得view对应位置
      */
@@ -108,17 +104,19 @@ abstract class GuideLayoutManager(val context: Context) {
     abstract fun onScrolled(xOffset:Int,yOffset:Int)
 
     /**
-     * 当分页滚动发生变化
+     * 获取滚动的横向计算值
      */
-    abstract fun onPageScrolled()
+    abstract fun getDecoratedScrollX():Int
+
+    /**
+     * 获得滚动的横向计算值
+     */
+    abstract fun getDecoratedScrollY():Int
+
     /**
      * 滚动到指定位置
      */
     abstract fun setCurrentItem(position: Int, smoothScroll: Boolean, velocity: Int)
-    /**
-     * 是否正在滚动状态
-     */
-    abstract fun isScrolling():Boolean
     /**
      * 计算滚动时间
      */
@@ -141,5 +139,33 @@ abstract class GuideLayoutManager(val context: Context) {
         f -= 0.5f // center the values about 0.
         f *= (0.3f * Math.PI / 2.0f).toFloat()
         return Math.sin(f.toDouble()).toFloat()
+    }
+
+    /**
+     * 惯性滑动事件
+     */
+    inner class ViewFlinger(val context:Context) :Runnable{
+        private val scroller: Scroller = Scroller(context)
+        fun abortAnimation(){
+            //移除滚动事件
+            removeCallbacks(this)
+            //中止滚动事件
+            scroller.abortAnimation()
+        }
+        override fun run() {
+            if(!scroller.isFinished&&scroller.computeScrollOffset()){
+                //此处计算滚动速率
+                pageScrollTo(scroller.currX,scroller.currY)
+                postDelayed(this,16)
+            } else {
+                //滑动完成后,计算
+                completeScrolled()
+            }
+        }
+
+        fun startScroll(startX:Int,startY:Int,dx:Int,dy:Int,duration:Int) {
+            scroller.startScroll(startX, startY, dx, dy,duration)
+        }
+
     }
 }

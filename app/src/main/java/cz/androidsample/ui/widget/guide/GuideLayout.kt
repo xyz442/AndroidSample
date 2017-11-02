@@ -1,6 +1,7 @@
 package cz.androidsample.ui.widget.guide
 
 import android.content.Context
+import android.graphics.Canvas
 import android.support.v4.view.MotionEventCompat
 import android.support.v4.view.VelocityTrackerCompat
 import android.support.v4.view.ViewCompat
@@ -11,6 +12,7 @@ import android.util.SparseArray
 import android.view.*
 import cz.androidsample.debugLog
 import cz.androidsample.ui.widget.element.Page
+import cz.androidsample.ui.widget.element.PageLayout
 import cz.androidsample.ui.widget.element.TAG
 import cz.androidsample.ui.widget.guide.layoutmanager.GuideLayoutManager
 import java.util.*
@@ -20,9 +22,9 @@ import java.util.*
  * 引导页操作布局
  */
 class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : ViewGroup(context, attrs, defStyleAttr) {
-
     constructor(context: Context, attrs: AttributeSet?):this(context,attrs,0)
     constructor(context: Context):this(context,null,0)
+    private val MIN_DISTANCE_FOR_FLING = 25 // dips\
     //滑动状态--------
     val SCROLL_STATE_IDLE = 0
     val SCROLL_STATE_DRAGGING = 1
@@ -33,6 +35,7 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
     private var pagerAdapter: GuidePagerAdapter?=null
     private val recyclerBin=RecyclerBin()
     private var curPosition:Int=0
+    private var scrollPosition:Int=0
     private var populatePending:Boolean=false
     private var offscreenPageLimit:Int=1
     //当前布局管理对象
@@ -45,17 +48,30 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
     private var initialMotionY: Float = 0.toFloat()
     private var lastMotionX = 0f
     private var lastMotionY = 0f
+    private var scrolling: Boolean = false
 
     private var velocityTracker: VelocityTracker? = null
+    private var flingDistance: Int = 0
     private var minimumVelocity: Int = 0
     private var maximumVelocity: Int = 0
-    private var flingDistance: Int = 0
+    //前景/背景
+    private var backLayout:PageLayout?=null
+    private var foreLayout:PageLayout?=null
+    //是否启用滚动
+    private var isScrollEnable=true
+    //修饰滚动类
+    private val decoratedScrollX:Int
+        get() = layoutManager?.getDecoratedScrollX()?:0
+    private val decoratedScrollY:Int
+        get() = layoutManager?.getDecoratedScrollY()?:0
 
     init {
         val configuration = ViewConfiguration.get(context)
         touchSlop = configuration.scaledTouchSlop
-        minimumVelocity = configuration.scaledMinimumFlingVelocity
         maximumVelocity = configuration.scaledMaximumFlingVelocity
+        minimumVelocity = configuration.scaledMinimumFlingVelocity
+        val density = context.resources.displayMetrics.density
+        flingDistance = (MIN_DISTANCE_FOR_FLING * density).toInt()
     }
 
     //---------------------------------------------------------
@@ -66,6 +82,10 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
                 View.getDefaultSize(0, heightMeasureSpec))
         val childWidthSize = measuredWidth - paddingLeft - paddingRight
         val childHeightSize = measuredHeight - paddingTop - paddingBottom
+        //测量前景/背景
+        backLayout?.measure(widthMeasureSpec,heightMeasureSpec)
+        foreLayout?.measure(widthMeasureSpec,heightMeasureSpec)
+        //测量子控件
         (0..childCount - 1)
                 .map { getChildAt(it) }
                 .filter { it.visibility != View.GONE }
@@ -73,6 +93,10 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
+        //排版前景/背景
+        backLayout?.layout(0,0,measuredWidth,measuredHeight)
+        foreLayout?.layout(0,0,measuredWidth,measuredHeight)
+        //排版子控件
         layoutManager?.onLayout(changed,l,t,r,b)
     }
 
@@ -82,6 +106,28 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
     fun setLayoutManager(layoutManager: GuideLayoutManager){
         this.layoutManager=layoutManager
         layoutManager.onAttachedToWindow(this)
+    }
+
+    /**
+     * 设置背景布局
+     */
+    fun setGuideBackgroundLayout(layout: PageLayout) {
+        this.backLayout=layout
+        //添加控件
+        addView(layout,0,ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT))
+    }
+
+    /**
+     * 设置前景布局
+     */
+    fun setGuideForegroundLayout(layout: PageLayout) {
+        this.foreLayout=layout
+        addView(layout,childCount,ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT))
+    }
+
+    override fun onDetachedFromWindow() {
+        layoutManager?.onDetachedFromWindow(this)
+        super.onDetachedFromWindow()
     }
 
     /**
@@ -104,6 +150,21 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
             }
         }
     }
+
+    /**
+     * 获得当前位置
+     */
+    fun getCurrentPosition()=curPosition
+
+    /**
+     * 获得当前滚动位置
+     */
+    fun getScrollPosition()= scrollPosition
+
+    /**
+     * 获得当前分页个数
+     */
+    fun getPageCount()=pagerAdapter?.count?:0
 
     //---------------------------------------------------------
     // 准备数据
@@ -137,9 +198,16 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
         //此处检测缓存内是否有当前条目内容
         var scrapPage = recyclerBin.getScrapPage(position)
         if(null==scrapPage){
+            //获取一个新的页面
             scrapPage = pagerAdapter?.getPage(this, position) ?: throw NullPointerException("view is null!")
+            //回调创建对象
+            scrapPage.onCreateView(scrapPage.pageLayout)
+            //注册监听
+            addOnPageChangeListener(scrapPage)
         }
-        addView(scrapPage.pageLayout)
+        //如果添加了前景,则添加顺序往前-1
+        var index=if(null!=foreLayout) childCount-1 else childCount
+        addView(scrapPage.pageLayout,index)
         items.add(ItemInfo(scrapPage,position))
     }
 
@@ -148,7 +216,7 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
      */
     fun getViewPosition(child:View):Int{
         val item: ItemInfo?=items.find { it.item.pageLayout==child }
-        return item?.position?:0
+        return item?.position?:-1
     }
 
     /**
@@ -167,22 +235,36 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
         val layoutManager = layoutManager ?: return
         val consumed = IntArray(2)
         //此处以layoutManager处理滚动
-        if(layoutManager.preScrollOffset(x - scrollX, y - scrollY, consumed)){
+        val offsetX=x-decoratedScrollX
+        val offsetY=y-decoratedScrollY
+        if(layoutManager.preScrollOffset(offsetX, offsetY, consumed)){
             //处理滚动
-            layoutManager.onScrolled(x - scrollX+consumed[0],y - scrollY+consumed[1])
-            //回调滚动速率
-            layoutManager.onPageScrolled()
-            ViewCompat.postInvalidateOnAnimation(this)
+            layoutManager.onScrolled(offsetX+consumed[0],offsetY+consumed[1])
         }
+        //回调滚动速率
+        pageScrolled()
+        ViewCompat.postInvalidateOnAnimation(this)
     }
 
     /**
-     * 滚动计算
+     * 页滚动回调
+     */
+    private fun pageScrolled() {
+        //计算速率,并回传
+        var position:Int=decoratedScrollX / width
+        var offsetPixels=Math.abs(decoratedScrollX % width)
+        val offset = Math.abs(offsetPixels.toFloat() / width)
+        setPageScrolled(position,offset, offsetPixels)
+    }
+
+
+    /**
+     * 滚动后重新计算
      */
     internal fun completeScrolled() {
-        val layoutManager=layoutManager?:return
-        var needPopulate=layoutManager.isScrolling()
-        if (needPopulate) {
+        //终止动画
+        var needPopulate=scrolling
+        if(needPopulate){
             //终止动画
             layoutManager?.abortAnimation()
             setScrollState(SCROLL_STATE_IDLE)
@@ -194,6 +276,11 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
                 needPopulate = true
                 ii.scrolling = false
             }
+        }
+        scrolling = false
+        if(scrollPosition !=curPosition){
+            scrollPosition =curPosition
+            setPageSelected(curPosition)
         }
         if (needPopulate) {
             populate()
@@ -218,17 +305,13 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
         }
     }
 
-
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
         val action = ev.action and MotionEventCompat.ACTION_MASK
         if (action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_UP) {
-            // Release the drag.
             setCurrentItemInternal(curPosition, true,0)
             endDrag()
             return false
         }
-        // Nothing more to do here if we have decided whether or not we
-        // are dragging.
         if (action != MotionEvent.ACTION_DOWN) {
             if (isBeingDragged) {
                 return true
@@ -284,8 +367,6 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
         }
 
         if (!isBeingDragged) {
-            // Track the velocity as long as we aren't dragging.
-            // Once we start a real drag we will track in onTouchEvent.
             if (velocityTracker == null) {
                 velocityTracker = VelocityTracker.obtain()
             }
@@ -298,12 +379,11 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
         if (ev.action == MotionEvent.ACTION_DOWN && ev.edgeFlags != 0) {
             return false
         }
-
         val adapter=pagerAdapter
-        if (adapter == null || adapter.count == 0) {
+        val layoutManager=layoutManager
+        if (adapter == null || adapter.count == 0||null==layoutManager) {
             return false
         }
-
         if (velocityTracker == null) {
             velocityTracker = VelocityTracker.obtain()
         }
@@ -336,13 +416,12 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
                         parent.requestDisallowInterceptTouchEvent(true)
                     }
                 }
-                debugLog("onTouchEvent lastMotionX:$lastMotionX $lastMotionY $initialMotionX $initialMotionY")
                 if (isBeingDragged) {
                     // Scroll to follow the motion event
                     val x = ev.x
                     val y = ev.y
-                    var scrollX:Float = scrollX + (lastMotionX - x)
-                    var scrollY = scrollY.toFloat()
+                    var decoratedScrollX:Float = decoratedScrollX + (lastMotionX - x)
+                    var decoratedScrollY = decoratedScrollY.toFloat()
                     lastMotionX = x
                     lastMotionY = y
                     val startWidthWithMargin = width
@@ -351,13 +430,13 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
                     val startBound = Math.max(0, curPosition - 1) * startWidthWithMargin.toFloat()
                     val endBound = Math.min(curPosition + 1,itemCount) * startWidthWithMargin.toFloat()
                     //限制滑动范围
-                    if (scrollX < startBound) {
-                        scrollX = startBound
-                    } else if (scrollX > endBound) {
-                        scrollX = endBound
+                    if (decoratedScrollX < startBound) {
+                        decoratedScrollX = startBound
+                    } else if (decoratedScrollX > endBound) {
+                        decoratedScrollX = endBound
                     }
-                    lastMotionX += scrollX - scrollX.toInt()
-                    pageScrollTo(scrollX.toInt(), scrollY.toInt())
+                    lastMotionX += decoratedScrollX - decoratedScrollX.toInt()
+                    pageScrollTo(decoratedScrollX.toInt(), decoratedScrollY.toInt())
                 }
             }
             MotionEvent.ACTION_UP -> if (isBeingDragged) {
@@ -411,8 +490,13 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
                 items[i].scrolling = true
             }
         }
+        //记录操作前位置
+        scrollPosition =curPosition
+        //记录当前操作位置
+        curPosition=position
+        //记录开始滚动
+        scrolling = true
         //记录位置
-        curPosition = position
         populate()
         //滚动到指定位置
         layoutManager.setCurrentItem(position,smoothScroll,velocity)
@@ -465,5 +549,8 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
     }
 
 
+    override fun draw(canvas: Canvas?) {
+        super.draw(canvas)
+    }
 
 }

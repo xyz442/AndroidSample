@@ -9,6 +9,7 @@ import cz.androidsample.debugLog
 import cz.androidsample.ui.widget.element.Page
 import cz.androidsample.ui.widget.guide.adapter.*
 import cz.androidsample.ui.widget.guide.layoutmanager.PagerLayoutManager
+import cz.androidsample.ui.widget.guide.layoutmanager.StackLayoutManager
 import cz.volunteerunion.ui.ToolBarActivity
 import kotlinx.android.synthetic.main.activity_guide_layout.*
 import org.jetbrains.anko.sdk25.coroutines.onClick
@@ -33,21 +34,8 @@ class GuideLayoutActivity : ToolBarActivity() {
         pageItems.add(Page3(this).getPage())
         pageItems.add(Page4(this).getPage())
         val adapter=MyGuideAdapter(pageItems)
-        guideLayout.setLayoutManager(PagerLayoutManager(this))
+        guideLayout.setLayoutManager(StackLayoutManager(this))
         guideLayout.setAdapter(adapter)
-
-        guideLayout.addOnPageChangeListener(object :ViewPager.OnPageChangeListener{
-            override fun onPageScrollStateChanged(state: Int) {
-
-            }
-
-            override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
-            }
-
-            override fun onPageSelected(position: Int) {
-            }
-
-        })
 
     }
 }

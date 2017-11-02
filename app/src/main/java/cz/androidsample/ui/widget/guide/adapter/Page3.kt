@@ -9,11 +9,11 @@ import cz.androidsample.ui.widget.element.Page
 /**
  * Created by cz on 2017/11/1.
  */
-class Page3(context: Context): Page(context) {
+class Page3(val context: Context) {
     /**
      * 获得一个分页
      */
-    fun getPage()=with(Page(context)){
+    fun getPage()=with(Page(2,context)){
         layout {
             text {
                 id="text1"
