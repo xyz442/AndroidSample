@@ -7,7 +7,10 @@ import android.support.constraint.ConstraintLayout
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
+import cz.androidsample.debugLog
 import cz.androidsample.ui.widget.element.animator.ElementAnimator
+import cz.androidsample.ui.widget.element.animator.ElementAnimatorSet
+import cz.androidsample.ui.widget.element.animator.ElementLayoutAnimatorSet
 
 /**
  * Created by cz on 2017/10/27.
@@ -19,6 +22,8 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Co
     internal val pageScrollItems= mutableListOf<OnPageScrollListener>()
     internal val pageSelectItems= mutableListOf<OnPageSelectListener>()
     internal val elementLayoutItems= mutableListOf<ElementLayout>()
+    //初始化元素动画,此标记在于让所有控件添加完,并计算后,再初始化动画.确保动画内每个控件位置大小直接使用
+    private var initElementAnimator=false
     /**
      * 添加元素
      */
@@ -83,6 +88,56 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Co
         pageSelectItems.clear()
         pageScrollItems.clear()
         super.onDetachedFromWindow()
+    }
+
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(changed, left, top, right, bottom)
+        if(!initElementAnimator){
+            initElementAnimator=true
+            //初始化元素动画
+            elementLayoutItems.forEach {
+                //初始化子元素动画
+                it.elements.forEach(this::initElementAnimator)
+                //初始化布局动画
+                initElementLayoutAnimator(it)
+            }
+        }
+    }
+
+
+    private fun initElementLayoutAnimator(layout: ElementLayout) {
+        val animatorInit = layout.animatorInit
+        if(null!=animatorInit){
+            layout.animator= ElementLayoutAnimatorSet(layout).apply(animatorInit)
+        }
+    }
+
+    /**
+     * 初始化子元素动画
+     */
+    private fun initElementAnimator(it: Element<*>) {
+        val animatorInit = it.animatorInit
+        if (null != animatorInit) {
+            val animator = ElementAnimatorSet()
+            //记录宽高
+            animator.pwidth=measuredWidth
+            animator.pheight=measuredHeight
+            //记录id
+            animator.elementId = it.id
+            animator.apply(animatorInit)
+            //赋予动画元素
+            it.animator = animator
+            //设置初始化控件动画属性
+            val target=it.target
+            target.alpha=animator.alpha
+            target.scaleX=animator.scaleX
+            target.scaleY=animator.scaleY
+            target.rotation=animator.rotation
+            target.rotationX=animator.rotationX
+            target.rotationY=animator.rotationY
+            target.translationX=animator.translationX
+            target.translationY=animator.translationY
+        }
     }
 
     /**

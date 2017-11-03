@@ -14,6 +14,18 @@ import cz.androidsample.ui.widget.element.PageLayout
 open class ElementAnimatorSet:Animator(){
     //一个子元素根节点
     private var root = Node(null)
+    //父布局宽高
+    var pwidth=0
+    var pheight=0
+    //初始动画属性
+    var alpha=1f
+    var scaleX=1f
+    var scaleY=1f
+    var rotation=0f
+    var rotationX=0f
+    var rotationY=0f
+    var translationX=0f
+    var translationY=0f
 
     /**
      * 直接操作的动画元素

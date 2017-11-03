@@ -31,7 +31,8 @@ open class Element<V:View>{
     var padding=0
     var layoutParams=ElementLayoutParams()
     //保留表达式,而不是直接初始化,此处非常关键
-    var animator:(ElementAnimatorSet.()->Unit)?=null
+    var animatorInit:(ElementAnimatorSet.()->Unit)?=null
+    var animator:ElementAnimatorSet?=null
     //布局映射后view
     lateinit var target:View
     //元素行为回调对象

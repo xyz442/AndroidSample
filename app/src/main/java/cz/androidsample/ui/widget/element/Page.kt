@@ -11,7 +11,6 @@ open class Page(val context: Context) {
     companion object {
         var pageIndex = 0
     }
-
     internal val pageLayout = PageLayout(context)
     private var pageScrolled: ((Int, Float, Int) -> Unit)? = null
     private var pageSelected: ((Int) -> Unit)? = null

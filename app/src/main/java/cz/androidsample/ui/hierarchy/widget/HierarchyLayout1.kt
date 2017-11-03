@@ -172,7 +172,6 @@ class HierarchyLayout1(context: Context, attrs: AttributeSet?, defStyleAttr: Int
             canvas.translate((column*300).toFloat(), (row*300).toFloat())
             childView.draw(canvas)
             canvas.restore()
-//            debugLog("onDraw index:$it row:$row column:$column width:${childView.measuredWidth} height:${childView.measuredHeight} left:${childView.left} top:${childView.top}")
         }
     }
     override fun onTouchEvent(event: MotionEvent): Boolean {

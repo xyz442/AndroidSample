@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Color
 import android.view.Gravity
 import cz.androidsample.R
+import cz.androidsample.debugLog
 import cz.androidsample.ui.widget.element.*
 import cz.androidsample.ui.widget.element.Page
 
@@ -23,7 +24,9 @@ class Page1(val context: Context){
                     verticalPercent=0.10f
                     alignRule=CENTER_HORIZONTAL
                 }
-                animator { translationX(100f,600f).duration(1000) }
+                animator {
+                    translationX(-target.right*1f,0f).duration(600)
+                }
             }
             image(R.mipmap.page1_text2){
                 id="imageText2"
@@ -32,7 +35,10 @@ class Page1(val context: Context){
                     align="imageText1"
                     alignRule=CENTER_HORIZONTAL or TOP_BOTTOM
                 }
-                animator { translationYBy(500f).duration(1000).delay(1000) }
+                animator {
+                    translationX=-target.right*1f
+                    translationXBy(target.right*1f).delay(100).duration(600)
+                }
             }
             //横向导航线
             vline {
@@ -43,8 +49,8 @@ class Page1(val context: Context){
             image(R.mipmap.page1_wallet){
                 lparams {
                     align="line"
-//                    bottomMargin=dp(-80)
-                    alignRule=CENTER_HORIZONTAL or BOTTOM_TOP
+                    bottomMargin=dp(48)
+                    alignRule=CENTER
                 }
             }
             animator {

@@ -215,10 +215,15 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
 
         //回调事件,让其初始化一次
         setPageScrolled(curPosition,0f,0)
+        //执行动画
+        post{startPageAnimator(itemInfo,position)}
+    }
+
+    private fun startPageAnimator(itemInfo:ItemInfo,position: Int){
         //执行初始化动画
         if(!itemInfo.init&&curPosition==position){
             //执行起始动画,并在执行完成后,设置为可滑动
-            val pageAnimator = scrapPage?.pageLayout?.getPageAnimatorSet()
+            val pageAnimator = itemInfo.page?.pageLayout?.getPageAnimatorSet()
             if(null!=pageAnimator){
                 itemInfo.init=true
                 //禁止操作

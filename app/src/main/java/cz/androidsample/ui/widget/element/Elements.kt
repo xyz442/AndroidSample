@@ -43,19 +43,15 @@ inline fun ElementLayout.vline(init: LineElement.()->Unit){
  * 扩展元素动画组控制
  */
 fun ElementLayout.animator(init:ElementLayoutAnimatorSet.()->Unit){
-    animator=init
+//    animator=ElementLayoutAnimatorSet(this).apply(init)
+    animatorInit=init
 }
 
 /**
  * 扩展图片元素
  */
 fun Element<*>.animator(init: ElementAnimatorSet.()->Unit){
-//    val animatorSet = ElementAnimatorSet()
-//    //记录id
-//    animatorSet.elementId=id
-//    animatorSet.apply(init)
-    //赋予动画元素
-    animator=init
+    animatorInit=init
 }
 
 /**
