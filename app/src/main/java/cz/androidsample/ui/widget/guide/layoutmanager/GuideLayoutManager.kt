@@ -36,7 +36,7 @@ abstract class GuideLayoutManager(val context: Context) {
     val currentPosition:Int
         get() = layout.getCurrentPosition()
     val pageCount:Int
-        get() = layout.getPageCount()
+        get() = layout.pageCount
     /**
      * 获得指定位置控件
      */

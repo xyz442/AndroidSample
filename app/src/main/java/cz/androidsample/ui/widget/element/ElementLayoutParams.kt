@@ -37,4 +37,11 @@ class ElementLayoutParams(var width:Int=WRAP_CONTENT, var height:Int=WRAP_CONTEN
     //相对关系,默认依赖为父容器
     var align= PARENT_ID
     var alignRule =LEFT or TOP
+
+    fun margin(left:Int=0,top:Int=0,right:Int=0,bottom:Int=0){
+        this.leftMargin =left
+        this.topMargin =top
+        this.rightMargin =right
+        this.bottomMargin =bottom
+    }
 }

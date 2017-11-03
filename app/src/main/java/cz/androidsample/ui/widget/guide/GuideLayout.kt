@@ -1,5 +1,8 @@
 package cz.androidsample.ui.widget.guide
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.AnimatorSet
 import android.content.Context
 import android.graphics.Canvas
 import android.support.v4.view.MotionEventCompat
@@ -64,6 +67,8 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
         get() = layoutManager?.getDecoratedScrollX()?:0
     private val decoratedScrollY:Int
         get() = layoutManager?.getDecoratedScrollY()?:0
+    val pageCount:Int
+        get()= pagerAdapter?.count?:0
 
     init {
         val configuration = ViewConfiguration.get(context)
@@ -161,11 +166,6 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
      */
     fun getScrollPosition()= scrollPosition
 
-    /**
-     * 获得当前分页个数
-     */
-    fun getPageCount()=pagerAdapter?.count?:0
-
     //---------------------------------------------------------
     // 准备数据
     //---------------------------------------------------------
@@ -184,7 +184,7 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
         //删除范围外条目
         items.filter { (it.position >= startPos || it.position <= endPos) && it.scrolling }.forEach {
             items.remove(it)
-            destroyItem(it.position,it.item)
+            destroyItem(it.position,it.page)
         }
         (startPos..endPos).forEach { pos->
             if(items.none { it.position==pos }){
@@ -196,26 +196,51 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
 
     private fun addNewItem(position: Int) {
         //此处检测缓存内是否有当前条目内容
+        var itemInfo:ItemInfo
         var scrapPage = recyclerBin.getScrapPage(position)
         if(null==scrapPage){
             //获取一个新的页面
             scrapPage = pagerAdapter?.getPage(this, position) ?: throw NullPointerException("view is null!")
-            //回调创建对象
-            scrapPage.onCreateView(scrapPage.pageLayout)
-            //注册监听
-            addOnPageChangeListener(scrapPage)
+            itemInfo=ItemInfo(scrapPage,position)
+        } else {
+            //从缓存取出来分页己不需要初始化
+            itemInfo=ItemInfo(scrapPage,position)
+            itemInfo.init=true
         }
+        //添加分页
+        items.add(itemInfo)
         //如果添加了前景,则添加顺序往前-1
         var index=if(null!=foreLayout) childCount-1 else childCount
         addView(scrapPage.pageLayout,index)
-        items.add(ItemInfo(scrapPage,position))
+
+        //回调事件,让其初始化一次
+        setPageScrolled(curPosition,0f,0)
+        //执行初始化动画
+        if(!itemInfo.init&&curPosition==position){
+            //执行起始动画,并在执行完成后,设置为可滑动
+            val pageAnimator = scrapPage?.pageLayout?.getPageAnimatorSet()
+            if(null!=pageAnimator){
+                itemInfo.init=true
+                //禁止操作
+                isScrollEnable=false
+                //执行动画,并在执行完后置为可滚动
+                pageAnimator.addListener(object :AnimatorListenerAdapter(){
+                    override fun onAnimationEnd(animation: Animator?) {
+                        super.onAnimationEnd(animation)
+                        isScrollEnable=true
+                    }
+                })
+                pageAnimator.start()
+                debugLog("addNewItem:$curPosition startAnim")
+            }
+        }
     }
 
     /**
      * 获得当前元素在布局位置
      */
     fun getViewPosition(child:View):Int{
-        val item: ItemInfo?=items.find { it.item.pageLayout==child }
+        val item: ItemInfo?=items.find { it.page.pageLayout==child }
         return item?.position?:-1
     }
 
@@ -291,10 +316,30 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
      * 设置页滚动速率
      */
     internal fun setPageScrolled(position:Int,pageOffset:Float,offsetPixels:Int) {
+        //回调前景背景变化
+        foreLayout?.onPageScrolled(position,pageOffset,offsetPixels,false)
+        backLayout?.onPageScrolled(position,pageOffset,offsetPixels,false)
+        //回调对象变化
+        val currentItem=items.find { it.position==position }
+        val nextItem=items.find { it.position==position+1 }
+        //回调当前页,与下一页
+        currentItem?.page?.onPageScrolled(position, pageOffset, offsetPixels, true)
+        nextItem?.page?.onPageScrolled(position + 1, pageOffset, offsetPixels, false)
+        //回调其他分页
+        items.filter { it.position !in position..position+1 }.forEach {
+            it.page.onPageScrolled(it.position, 0f, 0, false)
+        }
         pageChangeListenerItems?.forEach { it.onPageScrolled(position, pageOffset, offsetPixels) }
     }
 
     internal fun setPageSelected(position: Int){
+        debugLog("setPageSelected:$position")
+        //回调前景背景元素
+        foreLayout?.onPageSelected(position)
+        backLayout?.onPageSelected(position)
+        //回调选中事件
+        val currentItem=items.find { it.position==position }
+        currentItem?.page?.onPageSelected(position)
         pageChangeListenerItems?.forEach { it.onPageSelected(position) }
     }
 
@@ -376,6 +421,8 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
     }
 
     override fun onTouchEvent(ev: MotionEvent): Boolean {
+        //是否禁用事件
+        if(!isScrollEnable) return false
         if (ev.action == MotionEvent.ACTION_DOWN && ev.edgeFlags != 0) {
             return false
         }
@@ -515,8 +562,9 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
     //---------------------------------------------------------
     // 数据
     //---------------------------------------------------------
-    class ItemInfo(var item: Page, var position: Int = 0){
+    class ItemInfo(var page: Page, var position: Int = 0){
         var scrolling: Boolean = false
+        var init:Boolean =false
     }
 
     inner class RecyclerBin {

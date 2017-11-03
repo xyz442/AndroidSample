@@ -13,7 +13,7 @@ class Page3(val context: Context) {
     /**
      * 获得一个分页
      */
-    fun getPage()=with(Page(2,context)){
+    fun getPage()=with(Page(context)){
         layout {
             text {
                 id="text1"
@@ -28,7 +28,7 @@ class Page3(val context: Context) {
                 }
                 animator {
                     play(alpha(0f,1f).duration(1000)).
-                            after(translationX(0f,200f).delay(3000).duration(1000)).
+                            after(translationX(0f,200f).duration(1000)).
                             after(translationY(0f,200f).duration(1000))
                 }
             }

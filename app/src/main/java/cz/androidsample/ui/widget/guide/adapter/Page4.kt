@@ -13,7 +13,7 @@ class Page4(val context: Context){
     /**
      * 获得一个分页
      */
-    fun getPage()=with(Page(3,context)){
+    fun getPage()=with(Page(context)){
         layout {
             text {
                 id="text1"

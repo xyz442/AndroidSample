@@ -9,11 +9,9 @@ import org.jetbrains.anko.backgroundResource
 /**
  * Created by cz on 2017/10/26.
  */
-class ImageElement : Element<ImageView>() {
+class ImageElement(var drawableResource:Int= -1) : Element<ImageView>() {
     //背景颜色
     var drawableColor= INVALID
-    //背景资源
-    var drawableResource:Int= INVALID
 
     var scaleType:ImageView.ScaleType=ImageView.ScaleType.CENTER
 

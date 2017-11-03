@@ -30,7 +30,21 @@ open class Element<V:View>{
     var paddingBottom=0
     var padding=0
     var layoutParams=ElementLayoutParams()
-    var animator:ElementAnimatorSet?=null
+    //保留表达式,而不是直接初始化,此处非常关键
+    var animator:(ElementAnimatorSet.()->Unit)?=null
+    //布局映射后view
+    lateinit var target:View
+    //元素行为回调对象
+    internal var viewClick:((View)->Unit)?=null
+    internal var pageSelected:((View,Int)->Unit)?=null
+    internal var pageScrolled:((View,Int,Float,Int,Boolean)->Unit)?=null
+
+    fun padding(left:Int=0,top:Int=0,right:Int=0,bottom:Int=0){
+        this.paddingLeft=left
+        this.paddingTop=top
+        this.paddingRight=right
+        this.paddingBottom=bottom
+    }
     /**
      * 创建view
      */
@@ -40,21 +54,44 @@ open class Element<V:View>{
         return view
     }
 
+    fun onClick(action:(View)->Unit){
+        this.viewClick=action
+    }
+
+    /**
+     * 分页选中
+     */
+    fun onSelected(action:(View,Int)->Unit){
+        this.pageSelected=action
+    }
+
+    /**
+     * 分页滑动
+     */
+    fun onScrolled(action:(View,Int,Float,Int,Boolean)->Unit){
+        this.pageScrolled=action
+    }
+
     /**
      * 转换控件
      */
     open protected fun convertToView(context:Context)=View(context)
 
     open fun initView(view:V){
+        //记录操作view
+        target=view
         //设置id
         view.id=System.identityHashCode(id)
-        debugLog("initView:$id viewId:${view.id}")
         //设置背景
         setBackground(view)
         //设置内边距
         setPadding(view,padding,paddingLeft,paddingTop,paddingRight,paddingBottom)
         //设置layoutParams,目前只支持转换为ConstraintLayout.LayoutParams
         setLayoutParams(view,layoutParams)
+        //设置点击
+        if(null!=viewClick){
+            view.setOnClickListener { viewClick?.invoke(it) }
+        }
     }
 
     /**
@@ -151,7 +188,25 @@ open class Element<V:View>{
     /**
      * 原始的lparams
      */
-    fun Element<V>.lparams(source: ElementLayoutParams.()->Unit) {
-        layoutParams=ElementLayoutParams().apply(source)
+    fun Element<V>.lparams(width:Int=ElementLayoutParams.WRAP_CONTENT,
+                           height:Int=ElementLayoutParams.WRAP_CONTENT,
+                           source: (ElementLayoutParams.()->Unit)?=null) {
+        layoutParams=ElementLayoutParams(width,height)
+        if(null!=source){
+            layoutParams.apply(source)
+        }
+    }
+
+    /**
+     * 原始的lparams
+     */
+    fun Element<V>.fillparams(source: (ElementLayoutParams.()->Unit)?=null) {
+        layoutParams=ElementLayoutParams(ElementLayoutParams.MATCH_PARENT,ElementLayoutParams.MATCH_PARENT)
+        if(null==source){
+            //置为居中,方位才会生效
+            layoutParams.alignRule=layoutParams.CENTER
+        } else {
+            layoutParams.apply(source)
+        }
     }
 }

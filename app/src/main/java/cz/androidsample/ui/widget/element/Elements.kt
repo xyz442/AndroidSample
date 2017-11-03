@@ -1,5 +1,6 @@
 package cz.androidsample.ui.widget.element
 
+import android.animation.ValueAnimator
 import android.view.animation.Interpolator
 import cz.androidsample.ui.widget.element.animator.*
 import cz.androidsample.ui.widget.guide.GuideLayout
@@ -19,27 +20,42 @@ inline fun ElementLayout.text(init:TextElement.()->Unit){
 /**
  * 扩展图片元素
  */
-inline fun ElementLayout.image(init: ImageElement.()->Unit){
-    addElement(ImageElement().apply(init))
+inline fun ElementLayout.image(resource:Int=-1, init: ImageElement.()->Unit){
+    addElement(ImageElement(resource).apply(init))
+}
+
+
+/**
+ * 横向线元素,可用做导航线
+ */
+inline fun ElementLayout.hline(init: LineElement.()->Unit){
+    addElement(LineElement(LineElement.HORIZONTAL).apply(init))
+}
+
+/**
+ * 纵向线元素,可用做导航线
+ */
+inline fun ElementLayout.vline(init: LineElement.()->Unit){
+    addElement(LineElement(LineElement.VERTICAL).apply(init))
 }
 
 /**
  * 扩展元素动画组控制
  */
-inline fun ElementLayout.animator(init:ElementLayoutAnimatorSet.()->Unit){
-    animator=ElementLayoutAnimatorSet(this).apply(init)
+fun ElementLayout.animator(init:ElementLayoutAnimatorSet.()->Unit){
+    animator=init
 }
 
 /**
  * 扩展图片元素
  */
-inline fun Element<*>.animator(init: ElementAnimatorSet.()->Unit){
-    val animatorSet = ElementAnimatorSet()
-    //记录id
-    animatorSet.elementId=id
-    animatorSet.apply(init)
+fun Element<*>.animator(init: ElementAnimatorSet.()->Unit){
+//    val animatorSet = ElementAnimatorSet()
+//    //记录id
+//    animatorSet.elementId=id
+//    animatorSet.apply(init)
     //赋予动画元素
-    animator=animatorSet
+    animator=init
 }
 
 /**
@@ -53,7 +69,7 @@ inline fun GuideLayout.foregroundLayout(init: ElementLayout.()->Unit){
     //初始化
     pageLayout.addElementLayout(elementLayout)
     //设置背景布局
-    setGuideBackgroundLayout(pageLayout)
+    setGuideForegroundLayout(pageLayout)
     //执行动画
     post { animator?.start() }
 }
@@ -90,26 +106,26 @@ inline fun ElementAnimator.interpolator(interpolator: Interpolator):ElementAnima
     return this
 }
 
-inline fun ElementAnimatorSet.alpha(start:Float,end:Float):ElementAnimator{
-    val animator=AlphaElementAnimator(start,end)
+inline fun ElementAnimatorSet.alpha(start:Float,end:Float,repeatCount:Int=0,repeatMode:Int= ValueAnimator.RESTART):ElementAnimator{
+    val animator=AlphaElementAnimator(start,end,repeatCount,repeatMode)
     addAnimator(animator)
     return animator
 }
 
-inline fun ElementAnimatorSet.rotation(start:Float,end:Float):ElementAnimator{
-    val animator=RotationElementAnimator(start,end)
+inline fun ElementAnimatorSet.rotation(start:Float,end:Float,repeatCount:Int=0,repeatMode:Int= ValueAnimator.RESTART):ElementAnimator{
+    val animator=RotationElementAnimator(start,end,repeatCount,repeatMode)
     addAnimator(animator)
     return animator
 }
 
-inline fun ElementAnimatorSet.rotationX(start:Float,end:Float):ElementAnimator{
-    val animator=RotationXElementAnimator(start,end)
+inline fun ElementAnimatorSet.rotationX(start:Float,end:Float,repeatCount:Int=0,repeatMode:Int= ValueAnimator.RESTART):ElementAnimator{
+    val animator=RotationXElementAnimator(start,end,repeatCount,repeatMode)
     addAnimator(animator)
     return animator
 }
 
-inline fun ElementAnimatorSet.rotationY(start:Float,end:Float):ElementAnimator{
-    val animator=RotationYElementAnimator(start,end)
+inline fun ElementAnimatorSet.rotationY(start:Float,end:Float,repeatCount:Int=0,repeatMode:Int= ValueAnimator.RESTART):ElementAnimator{
+    val animator=RotationYElementAnimator(start,end,repeatCount,repeatMode)
     addAnimator(animator)
     return animator
 }
@@ -118,8 +134,8 @@ inline fun ElementAnimatorSet.rotationY(start:Float,end:Float):ElementAnimator{
  * 百分比横向平移
  * 如果from为0f,默认为0f,则从原地移到目录位置
  */
-inline fun ElementAnimatorSet.translationXPercent(end:Float, from:Float=0f):ElementAnimator{
-    val animator=TranslationYPercentAnimator(end, from)
+inline fun ElementAnimatorSet.translationXPercent(end:Float, from:Float=0f,repeatCount:Int=0,repeatMode:Int= ValueAnimator.RESTART):ElementAnimator{
+    val animator=TranslationYPercentAnimator(end, from,repeatCount,repeatMode)
     addAnimator(animator)
     return animator
 }
@@ -128,38 +144,50 @@ inline fun ElementAnimatorSet.translationXPercent(end:Float, from:Float=0f):Elem
  * 百分比纵向平移
  * 如果from为0f,默认为0f,则从原地移到目录位置
  */
-inline fun ElementAnimatorSet.translationYPercent(end:Float, from:Float=0f):ElementAnimator{
-    val animator=TranslationYPercentAnimator(end, from)
+inline fun ElementAnimatorSet.translationYPercent(end:Float, from:Float=0f,repeatCount:Int=0,repeatMode:Int= ValueAnimator.RESTART):ElementAnimator{
+    val animator=TranslationYPercentAnimator(end, from,repeatCount,repeatMode)
     addAnimator(animator)
     return animator
 }
 
-inline fun ElementAnimatorSet.translationX(start: Float,end:Float):ElementAnimator{
-    val animator=TranslationXElementAnimator(start,end)
+inline fun ElementAnimatorSet.translationX(start: Float,end:Float,repeatCount:Int=0,repeatMode:Int= ValueAnimator.RESTART):ElementAnimator{
+    val animator=TranslationXElementAnimator(start,end,repeatCount,repeatMode)
     addAnimator(animator)
     return animator
 }
 
-inline fun ElementAnimatorSet.translationY(start: Float,end:Float):ElementAnimator{
-    val animator=TranslationYElementAnimator(start,end)
+inline fun ElementAnimatorSet.translationXBy(end:Float,repeatCount:Int=0,repeatMode:Int= ValueAnimator.RESTART):ElementAnimator{
+    val animator=TranslationXByElementAnimator(end,repeatCount,repeatMode)
     addAnimator(animator)
     return animator
 }
 
-inline fun ElementAnimatorSet.scale(start:Float,end:Float):ElementAnimator{
-    val animator=ScaleElementAnimator(start,end)
+inline fun ElementAnimatorSet.translationY(start: Float,end:Float,repeatCount:Int=0,repeatMode:Int= ValueAnimator.RESTART):ElementAnimator{
+    val animator=TranslationYElementAnimator(start,end,repeatCount,repeatMode)
     addAnimator(animator)
     return animator
 }
 
-inline fun ElementAnimatorSet.scaleX(start:Float,end:Float):ElementAnimator{
-    val animator=ScaleXElementAnimator(start,end)
+inline fun ElementAnimatorSet.translationYBy(end:Float,repeatCount:Int=0,repeatMode:Int= ValueAnimator.RESTART):ElementAnimator{
+    val animator=TranslationYByElementAnimator(end,repeatCount,repeatMode)
     addAnimator(animator)
     return animator
 }
 
-inline fun ElementAnimatorSet.scaleY(start:Float,end:Float):ElementAnimator{
-    val animator=ScaleYElementAnimator(start,end)
+inline fun ElementAnimatorSet.scale(start:Float,end:Float,repeatCount:Int=0,repeatMode:Int= ValueAnimator.RESTART):ElementAnimator{
+    val animator=ScaleElementAnimator(start,end,repeatCount,repeatMode)
+    addAnimator(animator)
+    return animator
+}
+
+inline fun ElementAnimatorSet.scaleX(start:Float,end:Float,repeatCount:Int=0,repeatMode:Int= ValueAnimator.RESTART):ElementAnimator{
+    val animator=ScaleXElementAnimator(start,end,repeatCount,repeatMode)
+    addAnimator(animator)
+    return animator
+}
+
+inline fun ElementAnimatorSet.scaleY(start:Float,end:Float,repeatCount:Int=0,repeatMode:Int= ValueAnimator.RESTART):ElementAnimator{
+    val animator=ScaleYElementAnimator(start,end,repeatCount,repeatMode)
     addAnimator(animator)
     return animator
 }

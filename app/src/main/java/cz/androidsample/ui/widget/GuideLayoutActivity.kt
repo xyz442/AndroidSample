@@ -1,12 +1,13 @@
 package cz.androidsample.ui.widget
 
+import android.graphics.Color
 import android.os.Bundle
 import android.support.v4.view.ViewPager
 
 import cz.androidsample.R
 import cz.androidsample.annotation.ToolBar
 import cz.androidsample.debugLog
-import cz.androidsample.ui.widget.element.Page
+import cz.androidsample.ui.widget.element.*
 import cz.androidsample.ui.widget.guide.adapter.*
 import cz.androidsample.ui.widget.guide.layoutmanager.PagerLayoutManager
 import cz.androidsample.ui.widget.guide.layoutmanager.StackLayoutManager
@@ -36,6 +37,70 @@ class GuideLayoutActivity : ToolBarActivity() {
         val adapter=MyGuideAdapter(pageItems)
         guideLayout.setLayoutManager(StackLayoutManager(this))
         guideLayout.setAdapter(adapter)
+        //初始化引导背景
+        initGuideBackground()
+    }
 
+    /**
+     * 初始化引导背景
+     */
+    private fun initGuideBackground() {
+        //添加背景布局
+        guideLayout.backgroundLayout {
+            //背景
+            image(R.mipmap.guide_background) { fillparams() }
+            //横向导航线
+            vline {
+                id="line"
+                lparams { verticalPercent=0.55f }
+            }
+            //背景房子
+            image(R.mipmap.house_background) {
+                lparams(ElementLayoutParams.MATCH_PARENT) {
+                    align="line"
+                    alignRule=BOTTOM_TOP
+                }
+            }
+            //中间传送带
+            image {
+                backgroundResources = R.mipmap.road
+                lparams(ElementLayoutParams.MATCH_PARENT) {
+                    align="line"
+                    margin(left=dp(20),right=dp(20))
+                    alignRule=TOP_BOTTOM or CENTER_HORIZONTAL
+                }
+            }
+            //左右云
+            image(R.mipmap.cloud_1) { lparams { verticalPercent = 0.1f } }
+            image(R.mipmap.cloud_1) {
+                lparams {
+                    horizontalPercent = 1f
+                    verticalPercent = 0.1f
+                }
+            }
+        }
+        //添加前景布局
+        guideLayout.foregroundLayout {
+            text {
+                font = Font("全新启航", sp(20), Color.WHITE)
+                padding(left=dp(16),top=dp(12),right=dp(16),bottom = dp(12))
+                backgroundResources = R.drawable.guide_button_selector
+                lparams {
+                    alignRule=CENTER_HORIZONTAL
+                    verticalPercent=0.85f
+                }
+                //点击
+                onClick { toast("点击开始!") }
+                //Page滚动
+                onScrolled { v,position, offset, _, _ ->
+                    v.alpha=0f
+                    v.isClickable=false
+                    if(position+1==guideLayout.pageCount-1||position==guideLayout.pageCount-1){
+                        v.alpha=if(position==guideLayout.pageCount-1) 1f else offset
+                        v.isClickable=true
+                    }
+                }
+            }
+        }
     }
 }
