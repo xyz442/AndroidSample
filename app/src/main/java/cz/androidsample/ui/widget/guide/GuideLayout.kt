@@ -212,30 +212,46 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
         //如果添加了前景,则添加顺序往前-1
         var index=if(null!=foreLayout) childCount-1 else childCount
         addView(scrapPage.pageLayout,index)
-
         //回调事件,让其初始化一次
         setPageScrolled(curPosition,0f,0)
         //执行动画
-        post{startPageAnimator(itemInfo,position)}
+        if(position==curPosition){
+            post{startPageAnimator(itemInfo)}
+        }
     }
 
-    private fun startPageAnimator(itemInfo:ItemInfo,position: Int){
+    private fun startPageAnimator(itemInfo:ItemInfo){
         //执行初始化动画
-        if(!itemInfo.init&&curPosition==position){
+        if(!itemInfo.init){
+            itemInfo.init=true
             //执行起始动画,并在执行完成后,设置为可滑动
-            val pageAnimator = itemInfo.page?.pageLayout?.getPageAnimatorSet()
+            val animatorSet=AnimatorSet()
+            val pageAnimator = itemInfo.page.pageLayout.getPageAnimatorSet()
             if(null!=pageAnimator){
-                itemInfo.init=true
                 //禁止操作
-                isScrollEnable=false
+//                isScrollEnable=false
+                if(0==itemInfo.position){
+                    //第一次执行,将前景背景一并执行
+                    val backAnimatorSet = backLayout?.getPageAnimatorSet()
+                    val foreAnimatorSet = foreLayout?.getPageAnimatorSet()
+                    if(null!=backAnimatorSet){
+                        animatorSet.play(backAnimatorSet).before(pageAnimator)
+                    }
+                    if(null!=foreAnimatorSet){
+                        animatorSet.play(pageAnimator).before(foreAnimatorSet)
+                    }
+                } else {
+                    //其他页操作
+                    animatorSet.playTogether(pageAnimator)
+                }
                 //执行动画,并在执行完后置为可滚动
-                pageAnimator.addListener(object :AnimatorListenerAdapter(){
+                animatorSet.addListener(object :AnimatorListenerAdapter(){
                     override fun onAnimationEnd(animation: Animator?) {
                         super.onAnimationEnd(animation)
-                        isScrollEnable=true
+//                        isScrollEnable=true
                     }
                 })
-                pageAnimator.start()
+                animatorSet.start()
                 debugLog("addNewItem:$curPosition startAnim")
             }
         }

@@ -23,7 +23,6 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Co
     internal val pageSelectItems= mutableListOf<OnPageSelectListener>()
     internal val elementLayoutItems= mutableListOf<ElementLayout>()
     //初始化元素动画,此标记在于让所有控件添加完,并计算后,再初始化动画.确保动画内每个控件位置大小直接使用
-    private var initElementAnimator=false
     /**
      * 添加元素
      */
@@ -63,7 +62,12 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Co
     /**
      * 获得布局元素转换后动画体
      */
-    private fun getPageAnimator(layout: ElementLayout):Animator{
+    internal fun getPageAnimator(layout: ElementLayout):Animator{
+        //初始化所有子元素
+        layout.elements.forEach(this::initElementAnimator)
+        //初始化布局动画
+        initElementLayoutAnimator(layout)
+        //返回动画组
         val animator=layout.animator
         return if(null!=animator){
             //转换为对象动画
@@ -83,27 +87,6 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Co
             animator
         }
     }
-
-    override fun onDetachedFromWindow() {
-        pageSelectItems.clear()
-        pageScrollItems.clear()
-        super.onDetachedFromWindow()
-    }
-
-    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        super.onLayout(changed, left, top, right, bottom)
-        if(!initElementAnimator){
-            initElementAnimator=true
-            //初始化元素动画
-            elementLayoutItems.forEach {
-                //初始化子元素动画
-                it.elements.forEach(this::initElementAnimator)
-                //初始化布局动画
-                initElementLayoutAnimator(it)
-            }
-        }
-    }
-
 
     private fun initElementLayoutAnimator(layout: ElementLayout) {
         val animatorInit = layout.animatorInit
@@ -138,6 +121,39 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Co
             target.translationX=animator.translationX
             target.translationY=animator.translationY
         }
+    }
+
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(changed, left, top, right, bottom)
+        //使margin 负值生效
+        (0..childCount-1).map { getChildAt(it) }.forEach {
+            val layoutParams=it.layoutParams
+            if(layoutParams is ConstraintLayout.LayoutParams){
+                //横向偏移
+                var horizontalOffset=0
+                if(0>layoutParams.leftMargin){
+                    horizontalOffset=layoutParams.leftMargin
+                } else if(0>layoutParams.rightMargin){
+                    horizontalOffset=-layoutParams.rightMargin
+                }
+                //纵向偏移
+                var verticalOffset=0
+                if(0>layoutParams.topMargin){
+                    verticalOffset=layoutParams.topMargin
+                } else if(0>layoutParams.bottomMargin){
+                    verticalOffset=-layoutParams.bottomMargin
+                }
+                if(0!=horizontalOffset||0!=verticalOffset){
+                    it.layout(it.left+horizontalOffset,it.top+verticalOffset,it.right+horizontalOffset,it.bottom+verticalOffset)
+                }
+            }
+        }
+    }
+
+    override fun onDetachedFromWindow() {
+        pageSelectItems.clear()
+        pageScrollItems.clear()
+        super.onDetachedFromWindow()
     }
 
     /**

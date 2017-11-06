@@ -3,6 +3,7 @@ package cz.androidsample.ui.widget
 import android.graphics.Color
 import android.os.Bundle
 import android.support.v4.view.ViewPager
+import android.support.v7.app.AppCompatActivity
 
 import cz.androidsample.R
 import cz.androidsample.annotation.ToolBar
@@ -16,13 +17,11 @@ import kotlinx.android.synthetic.main.activity_guide_layout.*
 import org.jetbrains.anko.sdk25.coroutines.onClick
 import org.jetbrains.anko.toast
 
-@ToolBar
-class GuideLayoutActivity : ToolBarActivity() {
+class GuideLayoutActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_guide_layout)
-        setTitle(intent.getStringExtra("title"))
 
         val pageItems= mutableListOf<Page>()
         val page = Page1(this).getPage()
@@ -48,7 +47,14 @@ class GuideLayoutActivity : ToolBarActivity() {
         //添加背景布局
         guideLayout.backgroundLayout {
             //背景
-            image(R.mipmap.guide_background) { fillparams() }
+            image(R.mipmap.guide_background) {
+                id="image1"
+                fillparams()
+                animator {
+                    alpha=0f
+                    alpha(0f,1f)
+                }
+            }
             //横向导航线
             vline {
                 id="line"
@@ -56,38 +62,67 @@ class GuideLayoutActivity : ToolBarActivity() {
             }
             //背景房子
             image(R.mipmap.house_background) {
+                id="image2"
                 lparams(ElementLayoutParams.MATCH_PARENT) {
                     align="line"
                     alignRule=BOTTOM_TOP
                 }
+                animator {
+                    alpha=0f
+                    alpha(0f,1f)
+                }
             }
             //中间传送带
             image {
+                id="image3"
                 backgroundResources = R.mipmap.road
                 lparams(ElementLayoutParams.MATCH_PARENT) {
                     align="line"
                     margin(left=dp(20),right=dp(20))
                     alignRule=TOP_BOTTOM or CENTER_HORIZONTAL
                 }
+                animator {
+                    alpha=0f
+                    play(scale(0.2f,1f)).with(alpha(0f,1f))
+                }
             }
             //左右云
-            image(R.mipmap.cloud_1) { lparams { verticalPercent = 0.1f } }
             image(R.mipmap.cloud_1) {
+                id="image4"
+                lparams { verticalPercent = 0.1f }
+                animator {
+                    translationX=-target.right*1f
+                    translationXBy(target.right*1f)
+                }
+            }
+            image(R.mipmap.cloud_1) {
+                id="image5"
                 lparams {
                     horizontalPercent = 1f
                     verticalPercent = 0.1f
                 }
+                animator {
+                    translationX=target.width*1f
+                    translationXBy(-target.width*1f)
+                }
+            }
+            animatorSet {
+                play("image1").delay(300).after("image2").delay(600).after("image3").after("image4").with("image5")
             }
         }
         //添加前景布局
         guideLayout.foregroundLayout {
             text {
-                font = Font("全新启航", sp(20), Color.WHITE)
+                font("全新启航", sp(20), Color.WHITE)
                 padding(left=dp(16),top=dp(12),right=dp(16),bottom = dp(12))
                 backgroundResources = R.drawable.guide_button_selector
                 lparams {
                     alignRule=CENTER_HORIZONTAL
                     verticalPercent=0.85f
+                }
+                animator {
+                    alpha=0f
+                    target.isClickable=false
                 }
                 //点击
                 onClick { toast("点击开始!") }

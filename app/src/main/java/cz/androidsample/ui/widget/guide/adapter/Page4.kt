@@ -1,8 +1,7 @@
 package cz.androidsample.ui.widget.guide.adapter
 
 import android.content.Context
-import android.graphics.Color
-import android.view.Gravity
+import cz.androidsample.R
 import cz.androidsample.ui.widget.element.*
 import cz.androidsample.ui.widget.element.Page
 
@@ -15,39 +14,104 @@ class Page4(val context: Context){
      */
     fun getPage()=with(Page(context)){
         layout {
-            text {
+            image(R.mipmap.page4_text1){
                 id="text1"
-                font= Font("分页4",sp(42), Color.RED)
-                padding=dp(12f)
-                gravity= Gravity.CENTER
-                backgroundColor= Color.GREEN
                 lparams {
-                    width=WRAP_CONTENT
-                    height=WRAP_CONTENT
+                    margin(left=dp(80),right=dp(80))
+                    verticalPercent=0.12f
+                    alignRule=CENTER_HORIZONTAL
+                }
+                animator {
+                    translationX=-target.right*1f
+                    translationXBy(target.right*1f)
+                }
+            }
+            image(R.mipmap.page4_text2){
+                id="text2"
+                lparams {
+                    margin(left=dp(80),top=dp(8),right=dp(80))
+                    align="text1"
+                    alignRule=CENTER_HORIZONTAL or TOP_BOTTOM
+                }
+                animator {
+                    translationX=-target.right*1f
+                    translationXBy(target.right*1f)
+                }
+            }
+            //横向导航线
+            vline {
+                id="line"
+                lparams { verticalPercent=0.62f }
+            }
+
+            image(R.mipmap.page4_phone){
+                id="imagePhone"
+                lparams {
+                    align="line"
+                    alignRule=CENTER_HORIZONTAL or BOTTOM
+                }
+            }
+
+            image(R.mipmap.page4_screen_text1){
+                id="screenText1"
+                lparams {
+                    align="imagePhone"
                     alignRule=CENTER
                 }
-                animator {
-                    play(alpha(0f,1f).duration(1000)).
-                            after(translationX(0f,200f).delay(3000).duration(1000)).
-                            after(translationY(0f,200f).duration(1000))
-                }
             }
-            text {
-                id="text2"
-                font= Font("附加文本",sp(12), Color.WHITE)
-                backgroundColor= Color.RED
-                gravity= Gravity.LEFT
+            image(R.mipmap.page4_screen_text2){
+                id="screenText2"
                 lparams {
-                    width=dp(100f)
-                    align="text1"
-                    //在text1的底部,并以它居中
-                    alignRule= TOP_BOTTOM or CENTER_HORIZONTAL
-                }
-                animator {
-                    translationX(0f,100f).duration(2000)
+                    align="screenText1"
+                    margin(bottom= dp(4))
+                    alignRule=BOTTOM_TOP or CENTER_HORIZONTAL
                 }
             }
-            animator { play("text1").after("text2") }
+
+            image(R.mipmap.page4_boy){
+                id="screenText2"
+                lparams {
+                    align="imagePhone"
+                    margin(right=dp(-12),bottom = dp(-42))
+                    alignRule=RIGHT_LEFT or BOTTOM
+                }
+            }
+            image(R.mipmap.page4_gold){
+                id="screenText2"
+                lparams {
+                    align="imagePhone"
+                    margin(left = dp(-8),top=dp(8))
+                    alignRule=LEFT or TOP_BOTTOM
+                }
+            }
+            image(R.mipmap.page4_box1){
+                id="screenText2"
+                lparams {
+                    align="imagePhone"
+                    margin(top=dp(-16))
+                    alignRule=TOP_BOTTOM or RIGHT
+                }
+            }
+
+            image(R.mipmap.page4_girl){
+                id="imageGirl"
+                lparams {
+                    align="imagePhone"
+                    margin(right=dp(16),bottom=dp(32))
+                    alignRule=RIGHT or BOTTOM
+                }
+            }
+
+            image(R.mipmap.page4_ladder){
+                id="imageLadder"
+                lparams {
+                    align="imageGirl"
+                    margin(left=dp(-20),top=dp(-42))
+                    alignRule=LEFT_RIGHT or TOP_BOTTOM
+                }
+            }
+
+
         }
     }
 }

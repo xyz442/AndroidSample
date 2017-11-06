@@ -3,6 +3,7 @@ package cz.androidsample.ui.widget.element
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
+import android.text.TextUtils
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
@@ -23,8 +24,19 @@ class TextElement: Element<TextView>() {
     var gravity:Int=Gravity.CENTER
     //文字样式
     var typeFace:Typeface=Typeface.DEFAULT
-    //字体字式
-    var font:Font?=null
+
+    fun font(text:String?=null,textSize:Float=0f,textColor:Int=0){
+        if(!TextUtils.isEmpty(text)){
+            this.text=text
+        }
+        if(0f!=textSize){
+            this.textSize=textSize
+        }
+        if(0!=textColor){
+            this.textColor=textColor
+        }
+    }
+
 
     override fun convertToView(context: Context): View = TextView(context)
 
@@ -36,18 +48,10 @@ class TextElement: Element<TextView>() {
         } else if(null!=text){
             view.text = text
         }
-        //设置字体属性
-        val font=font
-        if(null!=font){
-            view.text = font.text
-            view.setTextColor(font.textColor)
-            view.setTextSize(TypedValue.COMPLEX_UNIT_PX,font.textSize)
-        } else {
-            //设置字体颜色
-            view.setTextColor(textColor)
-            //设置字体大小
-            view.setTextSize(TypedValue.COMPLEX_UNIT_PX,textSize)
-        }
+        //设置字体颜色
+        view.setTextColor(textColor)
+        //设置字体大小
+        view.setTextSize(TypedValue.COMPLEX_UNIT_PX,textSize)
         view.typeface=typeFace
         //设置文字方向
         view.gravity=gravity

@@ -5,6 +5,7 @@ import android.animation.AnimatorSet
 import android.util.Log
 import android.view.View
 import cz.androidsample.ui.widget.element.PageLayout
+import cz.androidsample.ui.widget.element.RenderNode
 
 
 /**
@@ -79,7 +80,9 @@ open class ElementAnimatorSet:Animator(){
                 Log.w("Guide","Can't find element:${animator.elementId}")
             } else {
                 //转换动画
-                itemAnimator = node.animator.convert(parent, target)
+                itemAnimator = animator.convert(parent, target)
+                //添加动画的执行延持时间
+                itemAnimator?.startDelay=animator.delay
                 //添加动画结束监听
                 if(null!=node.animatorEnd){
                     itemAnimator?.addListener(object: AnimatorListenerAdapter(){
