@@ -3,12 +3,13 @@ package cz.androidsample.ui.widget.element
 import android.animation.Animator
 import android.animation.AnimatorSet
 import android.content.Context
+import android.content.res.Resources
 import android.support.constraint.ConstraintLayout
+import android.support.constraint.solver.widgets.ConstraintWidget
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import cz.androidsample.debugLog
-import cz.androidsample.ui.widget.element.animator.ElementAnimator
 import cz.androidsample.ui.widget.element.animator.ElementAnimatorSet
 import cz.androidsample.ui.widget.element.animator.ElementLayoutAnimatorSet
 
@@ -17,6 +18,12 @@ import cz.androidsample.ui.widget.element.animator.ElementLayoutAnimatorSet
  * 分页操作排版布局
  */
 class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : ConstraintLayout(context, attrs, defStyleAttr){
+    companion object{
+        private val weightField=ConstraintLayout.LayoutParams::class.java.getDeclaredField("widget")
+        init {
+            weightField.isAccessible=true
+        }
+    }
     constructor(context: Context, attrs: AttributeSet?):this(context,attrs,0)
     constructor(context: Context):this(context,null,0)
     internal val pageScrollItems= mutableListOf<OnPageScrollListener>()
@@ -122,6 +129,42 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Co
             target.translationY=animator.translationY
         }
     }
+
+    override fun requestLayout() {
+        for(i in 0..childCount-1) {
+            val childView = getChildAt(i)
+            val layoutParams = childView.layoutParams
+            if (layoutParams is LayoutParams) {
+                layoutParams.validate()
+            }
+        }
+        super.requestLayout()
+    }
+
+//    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+//        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+//        setChildrenMarginOffset()
+//    }
+//
+//    /**
+//     * 设置margin值,为确保ConstraintLayout.margin值为负值不生效
+//     */
+//    private fun setChildrenMarginOffset() {
+//        for(i in 0..childCount-1){
+//            val childView=getChildAt(i)
+//            val layoutParams=childView.layoutParams
+//            if (layoutParams is LayoutParams) {
+//                layoutParams.validate()
+//                val weight = weightField.get(layoutParams)
+//                if (null != weight && weight is ConstraintWidget) {
+//                    weight.anchors[0].margin = layoutParams.leftMargin
+//                    weight.anchors[1].margin = layoutParams.topMargin
+//                    weight.anchors[2].margin = layoutParams.rightMargin
+//                    weight.anchors[3].margin = layoutParams.bottomMargin
+//                }
+//            }
+//        }
+//    }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)

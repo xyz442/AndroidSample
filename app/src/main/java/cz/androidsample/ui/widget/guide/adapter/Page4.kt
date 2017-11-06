@@ -69,7 +69,7 @@ class Page4(val context: Context){
             }
 
             image(R.mipmap.page4_boy){
-                id="screenText2"
+                id="boy"
                 lparams {
                     align="imagePhone"
                     margin(right=dp(-12),bottom = dp(-42))
@@ -77,7 +77,6 @@ class Page4(val context: Context){
                 }
             }
             image(R.mipmap.page4_gold){
-                id="screenText2"
                 lparams {
                     align="imagePhone"
                     margin(left = dp(-8),top=dp(8))
@@ -85,7 +84,6 @@ class Page4(val context: Context){
                 }
             }
             image(R.mipmap.page4_box1){
-                id="screenText2"
                 lparams {
                     align="imagePhone"
                     margin(top=dp(-16))

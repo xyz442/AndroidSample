@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.View
 import cz.androidsample.ui.widget.element.PageLayout
 import cz.androidsample.ui.widget.element.RenderNode
+import cz.androidsample.ui.widget.element.TAG
 
 
 /**
@@ -77,7 +78,7 @@ open class ElementAnimatorSet:Animator(){
         if (null != animator&&null!=animator.elementId) {
             val target = parent.findElement(animator.elementId)
             if(null==target){
-                Log.w("Guide","Can't find element:${animator.elementId}")
+                Log.w(TAG,"Can't find element:${animator.elementId}")
             } else {
                 //转换动画
                 itemAnimator = animator.convert(parent, target)

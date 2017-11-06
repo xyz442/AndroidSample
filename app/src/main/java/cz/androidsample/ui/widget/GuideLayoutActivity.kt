@@ -29,10 +29,10 @@ class GuideLayoutActivity : AppCompatActivity() {
         text1?.onClick {
             toast("点击!")
         }
-        pageItems.add(page)
-        pageItems.add(Page2(this).getPage())
+//        pageItems.add(page)
+//        pageItems.add(Page2(this).getPage())
         pageItems.add(Page3(this).getPage())
-        pageItems.add(Page4(this).getPage())
+//        pageItems.add(Page4(this).getPage())
         val adapter=MyGuideAdapter(pageItems)
         guideLayout.setLayoutManager(StackLayoutManager(this))
         guideLayout.setAdapter(adapter)
