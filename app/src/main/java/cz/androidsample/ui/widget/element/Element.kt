@@ -55,24 +55,6 @@ open class Element<V:View>{
         return view
     }
 
-    fun onClick(action:(View)->Unit){
-        this.viewClick=action
-    }
-
-    /**
-     * 分页选中
-     */
-    fun onSelected(action:(View,Int)->Unit){
-        this.pageSelected=action
-    }
-
-    /**
-     * 分页滑动
-     */
-    fun onScrolled(action:(View,Int,Float,Int,Boolean)->Unit){
-        this.pageScrolled=action
-    }
-
     /**
      * 转换控件
      */

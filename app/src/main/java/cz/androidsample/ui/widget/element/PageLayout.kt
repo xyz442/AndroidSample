@@ -207,8 +207,8 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Co
     /**
      * 回调滚动事件
      */
-    internal inline fun onPageScrolled(position: Int, offset: Float, offsetPixels:Int, isSelectItem:Boolean){
-        pageScrollItems.forEach{ it.call(position,offset,offsetPixels,isSelectItem) }
+    internal inline fun onPageScrolled(position: Int, offset: Float, offsetPixels:Int,current:Boolean){
+        pageScrollItems.forEach{ it.call(position,offset,offsetPixels,current) }
     }
 
     /**
@@ -222,8 +222,8 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Co
      * 页滚动变化
      */
     inner class OnPageScrollListener(val v:View,val listener:(View,Int,Float,Int,Boolean)->Unit){
-        fun call(position:Int,offset:Float,OffsetPixels:Int,isSelectItem:Boolean){
-            listener(v,position,offset,OffsetPixels,isSelectItem)
+        fun call(position:Int,offset:Float,OffsetPixels:Int,current:Boolean){
+            listener(v,position,offset,OffsetPixels,current)
         }
     }
 

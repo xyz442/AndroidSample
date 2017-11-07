@@ -8,6 +8,7 @@ import android.widget.FrameLayout
 
 import cz.androidsample.R
 import cz.androidsample.ui.widget.element.Page
+import cz.androidsample.ui.widget.element.click
 import cz.androidsample.ui.widget.element.image
 import cz.androidsample.ui.widget.element.text
 import kotlinx.android.synthetic.main.activity_constraint.*
@@ -59,7 +60,7 @@ class ConstraintActivity : AppCompatActivity() {
                         margin(right=dp(-12),top = dp(-12))
                         alignRule=RIGHT or TOP_BOTTOM
                     }
-                    onClick {
+                    click {
                         target.requestLayout()
                     }
                 }

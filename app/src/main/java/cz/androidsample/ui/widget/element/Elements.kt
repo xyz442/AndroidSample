@@ -1,6 +1,7 @@
 package cz.androidsample.ui.widget.element
 
 import android.animation.ValueAnimator
+import android.view.View
 import android.view.animation.Interpolator
 import cz.androidsample.ui.widget.element.animator.*
 import cz.androidsample.ui.widget.guide.GuideLayout
@@ -9,6 +10,20 @@ import cz.androidsample.ui.widget.guide.GuideLayout
  * Created by cz on 2017/10/26.
  */
 val TAG="Guide"
+
+/**
+ * 分页滑动偏移事件
+ */
+fun Page.pageScrolled(pageScrolled: (View,Int,Float, Int) -> Unit) {
+    this.pageScrolled = pageScrolled
+}
+
+/**
+ * 分页选中
+ */
+fun Page.pageSelected(pageSelected: (View,Int) -> Unit) {
+    this.pageSelected = pageSelected
+}
 
 /**
  * 扩展text元素
@@ -53,6 +68,27 @@ fun ElementLayout.animatorSet(init:ElementLayoutAnimatorSet.()->Unit){
 fun Element<*>.animator(init: ElementAnimatorSet.()->Unit){
     animatorInit=init
 }
+
+
+fun Element<*>.click(action:(View)->Unit){
+    this.viewClick=action
+}
+
+/**
+ * 分页选中
+ */
+fun Element<*>.selected(action:(View, Int)->Unit){
+    this.pageSelected=action
+}
+
+/**
+ * 分页滑动
+ */
+fun Element<*>.scrolled(action:(View, Int, Float, Int,Boolean)->Unit){
+    this.pageScrolled=action
+}
+
+
 
 /**
  * 扩展引导布局前景

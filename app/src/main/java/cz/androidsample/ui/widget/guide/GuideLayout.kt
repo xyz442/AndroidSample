@@ -211,49 +211,48 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
         items.add(itemInfo)
         //如果添加了前景,则添加顺序往前-1
         var index=if(null!=foreLayout) childCount-1 else childCount
+        debugLog("addNewItem:$position $curPosition ${scrapPage?.pageLayout}")
+        //添加控件
         addView(scrapPage.pageLayout,index)
-        //回调事件,让其初始化一次
-        setPageScrolled(curPosition,0f,0)
-        //执行动画
-        if(position==curPosition){
-            post{startPageAnimator(itemInfo)}
+        //初始化
+        scrapPage.pageInit?.invoke(scrapPage.pageLayout)
+        //回调事件,将所有置为初始状态
+        if(curPosition==position){
+            setPageSelected(position)
         }
     }
 
     private fun startPageAnimator(itemInfo:ItemInfo){
         //执行初始化动画
-        if(!itemInfo.init){
-            itemInfo.init=true
-            //执行起始动画,并在执行完成后,设置为可滑动
-            val animatorSet=AnimatorSet()
-            val pageAnimator = itemInfo.page.pageLayout.getPageAnimatorSet()
-            if(null!=pageAnimator){
-                //禁止操作
-//                isScrollEnable=false
-                if(0==itemInfo.position){
-                    //第一次执行,将前景背景一并执行
-                    val backAnimatorSet = backLayout?.getPageAnimatorSet()
-                    val foreAnimatorSet = foreLayout?.getPageAnimatorSet()
-                    if(null!=backAnimatorSet){
-                        animatorSet.play(backAnimatorSet).before(pageAnimator)
-                    }
-                    if(null!=foreAnimatorSet){
-                        animatorSet.play(pageAnimator).before(foreAnimatorSet)
-                    }
-                } else {
-                    //其他页操作
-                    animatorSet.playTogether(pageAnimator)
+        //执行起始动画,并在执行完成后,设置为可滑动
+        val animatorSet=AnimatorSet()
+        val pageAnimator = itemInfo.page.pageLayout.getPageAnimatorSet()
+        if(null!=pageAnimator){
+            //禁止操作
+            isScrollEnable=false
+            if(0==itemInfo.position){
+                //第一次执行,将前景背景一并执行
+                val backAnimatorSet = backLayout?.getPageAnimatorSet()
+                val foreAnimatorSet = foreLayout?.getPageAnimatorSet()
+                if(null!=backAnimatorSet){
+                    animatorSet.play(backAnimatorSet).before(pageAnimator)
                 }
-                //执行动画,并在执行完后置为可滚动
-                animatorSet.addListener(object :AnimatorListenerAdapter(){
-                    override fun onAnimationEnd(animation: Animator?) {
-                        super.onAnimationEnd(animation)
-//                        isScrollEnable=true
-                    }
-                })
-                animatorSet.start()
-                debugLog("addNewItem:$curPosition startAnim")
+                if(null!=foreAnimatorSet){
+                    animatorSet.play(pageAnimator).before(foreAnimatorSet)
+                }
+            } else {
+                //其他页操作
+                animatorSet.playTogether(pageAnimator)
             }
+            //执行动画,并在执行完后置为可滚动
+            animatorSet.addListener(object :AnimatorListenerAdapter(){
+                override fun onAnimationEnd(animation: Animator?) {
+                    super.onAnimationEnd(animation)
+                    isScrollEnable=true
+                }
+            })
+            animatorSet.start()
+            debugLog("addNewItem:$curPosition startAnim")
         }
     }
 
@@ -337,24 +336,33 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
      * 设置页滚动速率
      */
     internal fun setPageScrolled(position:Int,pageOffset:Float,offsetPixels:Int) {
+        debugLog("setPageScrolled:$position $pageOffset $offsetPixels")
         //回调前景背景变化
         foreLayout?.onPageScrolled(position,pageOffset,offsetPixels,false)
         backLayout?.onPageScrolled(position,pageOffset,offsetPixels,false)
         //回调对象变化
         val currentItem=items.find { it.position==position }
         val nextItem=items.find { it.position==position+1 }
-        //回调当前页,与下一页
-        currentItem?.page?.onPageScrolled(position, pageOffset, offsetPixels, true)
-        nextItem?.page?.onPageScrolled(position + 1, pageOffset, offsetPixels, false)
-        //回调其他分页
-        items.filter { it.position !in position..position+1 }.forEach {
-            it.page.onPageScrolled(it.position, 0f, 0, false)
+        if(null!=currentItem&&currentItem.init){
+            //回调当前页,与下一页
+            currentItem.page?.onPageScrolled(position, pageOffset, offsetPixels,true)
+        }
+        if(null!=nextItem&&nextItem.init){
+            nextItem.page?.onPageScrolled(position + 1, pageOffset, offsetPixels,false)
         }
         pageChangeListenerItems?.forEach { it.onPageScrolled(position, pageOffset, offsetPixels) }
     }
 
     internal fun setPageSelected(position: Int){
         debugLog("setPageSelected:$position")
+        //执行初始动画
+        if(position==curPosition){
+            val itemInfo=items.find { it.position==position }
+            if(null!=itemInfo&&!itemInfo.init){
+                itemInfo.init=true
+                post{startPageAnimator(itemInfo)}
+            }
+        }
         //回调前景背景元素
         foreLayout?.onPageSelected(position)
         backLayout?.onPageSelected(position)

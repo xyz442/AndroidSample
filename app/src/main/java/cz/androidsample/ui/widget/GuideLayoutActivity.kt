@@ -2,17 +2,12 @@ package cz.androidsample.ui.widget
 
 import android.graphics.Color
 import android.os.Bundle
-import android.support.v4.view.ViewPager
 import android.support.v7.app.AppCompatActivity
 
 import cz.androidsample.R
-import cz.androidsample.annotation.ToolBar
-import cz.androidsample.debugLog
 import cz.androidsample.ui.widget.element.*
 import cz.androidsample.ui.widget.guide.adapter.*
-import cz.androidsample.ui.widget.guide.layoutmanager.PagerLayoutManager
 import cz.androidsample.ui.widget.guide.layoutmanager.StackLayoutManager
-import cz.volunteerunion.ui.ToolBarActivity
 import kotlinx.android.synthetic.main.activity_guide_layout.*
 import org.jetbrains.anko.sdk25.coroutines.onClick
 import org.jetbrains.anko.toast
@@ -29,10 +24,10 @@ class GuideLayoutActivity : AppCompatActivity() {
         text1?.onClick {
             toast("点击!")
         }
-//        pageItems.add(page)
-//        pageItems.add(Page2(this).getPage())
+        pageItems.add(page)
+        pageItems.add(Page2(this).getPage())
         pageItems.add(Page3(this).getPage())
-//        pageItems.add(Page4(this).getPage())
+        pageItems.add(Page4(this).getPage())
         val adapter=MyGuideAdapter(pageItems)
         guideLayout.setLayoutManager(StackLayoutManager(this))
         guideLayout.setAdapter(adapter)
@@ -125,9 +120,9 @@ class GuideLayoutActivity : AppCompatActivity() {
                     target.isClickable=false
                 }
                 //点击
-                onClick { toast("点击开始!") }
+                click { toast("点击开始!") }
                 //Page滚动
-                onScrolled { v,position, offset, _, _ ->
+                scrolled { v, position, offset, _,_->
                     v.alpha=0f
                     v.isClickable=false
                     if(position+1==guideLayout.pageCount-1||position==guideLayout.pageCount-1){

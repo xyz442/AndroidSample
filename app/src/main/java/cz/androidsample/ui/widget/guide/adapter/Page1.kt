@@ -1,8 +1,6 @@
 package cz.androidsample.ui.widget.guide.adapter
 
 import android.content.Context
-import android.graphics.Color
-import android.view.Gravity
 import cz.androidsample.R
 import cz.androidsample.debugLog
 import cz.androidsample.ui.widget.element.*
@@ -16,6 +14,7 @@ class Page1(val context: Context){
      * 获得一个分页
      */
     fun getPage()=with(Page(context)){
+        init { alpha=0f }
         layout {
             image(R.mipmap.page1_text1){
                 id="imageText1"
@@ -28,6 +27,10 @@ class Page1(val context: Context){
                     translationX=-target.right*1f
                     translationXBy(target.right*1f)
                 }
+                scrolled { view, position, offset, _,_ ->
+                    debugLog("Page1:$position offset:$offset")
+                    view.translationX=view.right*-offset
+                }
             }
             image(R.mipmap.page1_text2){
                 id="imageText2"
@@ -39,6 +42,9 @@ class Page1(val context: Context){
                 animator {
                     translationX=-target.right*1f
                     translationXBy(target.right*1f)
+                }
+                scrolled { view, _, offset, _,_ ->
+                    view.translationX=view.right*(offset*-1.5f)
                 }
             }
             //横向导航线
@@ -59,6 +65,10 @@ class Page1(val context: Context){
                     translationY=-target.height*1f
                     play(alpha(0f,1f).duration(600)).with(translationYBy(target.height*1f).duration(600))
                 }
+                scrolled { view, _, offset, _,_->
+                    view.alpha=1f-offset
+                    view.translationY=-view.height*offset
+                }
             }
             image(R.mipmap.page1_square){
                 id="imageSquare"
@@ -70,6 +80,9 @@ class Page1(val context: Context){
                 animator {
                     alpha=0f
                     alpha(0f,1f)
+                }
+                scrolled { view, _, offset, _,_->
+                    view.alpha=1f-offset*4
                 }
             }
             image(R.mipmap.page_girl2){
@@ -83,8 +96,12 @@ class Page1(val context: Context){
                     alpha=0f
                     alpha(0f,1f)
                 }
+                scrolled { view, _, offset, _,_->
+                    view.alpha=1f-offset*4
+                }
             }
             image(R.mipmap.page_girl1){
+                id="imageGirl2"
                 lparams {
                     align="imageWallet"
                     margin(left=dp(-16),bottom = dp(-32))
@@ -92,25 +109,44 @@ class Page1(val context: Context){
                 }
                 animator {
                     alpha=0f
-                    translationX=target.width*1f
-                    translationY=target.width*1f
-                    translationX(0f,target.left*1f)
-                    translationY(0f,target.top*1f)
+                    alpha(0f,1f)
+                }
+                scrolled { view, _, offset, _ ,_->
+                    view.alpha=1f-offset*4
                 }
             }
             image(R.mipmap.page1_boy){
+                id="imageBoy"
                 lparams {
                     align="imageWallet"
                     margin(top=dp(20),right=dp(24))
                     alignRule=TOP_BOTTOM or RIGHT
                 }
+                animator {
+                    alpha=0f
+                    alpha(0f,1f)
+                }
+                scrolled { view, _, offset, _,_->
+                    view.alpha=1f-offset*4
+                }
             }
 
             image(R.mipmap.page1_gold1){
+                id="imageGold1"
                 lparams {
                     align="imageGirl1"
                     margin(right=dp(-24),bottom= dp(-20))
                     alignRule=BOTTOM_TOP or RIGHT
+                }
+                animator {
+                    alpha=0f
+                    alpha(0f,1f)
+                    translationY=-target.height*1f
+                    translationYBy(target.height*1f)
+                }
+                scrolled { view, _, offset, _,_ ->
+                    view.alpha=1f-offset*4
+                    view.translationY=view.height*-offset
                 }
             }
             image(R.mipmap.page1_gold2){
@@ -120,30 +156,78 @@ class Page1(val context: Context){
                     margin(top=dp(32),right=dp(16))
                     alignRule=TOP or RIGHT
                 }
+                animator {
+                    alpha=0f
+                    alpha(0f,1f)
+                    translationY=-target.height*1f
+                    translationYBy(target.height*1f)
+                }
+                scrolled { view, _, offset, _,_->
+                    view.alpha=1f-offset*4
+                    view.translationY=view.height*-offset
+                }
             }
             image(R.mipmap.page1_gold3){
+                id="imageGold3"
                 lparams {
                     align="imageGold2"
                     alignRule=TOP_BOTTOM or RIGHT
                 }
+                animator {
+                    alpha=0f
+                    alpha(0f,1f)
+                    translationY=-target.height*1f
+                    translationYBy(target.height*1f)
+                }
+                scrolled { view, _, offset, _,_->
+                    view.alpha=1f-offset*4
+                    view.translationY=view.height*-offset
+                }
             }
             image(R.mipmap.page1_gold4){
+                id="imageGold4"
                 lparams {
                     align="imageWallet"
                     margin(left=dp(-4),top=dp(-4))
                     alignRule=TOP or LEFT_RIGHT
                 }
+                animator {
+                    alpha=0f
+                    alpha(0f,1f)
+                    translationY=-target.height*1f
+                    translationYBy(target.height*1f)
+                }
+                scrolled { view, _, offset, _ ,_->
+                    view.alpha=1f-offset*4
+                    view.translationY=view.height*-offset
+                }
             }
             image(R.mipmap.page1_gold5){
+                id="imageGold5"
                 lparams {
                     align="imageWallet"
                     margin(left=dp(-4))
                 }
+                animator {
+                    alpha=0f
+                    alpha(0f,1f)
+                    translationY=-target.height*1f
+                    translationYBy(target.height*1f)
+                }
+                scrolled { view, _, offset, _ ,_->
+                    view.alpha=1f-offset*4
+                    view.translationY=view.height*-offset
+                }
             }
             animatorSet {
-                play("imageText1").delay(600).
-                        after("imageText2").after("imageWallet").
-                        after("imageSquare")
+                play("imageWallet").
+                        after("imageText1").after("imageText2").after("imageGold1").
+                        with("imageGold2").with("imageGold3").with("imageGold4").with("imageGold5").
+                        after("imageSquare").after("imageGirl1").with("imageGirl2").with("imageBoy")
+            }
+
+            pageSelected{ view, _ ->
+                view.alpha=1f
             }
         }
     }

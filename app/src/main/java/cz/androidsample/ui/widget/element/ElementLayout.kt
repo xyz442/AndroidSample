@@ -12,8 +12,8 @@ import cz.androidsample.ui.widget.element.animator.ElementLayoutAnimatorSet
  */
 class ElementLayout(val context:Context){
     internal val elements = mutableListOf<Element<*>>()
-    var animatorInit:(ElementLayoutAnimatorSet.()->Unit)?=null
-    var animator:ElementLayoutAnimatorSet?=null
+    internal var animatorInit:(ElementLayoutAnimatorSet.()->Unit)?=null
+    internal var animator:ElementLayoutAnimatorSet?=null
     /**
      * 添加一个元素
      */
