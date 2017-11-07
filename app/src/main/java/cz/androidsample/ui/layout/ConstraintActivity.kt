@@ -3,7 +3,6 @@ package cz.androidsample.ui.layout
 import android.graphics.Color
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.view.View
 import android.widget.FrameLayout
 
 import cz.androidsample.R
@@ -12,7 +11,6 @@ import cz.androidsample.ui.widget.element.click
 import cz.androidsample.ui.widget.element.image
 import cz.androidsample.ui.widget.element.text
 import kotlinx.android.synthetic.main.activity_constraint.*
-import org.jetbrains.anko.sdk25.coroutines.onClick
 
 class ConstraintActivity : AppCompatActivity() {
 
@@ -66,7 +64,7 @@ class ConstraintActivity : AppCompatActivity() {
                 }
             }
         }
-        frameContainer.addView(layout.pageLayout,FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.MATCH_PARENT)
+        frameContainer.addView(layout.layout,FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.MATCH_PARENT)
 
     }
 }

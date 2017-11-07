@@ -16,7 +16,6 @@ class Page2(val context: Context){
      * 获得一个分页
      */
     fun getPage()=with(Page(context)){
-        init { alpha=0f }
         layout {
             image(R.mipmap.page2_text1){
                 id="text1"
@@ -235,12 +234,10 @@ class Page2(val context: Context){
                 }
             }
             animatorSet {
+                alpha=1f
                 play("imageCar").after("text1").after("text2").
                         after("box1").with("box2").with("box3").
                         with("box4").after("imageBoy").with("imageGirl1").after("imageGirl2")
-            }
-            pageSelected { view, _ ->
-                view.alpha=1f
             }
         }
     }

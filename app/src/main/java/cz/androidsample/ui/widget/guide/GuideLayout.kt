@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter
 import android.animation.AnimatorSet
 import android.content.Context
 import android.graphics.Canvas
+import android.os.Build
 import android.support.v4.view.MotionEventCompat
 import android.support.v4.view.VelocityTrackerCompat
 import android.support.v4.view.ViewCompat
@@ -71,6 +72,8 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
         get()= pagerAdapter?.count?:0
 
     init {
+        //使分页数为0
+        Page.pageIndex=0
         val configuration = ViewConfiguration.get(context)
         touchSlop = configuration.scaledTouchSlop
         maximumVelocity = configuration.scaledMaximumFlingVelocity
@@ -211,48 +214,13 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
         items.add(itemInfo)
         //如果添加了前景,则添加顺序往前-1
         var index=if(null!=foreLayout) childCount-1 else childCount
-        debugLog("addNewItem:$position $curPosition ${scrapPage?.pageLayout}")
         //添加控件
-        addView(scrapPage.pageLayout,index)
-        //初始化
-        scrapPage.pageInit?.invoke(scrapPage.pageLayout)
+        addView(scrapPage.layout,index)
+        //创建分页回调
+        pagerAdapter?.onCreatePage(scrapPage,scrapPage.layout,position)
         //回调事件,将所有置为初始状态
         if(curPosition==position){
             setPageSelected(position)
-        }
-    }
-
-    private fun startPageAnimator(itemInfo:ItemInfo){
-        //执行初始化动画
-        //执行起始动画,并在执行完成后,设置为可滑动
-        val animatorSet=AnimatorSet()
-        val pageAnimator = itemInfo.page.pageLayout.getPageAnimatorSet()
-        if(null!=pageAnimator){
-            //禁止操作
-            isScrollEnable=false
-            if(0==itemInfo.position){
-                //第一次执行,将前景背景一并执行
-                val backAnimatorSet = backLayout?.getPageAnimatorSet()
-                val foreAnimatorSet = foreLayout?.getPageAnimatorSet()
-                if(null!=backAnimatorSet){
-                    animatorSet.play(backAnimatorSet).before(pageAnimator)
-                }
-                if(null!=foreAnimatorSet){
-                    animatorSet.play(pageAnimator).before(foreAnimatorSet)
-                }
-            } else {
-                //其他页操作
-                animatorSet.playTogether(pageAnimator)
-            }
-            //执行动画,并在执行完后置为可滚动
-            animatorSet.addListener(object :AnimatorListenerAdapter(){
-                override fun onAnimationEnd(animation: Animator?) {
-                    super.onAnimationEnd(animation)
-                    isScrollEnable=true
-                }
-            })
-            animatorSet.start()
-            debugLog("addNewItem:$curPosition startAnim")
         }
     }
 
@@ -260,7 +228,7 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
      * 获得当前元素在布局位置
      */
     fun getViewPosition(child:View):Int{
-        val item: ItemInfo?=items.find { it.page.pageLayout==child }
+        val item: ItemInfo?=items.find { it.page.layout ==child }
         return item?.position?:-1
     }
 
@@ -269,7 +237,7 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
      */
     fun destroyItem(position:Int,page: Page?){
         val page=page?:return
-        removeView(page.pageLayout)//移除控件
+        removeView(page.layout)//移除控件
         recyclerBin.addScrapView(position,page)
     }
 
@@ -356,13 +324,7 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
     internal fun setPageSelected(position: Int){
         debugLog("setPageSelected:$position")
         //执行初始动画
-        if(position==curPosition){
-            val itemInfo=items.find { it.position==position }
-            if(null!=itemInfo&&!itemInfo.init){
-                itemInfo.init=true
-                post{startPageAnimator(itemInfo)}
-            }
-        }
+        checkAndStartPageAnimator(position)
         //回调前景背景元素
         foreLayout?.onPageSelected(position)
         backLayout?.onPageSelected(position)
@@ -370,6 +332,57 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
         val currentItem=items.find { it.position==position }
         currentItem?.page?.onPageSelected(position)
         pageChangeListenerItems?.forEach { it.onPageSelected(position) }
+    }
+
+    /**
+     * 检测并执行初始动画
+     */
+    private fun checkAndStartPageAnimator(position: Int) {
+        if (position == curPosition) {
+            val itemInfo = items.find { it.position == position }
+            if (null != itemInfo && !itemInfo.init) {
+                itemInfo.init = true
+                post {
+                    pagerAdapter?.onStartPageAnimator(itemInfo.page,itemInfo.page.layout, itemInfo.position)
+                    startPageAnimator(itemInfo)
+                }
+            }
+        }
+    }
+
+    private fun startPageAnimator(itemInfo:ItemInfo){
+        //执行初始化动画
+        //执行起始动画,并在执行完成后,设置为可滑动
+        val animatorSet=AnimatorSet()
+        //记录分页动画.以备结束时释放
+        itemInfo.pageAnimator=animatorSet
+        val pageAnimator = itemInfo.page.layout.getPageAnimatorSet()
+        if(null!=pageAnimator){
+            //禁止操作
+            isScrollEnable=false
+            if(0==itemInfo.position){
+                //第一次执行,将前景背景一并执行
+                val backAnimatorSet = backLayout?.getPageAnimatorSet()
+                val foreAnimatorSet = foreLayout?.getPageAnimatorSet()
+                if(null!=backAnimatorSet){
+                    animatorSet.play(backAnimatorSet).before(pageAnimator)
+                }
+                if(null!=foreAnimatorSet){
+                    animatorSet.play(pageAnimator).before(foreAnimatorSet)
+                }
+            } else {
+                //其他页操作
+                animatorSet.playTogether(pageAnimator)
+            }
+            //执行动画,并在执行完后置为可滚动
+            animatorSet.addListener(object :AnimatorListenerAdapter(){
+                override fun onAnimationEnd(animation: Animator?) {
+                    super.onAnimationEnd(animation)
+                    isScrollEnable=true
+                }
+            })
+            animatorSet.start()
+        }
     }
 
     internal fun setScrollState(newState: Int) {
@@ -594,6 +607,7 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
     class ItemInfo(var page: Page, var position: Int = 0){
         var scrolling: Boolean = false
         var init:Boolean =false
+        var pageAnimator:AnimatorSet?=null
     }
 
     inner class RecyclerBin {

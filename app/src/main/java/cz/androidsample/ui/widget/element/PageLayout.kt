@@ -3,13 +3,10 @@ package cz.androidsample.ui.widget.element
 import android.animation.Animator
 import android.animation.AnimatorSet
 import android.content.Context
-import android.content.res.Resources
 import android.support.constraint.ConstraintLayout
-import android.support.constraint.solver.widgets.ConstraintWidget
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
-import cz.androidsample.debugLog
 import cz.androidsample.ui.widget.element.animator.ElementAnimatorSet
 import cz.androidsample.ui.widget.element.animator.ElementLayoutAnimatorSet
 
@@ -98,7 +95,10 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Co
     private fun initElementLayoutAnimator(layout: ElementLayout) {
         val animatorInit = layout.animatorInit
         if(null!=animatorInit){
-            layout.animator= ElementLayoutAnimatorSet(layout).apply(animatorInit)
+            val layoutAnimatorSet=ElementLayoutAnimatorSet(layout).apply(animatorInit)
+            layout.animator=layoutAnimatorSet
+            //设置初始化控件动画属性
+            initElementAnimatorAttribute(this,layoutAnimatorSet)
         }
     }
 
@@ -118,16 +118,22 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Co
             //赋予动画元素
             it.animator = animator
             //设置初始化控件动画属性
-            val target=it.target
-            target.alpha=animator.alpha
-            target.scaleX=animator.scaleX
-            target.scaleY=animator.scaleY
-            target.rotation=animator.rotation
-            target.rotationX=animator.rotationX
-            target.rotationY=animator.rotationY
-            target.translationX=animator.translationX
-            target.translationY=animator.translationY
+            initElementAnimatorAttribute(it.target, animator)
         }
+    }
+
+    /**
+     * 初始化布局元素初始属性
+     */
+    private fun initElementAnimatorAttribute(target:View, animator: ElementAnimatorSet) {
+        target.alpha = animator.alpha
+        target.scaleX = animator.scaleX
+        target.scaleY = animator.scaleY
+        target.rotation = animator.rotation
+        target.rotationX = animator.rotationX
+        target.rotationY = animator.rotationY
+        target.translationX = animator.translationX
+        target.translationY = animator.translationY
     }
 
     override fun requestLayout() {

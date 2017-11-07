@@ -16,9 +16,6 @@ class Page3(val context: Context) {
      * 获得一个分页
      */
     fun getPage()=with(Page(context)){
-        init {
-            alpha=0f
-        }
         layout {
             image(R.mipmap.page3_text1){
                 id="text1"
@@ -267,27 +264,23 @@ class Page3(val context: Context) {
                 }
             }
 
-            image(R.mipmap.page3_girl3){
-                id="imageGirl3"
+            image(R.mipmap.page3_girl3) {
+                id = "imageGirl3"
                 lparams {
-                    align="imageCard"
-                    alignRule=LEFT_RIGHT or CENTER_VERTICAL
+                    align = "imageCard"
+                    alignRule = LEFT_RIGHT or CENTER_VERTICAL
                 }
                 animator {
-                    alpha=0f
-                    play(alpha(0f,1f).duration(600))
+                    alpha = 0f
+                    play(alpha(0f, 1f).duration(600))
                 }
-                scrolled { view, _, offset, _ ,current->
-                    if(current){
-                        view.alpha=1f-offset*4
+                scrolled { view, _, offset, _, current ->
+                    if (current) {
+                        view.alpha = 1f - offset * 4
                     } else {
-                        view.alpha=1f-(1f-offset)*4f
+                        view.alpha = 1f - (1f - offset) * 4f
                     }
                 }
-            }
-
-            pageSelected { view, position ->
-                view.alpha=1f
             }
         }
     }
