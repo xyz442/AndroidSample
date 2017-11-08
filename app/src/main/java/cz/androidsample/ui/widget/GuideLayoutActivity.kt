@@ -1,5 +1,7 @@
 package cz.androidsample.ui.widget
 
+import android.animation.AnimatorSet
+import android.animation.ValueAnimator
 import android.graphics.Color
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
@@ -7,6 +9,7 @@ import android.support.v7.app.AppCompatActivity
 import cz.androidsample.R
 import cz.androidsample.ui.widget.element.*
 import cz.androidsample.ui.widget.guide.adapter.*
+import cz.androidsample.ui.widget.guide.layoutmanager.PagerLayoutManager
 import cz.androidsample.ui.widget.guide.layoutmanager.StackLayoutManager
 import kotlinx.android.synthetic.main.activity_guide_layout.*
 import org.jetbrains.anko.sdk25.coroutines.onClick

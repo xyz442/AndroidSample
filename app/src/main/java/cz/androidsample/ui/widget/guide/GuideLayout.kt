@@ -3,16 +3,15 @@ package cz.androidsample.ui.widget.guide
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.AnimatorSet
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
-import android.os.Build
 import android.support.v4.view.MotionEventCompat
 import android.support.v4.view.VelocityTrackerCompat
 import android.support.v4.view.ViewCompat
 import android.support.v4.view.ViewPager
 import android.util.AttributeSet
 import android.util.Log
-import android.util.SparseArray
 import android.view.*
 import cz.androidsample.debugLog
 import cz.androidsample.ui.widget.element.Page
@@ -134,6 +133,10 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
     }
 
     override fun onDetachedFromWindow() {
+        //移除加载集动画
+        items.forEach { it.cancelAnimator() }
+        //移除缓存堆动画
+        recyclerBin.clearRecyclerBin()
         layoutManager?.onDetachedFromWindow(this)
         super.onDetachedFromWindow()
     }
@@ -187,7 +190,7 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
         //删除范围外条目
         items.filter { (it.position >= startPos || it.position <= endPos) && it.scrolling }.forEach {
             items.remove(it)
-            destroyItem(it.position,it.page)
+            destroyItem(it)
         }
         (startPos..endPos).forEach { pos->
             if(items.none { it.position==pos }){
@@ -199,25 +202,21 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
 
     private fun addNewItem(position: Int) {
         //此处检测缓存内是否有当前条目内容
-        var itemInfo:ItemInfo
-        var scrapPage = recyclerBin.getScrapPage(position)
-        if(null==scrapPage){
+        var itemInfo = recyclerBin.getScrap(position)
+        if(null==itemInfo){
             //获取一个新的页面
-            scrapPage = pagerAdapter?.getPage(this, position) ?: throw NullPointerException("view is null!")
-            itemInfo=ItemInfo(scrapPage,position)
-        } else {
-            //从缓存取出来分页己不需要初始化
-            itemInfo=ItemInfo(scrapPage,position)
-            itemInfo.init=true
+            val page = pagerAdapter?.getPage(this, position) ?: throw NullPointerException("view is null!")
+            itemInfo=ItemInfo(page,position)
         }
+        val page=itemInfo.page
         //添加分页
         items.add(itemInfo)
         //如果添加了前景,则添加顺序往前-1
         var index=if(null!=foreLayout) childCount-1 else childCount
         //添加控件
-        addView(scrapPage.layout,index)
+        addView(page.layout,index)
         //创建分页回调
-        pagerAdapter?.onCreatePage(scrapPage,scrapPage.layout,position)
+        pagerAdapter?.onCreatePage(page,page.layout,position)
         //回调事件,将所有置为初始状态
         if(curPosition==position){
             setPageSelected(position)
@@ -235,10 +234,9 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
     /**
      * 移除指定位置view
      */
-    fun destroyItem(position:Int,page: Page?){
-        val page=page?:return
-        removeView(page.layout)//移除控件
-        recyclerBin.addScrapView(position,page)
+    fun destroyItem(item:ItemInfo){
+        removeView(item.page.layout)//移除控件
+        recyclerBin.addScrap(item)
     }
 
     /**
@@ -253,6 +251,8 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
         if(layoutManager.preScrollOffset(offsetX, offsetY, consumed)){
             //处理滚动
             layoutManager.onScrolled(offsetX+consumed[0],offsetY+consumed[1])
+            backLayout?.x=scrollX*1f
+            foreLayout?.x=scrollX*1f
         }
         //回调滚动速率
         pageScrolled()
@@ -375,14 +375,47 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
                 animatorSet.playTogether(pageAnimator)
             }
             //执行动画,并在执行完后置为可滚动
-            animatorSet.addListener(object :AnimatorListenerAdapter(){
-                override fun onAnimationEnd(animation: Animator?) {
+            val animatorListener=object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
                     super.onAnimationEnd(animation)
-                    isScrollEnable=true
+                    isScrollEnable = true
                 }
-            })
+
+                override fun onAnimationRepeat(animation: Animator) {
+                    super.onAnimationRepeat(animation)
+                    isScrollEnable = true
+                }
+            }
+            //找到无限循环动画体
+            val infiniteAnimator = getPageInfiniteAnimator(animatorSet)
+            if(null!=infiniteAnimator){
+                infiniteAnimator.addListener(animatorListener)
+            } else {
+                animatorSet.addListener(animatorListener)
+            }
             animatorSet.start()
         }
+    }
+
+    /**
+     * 查找出无限循环动画体
+     */
+    private fun getPageInfiniteAnimator(animatorSet: AnimatorSet):Animator? {
+        var findAnimator:Animator?=null
+        for (childAnimation in animatorSet.childAnimations) {
+            if(childAnimation is AnimatorSet){
+                findAnimator=getPageInfiniteAnimator(childAnimation)
+                if(null!=findAnimator){
+                    return findAnimator
+                }
+            } else if(childAnimation is ValueAnimator){
+                if(ValueAnimator.INFINITE==childAnimation.repeatCount){
+                    //无限循环动画
+                    return childAnimation
+                }
+            }
+        }
+        return findAnimator
     }
 
     internal fun setScrollState(newState: Int) {
@@ -608,20 +641,42 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
         var scrolling: Boolean = false
         var init:Boolean =false
         var pageAnimator:AnimatorSet?=null
+
+        fun cancelAnimator(){
+            val pageAnimator=pageAnimator?:return
+            removeAnimatorAllListeners(pageAnimator)
+            pageAnimator.cancel()
+        }
+
+        /**
+         * 移除动画体所有监听事件
+         */
+        private fun removeAnimatorAllListeners(animatorSet: AnimatorSet){
+            for (childAnimation in animatorSet.childAnimations) {
+                childAnimation.removeAllListeners()
+                if(childAnimation is AnimatorSet){
+                    removeAnimatorAllListeners(childAnimation)
+                } else if(childAnimation is ValueAnimator){
+                    childAnimation.removeAllUpdateListeners()
+                }
+            }
+        }
     }
 
     inner class RecyclerBin {
-        val scrapItems= SparseArray<Page>()
+        val scrapItems= mutableListOf<ItemInfo>()
 
-        fun addScrapView(position: Int, page: Page) {
-            scrapItems.put(position,page)
+        fun addScrap(item: ItemInfo) {
+            scrapItems.add(item)
         }
 
-        fun getScrapPage(position: Int): Page? {
-            return scrapItems.get(position)
+        fun getScrap(position: Int): ItemInfo? {
+            return scrapItems.find { it.position==position }
         }
 
         fun clearRecyclerBin() {
+            //取消所有动画
+            this.scrapItems.forEach { it.cancelAnimator() }
             this.scrapItems.clear()
         }
     }

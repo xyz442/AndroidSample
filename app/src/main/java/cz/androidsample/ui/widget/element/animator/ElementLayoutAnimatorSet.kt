@@ -1,5 +1,6 @@
 package cz.androidsample.ui.widget.element.animator
 
+import android.animation.AnimatorListenerAdapter
 import android.animation.AnimatorSet
 import android.view.View
 import cz.androidsample.ui.widget.element.ElementLayout
@@ -11,6 +12,8 @@ import cz.androidsample.ui.widget.element.PageLayout
  */
 class ElementLayoutAnimatorSet(val layout: ElementLayout):ElementAnimatorSet() {
     private var root=Animator.Node(null)
+    //动画最大控制时间
+    var animatorDuration:Long=0
     /**
      * 获取一个元素动画对象
      * @param elementId:元素id

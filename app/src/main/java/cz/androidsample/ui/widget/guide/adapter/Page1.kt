@@ -83,6 +83,7 @@ class Page1(val context: Context){
                 scrolled { view, _, offset, _,_->
                     view.alpha=1f-offset*4
                 }
+
             }
             image(R.mipmap.page_girl2){
                 id="imageGirl1"
@@ -174,9 +175,8 @@ class Page1(val context: Context){
                 }
                 animator {
                     alpha=0f
-                    alpha(0f,1f)
                     translationY=-target.height*1f
-                    translationYBy(target.height*1f)
+                    play(alpha(0f,1f)).with(translationYBy(target.height*1f))
                 }
                 scrolled { view, _, offset, _,_->
                     view.alpha=1f-offset*4

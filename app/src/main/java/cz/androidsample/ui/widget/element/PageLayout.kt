@@ -74,7 +74,6 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Co
         //返回动画组
         val animator=layout.animator
         return if(null!=animator){
-            //转换为对象动画
             animator.convert(this, this)
         } else {
             Log.w(TAG,"当前分页没有使用定义动画组,并行执行所有元素动画!")

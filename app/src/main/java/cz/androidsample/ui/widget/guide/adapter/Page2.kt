@@ -1,5 +1,6 @@
 package cz.androidsample.ui.widget.guide.adapter
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Color
 import android.view.Gravity
@@ -71,7 +72,8 @@ class Page2(val context: Context){
                 animator {
                     alpha=0f
                     translationY=-target.height*1f
-                    play(alpha(0f,1f)).with(translationYBy(target.height*1f).duration(600))
+                    play(alpha(0f,1f)).with(translationYBy(target.height*1f,600)).
+                            after(translationY(0f,-20f,1200,-1,ValueAnimator.REVERSE).delay(1000))
                 }
                 scrolled { view, _, offset, _, current ->
                     if(current){
@@ -94,7 +96,8 @@ class Page2(val context: Context){
                 animator {
                     alpha=0f
                     translationY=-target.height*1f
-                    play(alpha(0f,1f)).with(translationYBy(target.height*1f).duration(600))
+                    play(alpha(0f,1f)).with(translationYBy(target.height*1f,600)).
+                            after(translationY(0f,-20f,1400,-1,ValueAnimator.REVERSE).delay(1000))
                 }
                 scrolled { view, _, offset, _, current ->
                     if(current){
@@ -117,7 +120,8 @@ class Page2(val context: Context){
                 animator {
                     alpha=0f
                     translationY=-target.height*1f
-                    play(alpha(0f,1f)).with(translationYBy(target.height*1f).duration(600))
+                    play(alpha(0f,1f)).with(translationYBy(target.height*1f,600)).
+                            after(translationY(0f,-20f,1600,-1,ValueAnimator.REVERSE).delay(1000))
                 }
                 scrolled { view, _, offset, _, current ->
                     if(current){
@@ -140,7 +144,7 @@ class Page2(val context: Context){
                 animator {
                     alpha=0f
                     translationY=-target.height*1f
-                    play(alpha(0f,1f)).with(translationYBy(target.height*1f).duration(600))
+                    play(alpha(0f,1f)).with(translationYBy(target.height*1f,600))
                 }
                 scrolled { view, position, offset, _, current ->
                     debugLog("Page2:$position $offset $current")
@@ -234,7 +238,7 @@ class Page2(val context: Context){
                 }
             }
             animatorSet {
-                alpha=1f
+                animatorDuration=5*1000
                 play("imageCar").after("text1").after("text2").
                         after("box1").with("box2").with("box3").
                         with("box4").after("imageBoy").with("imageGirl1").after("imageGirl2")
