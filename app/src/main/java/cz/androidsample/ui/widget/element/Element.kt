@@ -2,9 +2,7 @@ package cz.androidsample.ui.widget.element
 
 import android.content.Context
 import android.graphics.drawable.Drawable
-import android.support.constraint.ConstraintLayout
 import android.view.View
-import cz.androidsample.debugLog
 import cz.androidsample.ui.widget.element.animator.ElementAnimatorSet
 import org.jetbrains.anko.backgroundColor
 import org.jetbrains.anko.backgroundDrawable
@@ -29,7 +27,7 @@ open class Element<V:View>{
     var paddingRight=0
     var paddingBottom=0
     var padding=0
-    var layoutParams=ElementLayoutParams()
+    var layoutParams= PageLayoutParams()
     //保留表达式,而不是直接初始化,此处非常关键
     internal var animatorInit:(ElementAnimatorSet.()->Unit)?=null
     internal var animator:ElementAnimatorSet?=null
@@ -69,8 +67,8 @@ open class Element<V:View>{
         setBackground(view)
         //设置内边距
         setPadding(view,padding,paddingLeft,paddingTop,paddingRight,paddingBottom)
-        //设置layoutParams,目前只支持转换为ConstraintLayout.LayoutParams
-        setLayoutParams(view,layoutParams)
+        //设置layoutParams
+        view.layoutParams=layoutParams
         //设置点击
         if(null!=viewClick){
             view.setOnClickListener { viewClick?.invoke(it) }
@@ -102,79 +100,13 @@ open class Element<V:View>{
                 if(0== paddingRight) padding else paddingRight,
                 if(0== paddingBottom) padding else paddingBottom)
     }
-
-    /**
-     * 设置控件LayoutParams
-     */
-    private fun setLayoutParams(view: V,layoutParams:ElementLayoutParams) {
-        //映射为对应关系
-        val constrainLayoutParams=ConstraintLayout.LayoutParams(layoutParams.width, layoutParams.height)
-        //设定内边距
-        constrainLayoutParams.leftMargin=if(0==layoutParams.leftMargin) layoutParams.margin else layoutParams.leftMargin
-        constrainLayoutParams.topMargin=if(0==layoutParams.topMargin) layoutParams.margin else layoutParams.topMargin
-        constrainLayoutParams.rightMargin=if(0==layoutParams.rightMargin) layoutParams.margin else layoutParams.rightMargin
-        constrainLayoutParams.bottomMargin=if(0==layoutParams.bottomMargin) layoutParams.margin else layoutParams.bottomMargin
-        //以tag计算id
-        var align=layoutParams.PARENT
-        if(layoutParams.PARENT_ID !=layoutParams.align){
-            align=System.identityHashCode(layoutParams.align)
-        }
-        debugLog("setLayoutParams:$align align:${layoutParams.align}")
-        if(layoutParams.width==layoutParams.MATCH_PARENT){
-            constrainLayoutParams.leftToLeft=layoutParams.PARENT
-            constrainLayoutParams.rightToRight=layoutParams.PARENT
-        }
-        if(layoutParams.height==layoutParams.MATCH_PARENT){
-            constrainLayoutParams.leftToLeft=layoutParams.PARENT
-            constrainLayoutParams.rightToRight=layoutParams.PARENT
-        }
-        //横向占比
-        if(0f!=layoutParams.horizontalPercent){
-            constrainLayoutParams.horizontalBias=layoutParams.horizontalPercent
-            constrainLayoutParams.leftToLeft=layoutParams.PARENT
-            constrainLayoutParams.rightToRight=layoutParams.PARENT
-        }
-        //纵向占比
-        if(0f!=layoutParams.verticalPercent){
-            constrainLayoutParams.verticalBias=layoutParams.verticalPercent
-            constrainLayoutParams.topToTop=layoutParams.PARENT
-            constrainLayoutParams.bottomToBottom=layoutParams.PARENT
-        }
-        //方向左
-        if(0!=(layoutParams.LEFT and layoutParams.alignRule)){
-            constrainLayoutParams.leftToLeft=align
-        } else if(0!=(layoutParams.LEFT_RIGHT and layoutParams.alignRule)){
-            constrainLayoutParams.leftToRight=align
-        }
-        //方向上
-        if(0!=(layoutParams.TOP and layoutParams.alignRule)){
-            constrainLayoutParams.topToTop=align
-        } else if(0!=(layoutParams.TOP_BOTTOM and layoutParams.alignRule)){
-            constrainLayoutParams.topToBottom=align
-        }
-        //方向右
-        if(0!=(layoutParams.RIGHT and layoutParams.alignRule)){
-            constrainLayoutParams.rightToRight=align
-        } else if(0!=(layoutParams.RIGHT_LEFT and layoutParams.alignRule)){
-            constrainLayoutParams.rightToLeft=align
-        }
-        //方向下
-        if(0!=(layoutParams.BOTTOM and layoutParams.alignRule)){
-            constrainLayoutParams.bottomToBottom=align
-        } else if(0!=(layoutParams.BOTTOM_TOP and layoutParams.alignRule)){
-            constrainLayoutParams.bottomToTop=align
-        }
-        constrainLayoutParams.validate()
-        view.layoutParams=constrainLayoutParams
-    }
-
     /**
      * 原始的lparams
      */
-    fun Element<V>.lparams(width:Int=ElementLayoutParams.WRAP_CONTENT,
-                           height:Int=ElementLayoutParams.WRAP_CONTENT,
-                           source: (ElementLayoutParams.()->Unit)?=null) {
-        layoutParams=ElementLayoutParams(width,height)
+    fun Element<V>.lparams(width:Int= PageLayoutParams.WRAP_CONTENT,
+                           height:Int= PageLayoutParams.WRAP_CONTENT,
+                           source: (PageLayoutParams.()->Unit)?=null) {
+        layoutParams= PageLayoutParams(width,height)
         if(null!=source){
             layoutParams.apply(source)
         }
@@ -183,8 +115,8 @@ open class Element<V:View>{
     /**
      * 原始的lparams
      */
-    fun Element<V>.fillparams(source: (ElementLayoutParams.()->Unit)?=null) {
-        layoutParams=ElementLayoutParams(ElementLayoutParams.MATCH_PARENT,ElementLayoutParams.MATCH_PARENT)
+    fun Element<V>.fillparams(source: (PageLayoutParams.()->Unit)?=null) {
+        layoutParams= PageLayoutParams(PageLayoutParams.MATCH_PARENT, PageLayoutParams.MATCH_PARENT)
         if(null==source){
             //置为居中,方位才会生效
             layoutParams.alignRule=layoutParams.CENTER

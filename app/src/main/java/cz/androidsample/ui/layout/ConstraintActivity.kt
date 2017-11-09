@@ -6,10 +6,7 @@ import android.os.Bundle
 import android.widget.FrameLayout
 
 import cz.androidsample.R
-import cz.androidsample.ui.widget.element.Page
-import cz.androidsample.ui.widget.element.click
-import cz.androidsample.ui.widget.element.image
-import cz.androidsample.ui.widget.element.text
+import cz.androidsample.ui.widget.element.*
 import kotlinx.android.synthetic.main.activity_constraint.*
 
 class ConstraintActivity : AppCompatActivity() {
@@ -19,14 +16,23 @@ class ConstraintActivity : AppCompatActivity() {
         setContentView(R.layout.activity_constraint)
         val layout = with(Page(this)) {
             layout {
+                vline {
+                    id="line"
+                    lparams { verticalPercent=0.55f }
+                }
+                hline {
+                    lparams { horizontalPercent=0.5f }
+                }
+
                 text {
                     id = "button1"
                     font("Button1", sp(16), Color.RED)
                     padding = dp(12)
                     backgroundColor=Color.GREEN
-                    lparams {
-                        margin(top = dp(20))
-                        alignRule = CENTER_HORIZONTAL
+                    lparams(width = 400) {
+                        align="line"
+                        margin(right=dp(-40),bottom = dp(10))
+                        alignRule = CENTER_HORIZONTAL or BOTTOM_TOP
                     }
                 }
                 text {
@@ -36,7 +42,7 @@ class ConstraintActivity : AppCompatActivity() {
                     padding = dp(12)
                     lparams {
                         align = "button1"
-                        margin(top = dp(-20))
+                        margin(top=dp(-10))
                         alignRule = TOP_BOTTOM or CENTER_HORIZONTAL
                     }
                 }
@@ -47,15 +53,17 @@ class ConstraintActivity : AppCompatActivity() {
                     padding = dp(12)
                     lparams {
                         align = "button2"
-                        margin(top = dp(-20),right = dp(-20))
-                        alignRule = TOP_BOTTOM or RIGHT
+                        margin(left = dp(20),top=dp(-10))
+                        alignRule = LEFT or TOP_BOTTOM
                     }
                 }
-                image(R.mipmap.page4_boy){
+                image{
                     id="boy"
+                    padding=dp(20)
+                    backgroundColor=Color.RED
                     lparams {
                         align="button3"
-                        margin(right=dp(-12),top = dp(-12))
+                        margin(top = dp(-12))
                         alignRule=RIGHT or TOP_BOTTOM
                     }
                     click {

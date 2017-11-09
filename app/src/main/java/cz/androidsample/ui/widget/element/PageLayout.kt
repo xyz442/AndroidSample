@@ -4,9 +4,12 @@ import android.animation.Animator
 import android.animation.AnimatorSet
 import android.content.Context
 import android.support.constraint.ConstraintLayout
+import android.support.constraint.solver.widgets.ConstraintWidget
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
+import cz.androidsample.debugLog
 import cz.androidsample.ui.widget.element.animator.ElementAnimatorSet
 import cz.androidsample.ui.widget.element.animator.ElementLayoutAnimatorSet
 
@@ -14,7 +17,8 @@ import cz.androidsample.ui.widget.element.animator.ElementLayoutAnimatorSet
  * Created by cz on 2017/10/27.
  * 分页操作排版布局
  */
-class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : ConstraintLayout(context, attrs, defStyleAttr){
+class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : ViewGroup(context, attrs, defStyleAttr){
+
     companion object{
         private val weightField=ConstraintLayout.LayoutParams::class.java.getDeclaredField("widget")
         init {
@@ -135,68 +139,157 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Co
         target.translationY = animator.translationY
     }
 
-    override fun requestLayout() {
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        for(i in 0..childCount-1){
+            val childView=getChildAt(i)
+            val layoutParams = childView.layoutParams
+            if(layoutParams is PageLayoutParams){
+                val childWidthMeasureSpec = getChildWidthMeasureSpec(layoutParams, widthMeasureSpec)
+                val childHeightMeasureSpec = getChildHeightMeasureSpec(layoutParams, heightMeasureSpec)
+                childView.measure(childWidthMeasureSpec,childHeightMeasureSpec)
+            }
+        }
+    }
+    /**
+     * 获取子孩子宽度的measureSpec
+     */
+    private fun getChildWidthMeasureSpec(layoutParams: PageLayoutParams,widthMeasureSpec:Int):Int {
+        val width = MeasureSpec.getSize(widthMeasureSpec)
+        val widthMode=MeasureSpec.getMode(widthMeasureSpec)
+        return if(0<layoutParams.widthPercent){
+            MeasureSpec.makeMeasureSpec(((measuredWidth-paddingLeft-paddingRight)*layoutParams.widthPercent).toInt(),MeasureSpec.EXACTLY)
+        } else when (layoutParams.width) {
+            LayoutParams.MATCH_PARENT -> MeasureSpec.makeMeasureSpec(width-Math.max(0,layoutParams.leftMargin)-Math.max(0,layoutParams.rightMargin),MeasureSpec.EXACTLY)
+            LayoutParams.WRAP_CONTENT-> MeasureSpec.makeMeasureSpec(layoutParams.width,MeasureSpec.AT_MOST)
+            else ->{
+                if(MeasureSpec.UNSPECIFIED==widthMode){
+                    MeasureSpec.makeMeasureSpec(layoutParams.width,MeasureSpec.UNSPECIFIED)
+                } else {
+                    MeasureSpec.makeMeasureSpec(layoutParams.width,MeasureSpec.EXACTLY)
+                }
+            }
+        }
+    }
+
+    /**
+     * 获取子孩子高度的measureSpec
+     */
+    private fun getChildHeightMeasureSpec(layoutParams: PageLayoutParams,heightMeasureSpec:Int):Int {
+        val height = MeasureSpec.getSize(heightMeasureSpec)
+        val heightMode=MeasureSpec.getMode(heightMeasureSpec)
+        return if(0<layoutParams.heightPercent){
+            MeasureSpec.makeMeasureSpec(((measuredHeight-paddingTop-paddingBottom)*layoutParams.heightPercent).toInt(),MeasureSpec.EXACTLY)
+        } else when (layoutParams.height) {
+            LayoutParams.MATCH_PARENT -> MeasureSpec.makeMeasureSpec(height-Math.max(0,layoutParams.topMargin)-Math.max(0,layoutParams.bottomMargin),MeasureSpec.EXACTLY)
+            LayoutParams.WRAP_CONTENT-> MeasureSpec.makeMeasureSpec(layoutParams.height,MeasureSpec.AT_MOST)
+            else -> {
+                if(MeasureSpec.UNSPECIFIED==heightMode){
+                    MeasureSpec.makeMeasureSpec(layoutParams.height,MeasureSpec.UNSPECIFIED)
+                } else {
+                    MeasureSpec.makeMeasureSpec(layoutParams.height,MeasureSpec.EXACTLY)
+                }
+            }
+        }
+    }
+
+    override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         for(i in 0..childCount-1) {
             val childView = getChildAt(i)
-            val layoutParams = childView.layoutParams
-            if (layoutParams is LayoutParams) {
-                layoutParams.validate()
-            }
-        }
-        super.requestLayout()
-    }
-
-//    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-//        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-//        setChildrenMarginOffset()
-//    }
-//
-//    /**
-//     * 设置margin值,为确保ConstraintLayout.margin值为负值不生效
-//     */
-//    private fun setChildrenMarginOffset() {
-//        for(i in 0..childCount-1){
-//            val childView=getChildAt(i)
-//            val layoutParams=childView.layoutParams
-//            if (layoutParams is LayoutParams) {
-//                layoutParams.validate()
-//                val weight = weightField.get(layoutParams)
-//                if (null != weight && weight is ConstraintWidget) {
-//                    weight.anchors[0].margin = layoutParams.leftMargin
-//                    weight.anchors[1].margin = layoutParams.topMargin
-//                    weight.anchors[2].margin = layoutParams.rightMargin
-//                    weight.anchors[3].margin = layoutParams.bottomMargin
-//                }
-//            }
-//        }
-//    }
-
-    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        super.onLayout(changed, left, top, right, bottom)
-        //使margin 负值生效
-        (0..childCount-1).map { getChildAt(it) }.forEach {
-            val layoutParams=it.layoutParams
-            if(layoutParams is ConstraintLayout.LayoutParams){
-                //横向偏移
-                var horizontalOffset=0
-                if(0>layoutParams.leftMargin){
-                    horizontalOffset=layoutParams.leftMargin
-                } else if(0>layoutParams.rightMargin){
-                    horizontalOffset=-layoutParams.rightMargin
-                }
-                //纵向偏移
-                var verticalOffset=0
-                if(0>layoutParams.topMargin){
-                    verticalOffset=layoutParams.topMargin
-                } else if(0>layoutParams.bottomMargin){
-                    verticalOffset=-layoutParams.bottomMargin
-                }
-                if(0!=horizontalOffset||0!=verticalOffset){
-                    it.layout(it.left+horizontalOffset,it.top+verticalOffset,it.right+horizontalOffset,it.bottom+verticalOffset)
-                }
+            if(!isChildRequested(childView)){
+                layoutChild(childView)
             }
         }
     }
+
+    private fun isChildRequested(childView:View):Boolean{
+        val layoutParams=childView.layoutParams
+        return layoutParams is PageLayoutParams&&layoutParams.isLayoutRequested
+    }
+
+    private fun layoutChild(childView:View):Boolean{
+        val layoutParams=childView.layoutParams
+        if(layoutParams is PageLayoutParams){
+            var align=layoutParams.PARENT
+            if(layoutParams.PARENT_ID !=layoutParams.align){
+                align=System.identityHashCode(layoutParams.align)
+            }
+            if(PageLayoutParams.PARENT==align){
+                //依赖父容器控件,直接排版
+                layoutAlignView(childView,this)
+            } else {
+                //依赖其他控件,继续操作
+                val alignView=findViewById(align)
+                if(null==alignView){
+                    throw NullPointerException("Can't find align:$align")
+                } else {
+                    if(isChildRequested(alignView)){
+                        //直接排版
+                        layoutAlignView(childView,alignView)
+                    } else {
+                        val layoutChild = layoutChild(alignView)
+                        if(layoutChild){
+                            //排版自己
+                            layoutAlignView(childView,alignView)
+                        }
+                    }
+                }
+            }
+        }
+        return true
+    }
+
+    /**
+     * 排版依赖控件
+     */
+    private fun layoutAlignView(childView:View,alignView:View){
+        val layoutParams=childView.layoutParams
+        if(layoutParams is PageLayoutParams){
+            //横向占比
+            var left=paddingLeft
+            var top=paddingTop
+            //横向占比
+            if(0f!=layoutParams.horizontalPercent&&layoutParams.horizontalPercent in 0f..1f){
+                left = ((measuredWidth-childView.measuredWidth)*layoutParams.horizontalPercent).toInt()
+            } else if(0!=(layoutParams.LEFT and layoutParams.alignRule)&&
+                    0!=(layoutParams.RIGHT and layoutParams.alignRule)){
+                //居中
+                left=(alignView.left+(alignView.width-childView.measuredWidth)/2)+layoutParams.leftMargin-layoutParams.rightMargin
+            } else if(0!=(layoutParams.LEFT and layoutParams.alignRule)){
+                //方向左
+                left=alignView.left+layoutParams.leftMargin
+            } else if(0!=(layoutParams.LEFT_RIGHT and layoutParams.alignRule)){
+                left=alignView.right+layoutParams.leftMargin
+            } else if(0!=(layoutParams.RIGHT and layoutParams.alignRule)){
+                //方向右,减去margin,而不是加
+                left=(alignView.right-childView.measuredWidth)-layoutParams.rightMargin
+            } else if(0!=(layoutParams.RIGHT_LEFT and layoutParams.alignRule)){
+                left=alignView.left-childView.measuredWidth-layoutParams.rightMargin
+            }
+            //纵向占比
+            if(0f!=layoutParams.verticalPercent&&layoutParams.verticalPercent in 0f..1f){
+                top = ((measuredHeight-childView.measuredHeight)*layoutParams.verticalPercent).toInt()
+            } else if(0!=(layoutParams.TOP and layoutParams.alignRule)&&
+                    0!=(layoutParams.BOTTOM and layoutParams.alignRule)){
+                top=(alignView.top+(alignView.height-childView.measuredHeight)/2)+layoutParams.topMargin-layoutParams.bottomMargin
+            } else if(0!=(layoutParams.TOP and layoutParams.alignRule)){
+                //方向上
+                top=alignView.top+layoutParams.topMargin
+            } else if(0!=(layoutParams.TOP_BOTTOM and layoutParams.alignRule)){
+                top=alignView.bottom+layoutParams.topMargin
+            } else if(0!=(layoutParams.BOTTOM and layoutParams.alignRule)){
+                //方向下,减去margin,而不是加
+                top=alignView.bottom-childView.measuredHeight-layoutParams.bottomMargin
+            } else if(0!=(layoutParams.BOTTOM_TOP and layoutParams.alignRule)){
+                top=alignView.top-childView.measuredHeight-layoutParams.bottomMargin
+            }
+            //设置排版完成
+            layoutParams.isLayoutRequested=true
+            //排版控件
+            childView.layout(left,top,left+childView.measuredWidth,top+childView.measuredHeight)
+        }
+    }
+
 
     override fun onDetachedFromWindow() {
         pageSelectItems.clear()
@@ -240,5 +333,13 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Co
             //回调变化
             listener(v,position)
         }
+    }
+
+    override fun generateLayoutParams(attrs: AttributeSet?): LayoutParams {
+        return LayoutParams(context,attrs)
+    }
+
+    override fun generateDefaultLayoutParams(): LayoutParams {
+        return LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT)
     }
 }

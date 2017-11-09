@@ -1,5 +1,6 @@
 package cz.androidsample.ui.widget.guide.adapter
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Color
 import android.view.Gravity
@@ -126,7 +127,6 @@ class Page3(val context: Context) {
                 id="imageWheel"
                 lparams {
                     align="imageScoreBg"
-                    margin(left=dp(-32),bottom = dp(-8))
                     alignRule=CENTER
                 }
                 animator {
@@ -145,12 +145,11 @@ class Page3(val context: Context) {
                 id="imageWheelFlag"
                 lparams {
                     align="imageScoreBg"
-                    margin(left=dp(-32),bottom = dp(-8))
                     alignRule=CENTER
                 }
                 animator {
                     alpha=0f
-                    play(alpha(0f,1f).duration(600))
+                    play(alpha(0f,1f).duration(600)).after(rotation(360f,0f,3000,-1,ValueAnimator.RESTART))
                 }
                 scrolled { view, _, offset, _ ,current->
                     if(current){
@@ -165,7 +164,7 @@ class Page3(val context: Context) {
                 font("500",sp(24),Color.RED)
                 lparams {
                     align="imageScoreBg"
-                    margin(left=dp(-36))
+                    margin(left=dp(-4),top=dp(-8))
                     alignRule=CENTER
                 }
                 animator {
@@ -185,7 +184,6 @@ class Page3(val context: Context) {
                 font("信用优秀",sp(9),Color.RED)
                 lparams {
                     align="imageCreditScore"
-                    margin(left=dp(-36))
                     alignRule=TOP_BOTTOM or CENTER_HORIZONTAL
                 }
                 animator {
