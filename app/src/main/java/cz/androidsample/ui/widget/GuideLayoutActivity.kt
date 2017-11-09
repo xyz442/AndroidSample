@@ -56,7 +56,7 @@ class GuideLayoutActivity : AppCompatActivity() {
                 lparams { verticalPercent=0.55f }
             }
             //背景房子
-            image(R.mipmap.house_background) {
+            image(R.mipmap.guide_house_background) {
                 id="image2"
                 lparams(PageLayoutParams.MATCH_PARENT) {
                     align="line"

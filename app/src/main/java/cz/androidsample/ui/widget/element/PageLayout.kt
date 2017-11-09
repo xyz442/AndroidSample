@@ -207,6 +207,7 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Vi
         return layoutParams is PageLayoutParams&&layoutParams.isLayoutRequested
     }
 
+
     private fun layoutChild(childView:View):Boolean{
         val layoutParams=childView.layoutParams
         if(layoutParams is PageLayoutParams){
@@ -215,8 +216,8 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Vi
                 align=System.identityHashCode(layoutParams.align)
             }
             if(PageLayoutParams.PARENT==align){
-                //依赖父容器控件,直接排版
-                layoutAlignView(childView,this)
+                //依赖父容器控件,直接排版,为防止父容器left/right排版位置问题,此处直接传大小
+                layoutAlignView(childView,this,paddingLeft,measuredWidth-paddingRight)
             } else {
                 //依赖其他控件,继续操作
                 val alignView=findViewById(align)
@@ -225,12 +226,12 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Vi
                 } else {
                     if(isChildRequested(alignView)){
                         //直接排版
-                        layoutAlignView(childView,alignView)
+                        layoutAlignView(childView,alignView,alignView.left,alignView.right)
                     } else {
                         val layoutChild = layoutChild(alignView)
                         if(layoutChild){
                             //排版自己
-                            layoutAlignView(childView,alignView)
+                            layoutAlignView(childView,alignView,alignView.left,alignView.right)
                         }
                     }
                 }
@@ -241,8 +242,10 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Vi
 
     /**
      * 排版依赖控件
+     * @param alignLeft 依赖控件左侧位置
+     * @param alignRight 依赖控件的右侧位置
      */
-    private fun layoutAlignView(childView:View,alignView:View){
+    private fun layoutAlignView(childView:View,alignView:View,alignLeft:Int,alignRight:Int){
         val layoutParams=childView.layoutParams
         if(layoutParams is PageLayoutParams){
             //横向占比
@@ -254,17 +257,17 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Vi
             } else if(0!=(layoutParams.LEFT and layoutParams.alignRule)&&
                     0!=(layoutParams.RIGHT and layoutParams.alignRule)){
                 //居中
-                left=(alignView.left+(alignView.width-childView.measuredWidth)/2)+layoutParams.leftMargin-layoutParams.rightMargin
+                left=(alignLeft+(alignView.width-childView.measuredWidth)/2)+layoutParams.leftMargin-layoutParams.rightMargin
             } else if(0!=(layoutParams.LEFT and layoutParams.alignRule)){
                 //方向左
-                left=alignView.left+layoutParams.leftMargin
+                left=alignLeft+layoutParams.leftMargin
             } else if(0!=(layoutParams.LEFT_RIGHT and layoutParams.alignRule)){
-                left=alignView.right+layoutParams.leftMargin
+                left=alignRight+layoutParams.leftMargin
             } else if(0!=(layoutParams.RIGHT and layoutParams.alignRule)){
                 //方向右,减去margin,而不是加
-                left=(alignView.right-childView.measuredWidth)-layoutParams.rightMargin
+                left=(alignRight-childView.measuredWidth)-layoutParams.rightMargin
             } else if(0!=(layoutParams.RIGHT_LEFT and layoutParams.alignRule)){
-                left=alignView.left-childView.measuredWidth-layoutParams.rightMargin
+                left=alignLeft-childView.measuredWidth-layoutParams.rightMargin
             }
             //纵向占比
             if(0f!=layoutParams.verticalPercent&&layoutParams.verticalPercent in 0f..1f){
@@ -287,6 +290,7 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Vi
             layoutParams.isLayoutRequested=true
             //排版控件
             childView.layout(left,top,left+childView.measuredWidth,top+childView.measuredHeight)
+            Log.e(TAG,"layoutView:$left $top ${left+childView.measuredWidth} ${top+childView.measuredHeight}")
         }
     }
 
