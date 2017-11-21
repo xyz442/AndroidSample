@@ -10,8 +10,16 @@ import cz.androidsample.R
 /**
  * Created by cz on 2017/11/21.
  */
-class BannerPage3Fragment:Fragment(){
+class BannerPage3Fragment:BaseBannerPageFragment(){
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_banner_page1,container,false)
+        return inflater.inflate(R.layout.fragment_banner_page3,container,false)
+    }
+    override fun startPageAnimator() {
+
+    }
+
+    override fun prePageAnimator() {
+
     }
 }
