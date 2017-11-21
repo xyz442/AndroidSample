@@ -40,6 +40,8 @@ class PageLayoutParams(width:Int=WRAP_CONTENT,height:Int=WRAP_CONTENT): ViewGrou
         set(value) { margin(value,value,value,value) }
     //相对关系,默认依赖为父容器
     var align= PARENT_ID
+    //轨迹依赖
+    var arcAlign:String?=null
     var alignRule =LEFT or TOP
     //是否排版完成
     internal var isLayoutRequested=false

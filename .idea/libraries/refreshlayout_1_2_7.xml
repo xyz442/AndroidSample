@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="refreshlayout-1.2.7">
+    <CLASSES>
+      <root url="file://$USER_HOME$/.android/build-cache/0595efbd988dd16b4c4369ed9c98cf950612fd28/output/res" />
+      <root url="jar://$USER_HOME$/.android/build-cache/0595efbd988dd16b4c4369ed9c98cf950612fd28/output/jars/classes.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/cz.refreshlayout.library/refreshlayout/1.2.7/4cedb3b8a3c316a4404e93c1d50e122d68e5420b/refreshlayout-1.2.7-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

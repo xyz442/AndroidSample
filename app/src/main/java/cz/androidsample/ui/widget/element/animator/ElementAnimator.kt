@@ -7,6 +7,7 @@ import android.view.View
 import android.view.animation.Interpolator
 import android.view.animation.LinearInterpolator
 import android.widget.TextView
+import cz.androidsample.ui.widget.ArcTargetView
 import cz.androidsample.ui.widget.element.PageLayout
 
 /**
@@ -185,6 +186,67 @@ class NumberElementAnimator(val start:Int, val end:Int,duration:Long,repeatCount
         return animator
     }
 }
+
+/**
+ * arc轨道前进动画
+ */
+class ArcElementAnimator(val targetId:String,val fraction:Float,duration:Long,repeatCount: Int,repeatMode: Int,val action:((Int)->String)?=null):ElementAnimator(duration,repeatCount,repeatMode) {
+    override fun convert(parent: PageLayout, target: View): android.animation.Animator {
+        val elementView= parent.findElement(targetId)
+        if(null==elementView){
+            throw NullPointerException("Target View is null! elementId:$targetId")
+        } else if(elementView !is ArcTargetView){
+            throw NullPointerException("Target View must be ArcTargetView! elementId:$targetId")
+        } else {
+            //设置轨道进度
+            elementView.setArcFraction(fraction)
+            //设置起始位置
+            setTargetArc(elementView, target)
+            val animator1 = ObjectAnimator.ofFloat(target,"arcFraction",fraction,1f)
+            val animator2 = ObjectAnimator.ofFloat(target,"arcFraction",0f,1f)
+            animator1.addUpdateListener { setTargetArc(elementView, target) }
+            animator2.addUpdateListener { setTargetArc(elementView, target) }
+            setElementAnimator(this,animator2)
+            val animatorSet=AnimatorSet()
+            animatorSet.play(animator1).before(animator2)
+            return animatorSet
+        }
+    }
+
+    private fun setTargetArc(elementView: ArcTargetView, target: View) {
+        val arcDegrees = elementView.getArcDegrees()
+        val x = elementView.getArcX()
+        val y = elementView.getArcY()
+        //设置角度以及旋转位置
+        target.rotation = arcDegrees
+        target.x = elementView.left + x
+        target.y = elementView.top + y
+    }
+}
+
+/**
+ * x移动
+ */
+class XElementAnimator(val start:Float, val end:Float,duration: Long,repeatCount: Int,repeatMode: Int) : ElementAnimator(duration,repeatCount,repeatMode) {
+    override fun convert(parent: PageLayout, target: View): android.animation.Animator {
+        val animator = ObjectAnimator.ofFloat(target, "x",start, end)
+        setElementAnimator(this,animator)
+        return animator
+    }
+}
+
+
+/**
+ * y移动
+ */
+class YElementAnimator(val start:Float, val end:Float,duration: Long,repeatCount: Int,repeatMode: Int) : ElementAnimator(duration,repeatCount,repeatMode) {
+    override fun convert(parent: PageLayout, target: View): android.animation.Animator {
+        val animator = ObjectAnimator.ofFloat(target, "y",start, end)
+        setElementAnimator(this,animator)
+        return animator
+    }
+}
+
 
 private inline fun setElementAnimator(elementAnimator: ElementAnimator,animator: ValueAnimator) {
     animator.repeatCount = elementAnimator.repeatCount

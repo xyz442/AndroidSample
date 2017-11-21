@@ -33,12 +33,25 @@ inline fun ElementLayout.text(init:TextElement.()->Unit){
 }
 
 /**
+ * 扩展text元素
+ */
+inline fun ElementLayout.relative(init:ElementRelativeLayout.()->Unit){
+    addElement(ElementRelativeLayout().apply(init))
+}
+
+/**
  * 扩展图片元素
  */
 inline fun ElementLayout.image(resource:Int=-1, init: ImageElement.()->Unit){
     addElement(ImageElement(resource).apply(init))
 }
 
+/**
+ * 扩展图片元素
+ */
+inline fun ElementLayout.arcView(resource:Int=-1, init: ArcElement.()->Unit){
+    addElement(ArcElement(resource).apply(init))
+}
 
 /**
  * 横向线元素,可用做导航线
@@ -180,6 +193,18 @@ inline fun ElementAnimatorSet.translationX(start: Float,end:Float,duration:Long=
     return animator
 }
 
+inline fun ElementAnimatorSet.x(start: Float,end:Float,duration:Long=300,repeatCount:Int=0,repeatMode:Int= ValueAnimator.RESTART):ElementAnimator{
+    val animator=XElementAnimator(start,end,duration,repeatCount,repeatMode)
+    addAnimator(animator)
+    return animator
+}
+
+inline fun ElementAnimatorSet.y(start: Float,end:Float,duration:Long=300,repeatCount:Int=0,repeatMode:Int= ValueAnimator.RESTART):ElementAnimator{
+    val animator=XElementAnimator(start,end,duration,repeatCount,repeatMode)
+    addAnimator(animator)
+    return animator
+}
+
 inline fun ElementAnimatorSet.translationXBy(end:Float,duration:Long=300,repeatCount:Int=0,repeatMode:Int= ValueAnimator.RESTART):ElementAnimator{
     val animator=TranslationXByElementAnimator(end,duration,repeatCount,repeatMode)
     addAnimator(animator)
@@ -219,6 +244,12 @@ inline fun ElementAnimatorSet.scaleY(start:Float,end:Float,duration:Long=300,rep
 //文本变化
 fun ElementAnimatorSet.number(start:Int,end:Int,duration:Long=300,repeatCount:Int=0,repeatMode:Int= ValueAnimator.RESTART,action:((Int)->String)?=null):ElementAnimator{
     val animator=NumberElementAnimator(start,end,duration,repeatCount,repeatMode,action)
+    addAnimator(animator)
+    return animator
+}
+//轨道前进
+inline fun ElementAnimatorSet.arc(targetId:String, fraction:Float, duration:Long=300, repeatCount:Int=0, repeatMode:Int= ValueAnimator.RESTART):ElementAnimator{
+    val animator=ArcElementAnimator(targetId, fraction,duration,repeatCount,repeatMode)
     addAnimator(animator)
     return animator
 }

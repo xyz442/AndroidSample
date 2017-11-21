@@ -30,7 +30,9 @@
         <activity android:name=".ui.hierarchy.Hierarchy4Activity" />
         <activity android:name=".ui.widget.seat.SeatTable2Activity" />
         <activity android:name=".ui.anim.GuideActivity" />
-        <activity android:name=".ui.widget.GuideLayoutActivity"></activity>
+        <activity android:name=".ui.widget.GuideLayoutActivity" />
+        <activity android:name=".ui.anim.BannerActivity" />
+        <activity android:name=".ui.anim.ArcAnimatorActivity"></activity>
     </application>
 
 </manifest>

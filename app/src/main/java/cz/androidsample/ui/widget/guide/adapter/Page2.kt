@@ -58,7 +58,7 @@ class Page2(val context: Context){
             }
             //横向导航线
             vline {
-                id="line"
+                id="line2"
                 lparams { verticalPercent=0.55f }
             }
 
@@ -160,7 +160,7 @@ class Page2(val context: Context){
             image(R.mipmap.page2_car){
                 id="imageCar"
                 lparams {
-                    align="line"
+                    align="line2"
                     bottomMargin=dp(42)
                     alignRule=CENTER
                 }

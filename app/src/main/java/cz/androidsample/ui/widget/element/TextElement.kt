@@ -7,7 +7,6 @@ import android.text.TextUtils
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
-import android.widget.ImageView
 import android.widget.TextView
 
 /**
@@ -25,7 +24,7 @@ class TextElement: Element<TextView>() {
     //文字样式
     var typeFace:Typeface=Typeface.DEFAULT
 
-    fun font(text:String?=null,textSize:Float=0f,textColor:Int=0){
+    fun font(text:String?=null, textSize:Float=0f, textColor: Int =0){
         if(!TextUtils.isEmpty(text)){
             this.text=text
         }
@@ -33,7 +32,7 @@ class TextElement: Element<TextView>() {
             this.textSize=textSize
         }
         if(0!=textColor){
-            this.textColor=textColor
+            this.textColor=textColor.toInt()
         }
     }
 

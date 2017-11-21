@@ -10,6 +10,7 @@ import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import cz.androidsample.debugLog
+import cz.androidsample.ui.widget.ArcTargetView
 import cz.androidsample.ui.widget.element.animator.ElementAnimatorSet
 import cz.androidsample.ui.widget.element.animator.ElementLayoutAnimatorSet
 
@@ -148,6 +149,7 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Vi
                 val childWidthMeasureSpec = getChildWidthMeasureSpec(layoutParams, widthMeasureSpec)
                 val childHeightMeasureSpec = getChildHeightMeasureSpec(layoutParams, heightMeasureSpec)
                 childView.measure(childWidthMeasureSpec,childHeightMeasureSpec)
+                debugLog("onMeasure:${childView::class.java.simpleName} ${childView.measuredWidth} ${childView.measuredHeight}")
             }
         }
     }
@@ -156,14 +158,22 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Vi
      */
     private fun getChildWidthMeasureSpec(layoutParams: PageLayoutParams,widthMeasureSpec:Int):Int {
         val width = MeasureSpec.getSize(widthMeasureSpec)
-        val widthMode=MeasureSpec.getMode(widthMeasureSpec)
+        val parentMode=MeasureSpec.getMode(widthMeasureSpec)
         return if(0<layoutParams.widthPercent){
             MeasureSpec.makeMeasureSpec(((measuredWidth-paddingLeft-paddingRight)*layoutParams.widthPercent).toInt(),MeasureSpec.EXACTLY)
         } else when (layoutParams.width) {
             LayoutParams.MATCH_PARENT -> MeasureSpec.makeMeasureSpec(width-Math.max(0,layoutParams.leftMargin)-Math.max(0,layoutParams.rightMargin),MeasureSpec.EXACTLY)
-            LayoutParams.WRAP_CONTENT-> MeasureSpec.makeMeasureSpec(layoutParams.width,MeasureSpec.AT_MOST)
+            LayoutParams.WRAP_CONTENT-> {
+                val resultMode:Int
+                if (parentMode == View.MeasureSpec.AT_MOST || parentMode == View.MeasureSpec.EXACTLY) {
+                    resultMode = View.MeasureSpec.AT_MOST
+                } else {
+                    resultMode = View.MeasureSpec.UNSPECIFIED
+                }
+                MeasureSpec.makeMeasureSpec(layoutParams.width,resultMode)
+            }
             else ->{
-                if(MeasureSpec.UNSPECIFIED==widthMode){
+                if(MeasureSpec.UNSPECIFIED==parentMode){
                     MeasureSpec.makeMeasureSpec(layoutParams.width,MeasureSpec.UNSPECIFIED)
                 } else {
                     MeasureSpec.makeMeasureSpec(layoutParams.width,MeasureSpec.EXACTLY)
@@ -177,14 +187,22 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Vi
      */
     private fun getChildHeightMeasureSpec(layoutParams: PageLayoutParams,heightMeasureSpec:Int):Int {
         val height = MeasureSpec.getSize(heightMeasureSpec)
-        val heightMode=MeasureSpec.getMode(heightMeasureSpec)
+        val parentMode=MeasureSpec.getMode(heightMeasureSpec)
         return if(0<layoutParams.heightPercent){
             MeasureSpec.makeMeasureSpec(((measuredHeight-paddingTop-paddingBottom)*layoutParams.heightPercent).toInt(),MeasureSpec.EXACTLY)
         } else when (layoutParams.height) {
             LayoutParams.MATCH_PARENT -> MeasureSpec.makeMeasureSpec(height-Math.max(0,layoutParams.topMargin)-Math.max(0,layoutParams.bottomMargin),MeasureSpec.EXACTLY)
-            LayoutParams.WRAP_CONTENT-> MeasureSpec.makeMeasureSpec(layoutParams.height,MeasureSpec.AT_MOST)
+            LayoutParams.WRAP_CONTENT-> {
+                val resultMode:Int
+                if (parentMode == View.MeasureSpec.AT_MOST || parentMode == View.MeasureSpec.EXACTLY) {
+                    resultMode = View.MeasureSpec.AT_MOST
+                } else {
+                    resultMode = View.MeasureSpec.UNSPECIFIED
+                }
+                MeasureSpec.makeMeasureSpec(layoutParams.height,resultMode)
+            }
             else -> {
-                if(MeasureSpec.UNSPECIFIED==heightMode){
+                if(MeasureSpec.UNSPECIFIED==parentMode){
                     MeasureSpec.makeMeasureSpec(layoutParams.height,MeasureSpec.UNSPECIFIED)
                 } else {
                     MeasureSpec.makeMeasureSpec(layoutParams.height,MeasureSpec.EXACTLY)
@@ -213,7 +231,7 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Vi
         if(layoutParams is PageLayoutParams){
             var align=layoutParams.PARENT
             if(layoutParams.PARENT_ID !=layoutParams.align){
-                align=System.identityHashCode(layoutParams.align)
+                align=Math.abs(System.identityHashCode(layoutParams.align))
             }
             if(PageLayoutParams.PARENT==align){
                 //依赖父容器控件,直接排版,为防止父容器left/right排版位置问题,此处直接传大小
@@ -226,18 +244,42 @@ class PageLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : Vi
                 } else {
                     if(isChildRequested(alignView)){
                         //直接排版
-                        layoutAlignView(childView,alignView,alignView.left,alignView.right)
+                        val arcView=findElement(layoutParams.arcAlign)
+                        if(arcView==alignView&&alignView is ArcTargetView){
+                            layoutArcView(childView,alignView)
+                        } else {
+                            layoutAlignView(childView,alignView,alignView.left,alignView.right)
+                        }
                     } else {
                         val layoutChild = layoutChild(alignView)
                         if(layoutChild){
                             //排版自己
-                            layoutAlignView(childView,alignView,alignView.left,alignView.right)
+                            val arcView=findElement(layoutParams.arcAlign)
+                            if(arcView==alignView&&alignView is ArcTargetView){
+                                layoutArcView(childView,alignView)
+                            } else {
+                                layoutAlignView(childView,alignView,alignView.left,alignView.right)
+                            }
                         }
                     }
                 }
             }
         }
         return true
+    }
+
+    /**
+     * 排版轨迹控件
+     */
+    private fun layoutArcView(childView: View, alignView: ArcTargetView) {
+        val arcDegrees = alignView.getArcDegrees()
+        val x = alignView.getArcX()
+        val y = alignView.getArcY()
+        //设置位置以及旋转角度
+        childView.rotation = arcDegrees
+        val left = (alignView.left + x).toInt()
+        val top = (alignView.top + y).toInt()
+        childView.layout(left-childView.measuredWidth/2, top-childView.measuredWidth/2,left+childView.measuredWidth/2,top+childView.measuredHeight/2)
     }
 
     /**

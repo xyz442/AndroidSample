@@ -62,7 +62,7 @@ open class Element<V:View>{
         //记录操作view
         target=view
         //设置id
-        view.id=System.identityHashCode(id)
+        view.id=Math.abs(System.identityHashCode(id))
         //设置背景
         setBackground(view)
         //设置内边距

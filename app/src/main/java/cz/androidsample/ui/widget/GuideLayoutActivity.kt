@@ -52,14 +52,14 @@ class GuideLayoutActivity : AppCompatActivity() {
             }
             //横向导航线
             vline {
-                id="line"
+                id="vline"
                 lparams { verticalPercent=0.55f }
             }
             //背景房子
             image(R.mipmap.guide_house_background) {
                 id="image2"
                 lparams(PageLayoutParams.MATCH_PARENT) {
-                    align="line"
+                    align="vline"
                     alignRule=BOTTOM_TOP
                 }
                 animator {
@@ -72,7 +72,7 @@ class GuideLayoutActivity : AppCompatActivity() {
                 id="image3"
                 backgroundResources = R.mipmap.road
                 lparams(PageLayoutParams.MATCH_PARENT) {
-                    align="line"
+                    align="vline"
                     margin(left=dp(20),right=dp(20))
                     alignRule=TOP_BOTTOM or CENTER_HORIZONTAL
                 }

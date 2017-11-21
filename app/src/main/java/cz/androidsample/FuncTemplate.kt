@@ -3,6 +3,8 @@ package cz.kotlinwidget
 import android.app.Activity
 import cz.androidsample.ui.FlipImgActivity
 import cz.androidsample.ui.anim.Animator1Activity
+import cz.androidsample.ui.anim.ArcAnimatorActivity
+import cz.androidsample.ui.anim.BannerActivity
 import cz.androidsample.ui.hierarchy.*
 import cz.androidsample.ui.layout.ConstraintActivity
 import cz.androidsample.ui.widget.GuideLayoutActivity
@@ -100,7 +102,16 @@ class FuncTemplate {
                     id = 4
                     title = "动画演示"
                     desc = "部分动画实例演示"
-                    clazz= Animator1Activity::class.java
+                    item {
+                        pid=4
+                        title = "多层级示例4"
+                        clazz= Animator1Activity::class.java
+                    }
+                    item {
+                        pid=4
+                        title = "带旋转角度椭圆轨道动画"
+                        clazz= ArcAnimatorActivity::class.java
+                    }
                 }
 
                 item {
@@ -119,6 +130,12 @@ class FuncTemplate {
                         title = "GuideLayout"
                         desc = "演示GuideLayout使用,一个用dsl,简化的元素配置"
                         clazz= GuideLayoutActivity::class.java
+                    }
+                    item {
+                        pid=5
+                        title = "Banner"
+                        desc = "演示GuideLayout制作一处banner实例"
+                        clazz= BannerActivity::class.java
                     }
                 }
                 item {

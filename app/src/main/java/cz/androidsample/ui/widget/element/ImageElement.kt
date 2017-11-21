@@ -1,6 +1,7 @@
 package cz.androidsample.ui.widget.element
 
 import android.content.Context
+import android.graphics.drawable.ColorDrawable
 import android.view.View
 import android.widget.ImageView
 import org.jetbrains.anko.backgroundColor
@@ -9,7 +10,7 @@ import org.jetbrains.anko.backgroundResource
 /**
  * Created by cz on 2017/10/26.
  */
-class ImageElement(var drawableResource:Int= -1) : Element<ImageView>() {
+open class ImageElement(var drawableResource:Int= -1) : Element<ImageView>() {
     //背景颜色
     var drawableColor= INVALID
 
@@ -21,9 +22,9 @@ class ImageElement(var drawableResource:Int= -1) : Element<ImageView>() {
         super.initView(view)
         view.scaleType=scaleType
         if(INVALID !=drawableResource){
-            view.backgroundResource=drawableResource
+            view.setImageResource(drawableResource)
         } else if(INVALID !=drawableColor){
-            view.backgroundColor=drawableColor
+            view.setImageDrawable(ColorDrawable(drawableColor))
         }
     }
 }

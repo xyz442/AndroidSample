@@ -81,6 +81,10 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
         flingDistance = (MIN_DISTANCE_FOR_FLING * density).toInt()
     }
 
+    fun setScrollEnable(enable:Boolean){
+        this.isScrollEnable=enable
+    }
+
     //---------------------------------------------------------
     // 测量,排版
     //---------------------------------------------------------
@@ -370,6 +374,9 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
                 if(null!=foreAnimatorSet){
                     animatorSet.play(pageAnimator).before(foreAnimatorSet)
                 }
+                if(null==backAnimatorSet&&null==foreAnimatorSet){
+                    animatorSet.playTogether(pageAnimator)
+                }
             } else {
                 //其他页操作
                 animatorSet.playTogether(pageAnimator)
@@ -591,6 +598,10 @@ class GuideLayout(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : V
             targetPage = (currentPage.toFloat() + pageOffset + 0.5f).toInt()
         }
         return targetPage
+    }
+
+    fun setCurrentItem(position:Int){
+        setCurrentItemInternal(position,true,0)
     }
 
     private fun setCurrentItemInternal(position: Int, smoothScroll: Boolean, velocity: Int) {

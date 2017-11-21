@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="cz.androidsample.ui.anim.ArcAnimatorActivity">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="圆示图:"/>
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:padding="12dp"
+        android:layout_gravity="center_horizontal"
+        android:src="@mipmap/banner1_arc"
+        android:background="@color/colorPrimaryDark"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="映射运行图:"/>
+
+    <cz.androidsample.ui.widget.ArcTargetView
+        android:id="@+id/targetView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:padding="12dp"
+        android:layout_gravity="center_horizontal"
+        android:src="@mipmap/banner1_arc"
+        android:background="@color/colorPrimaryDark"/>
+
+    <TextView
+        android:id="@+id/currentText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="当前旋转角度:"/>
+
+    <android.support.v7.widget.AppCompatSeekBar
+        android:id="@+id/seekBar1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:max="360"/>
+
+    <TextView
+        android:id="@+id/currentProgressText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="当前轨道进度:"/>
+
+    <android.support.v7.widget.AppCompatSeekBar
+        android:id="@+id/seekBar2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp" />
+
+    <TextView
+        android:id="@+id/viewRotationText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="当前控件角度:"/>
+
+    <android.support.v7.widget.AppCompatSeekBar
+        android:id="@+id/seekBar3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:max="360"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="动画时间:"/>
+
+    <android.support.v7.widget.AppCompatEditText
+        android:id="@+id/durationEditor"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:maxLength="4"
+        android:text="3000"
+        android:inputType="number"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="right">
+        <Button
+            android:id="@+id/buttonStart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Start"/>
+    </LinearLayout>
+</LinearLayout>

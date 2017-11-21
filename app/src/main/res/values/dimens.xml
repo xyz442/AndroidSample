@@ -14,4 +14,6 @@
     <dimen name="small_text_size">11sp</dimen>
     <dimen name="text_size">13sp</dimen>
     <dimen name="large_text_size">16sp</dimen>
+
+    <dimen name="banner_offset">10dp</dimen>
 </resources>

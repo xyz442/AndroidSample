@@ -3,9 +3,7 @@ package cz.androidsample.ui.widget.guide.adapter
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Color
-import android.view.Gravity
 import cz.androidsample.R
-import cz.androidsample.debugLog
 import cz.androidsample.ui.widget.element.*
 import cz.androidsample.ui.widget.element.Page
 

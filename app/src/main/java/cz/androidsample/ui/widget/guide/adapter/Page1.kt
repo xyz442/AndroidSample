@@ -54,7 +54,7 @@ class Page1(val context: Context){
 
             image(R.mipmap.page1_wallet){
                 id="imageWallet"
-                lparams(316,316) {
+                lparams {
                     align="line"
                     bottomMargin=dp(100)
                     alignRule=CENTER
