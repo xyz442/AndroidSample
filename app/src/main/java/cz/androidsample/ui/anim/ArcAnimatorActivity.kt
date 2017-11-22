@@ -26,6 +26,7 @@ class ArcAnimatorActivity : ToolBarActivity() {
             targetView.setAnimatorDuration(duration)
             targetView.startArcTestAnimator()
         }
+        targetView.addFilterFractions(60,90)
         seekBar1.setOnSeekBarChangeListener(object :SeekBar.OnSeekBarChangeListener{
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
                 currentText.text=getString(R.string.current_degrees_value,progress)

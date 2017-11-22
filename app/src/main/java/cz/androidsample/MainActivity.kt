@@ -95,7 +95,7 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-val DEBUG=false
+val DEBUG=true
 internal inline fun <reified T> T.debugLog(value:String){
     if(DEBUG){
         val item=this as Any

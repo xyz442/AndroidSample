@@ -4,11 +4,13 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
 import android.os.Build
+import android.support.annotation.FloatRange
 import android.util.AttributeSet
 import android.view.animation.LinearInterpolator
 import android.widget.ImageView
 import cz.androidsample.DEBUG
 import cz.androidsample.debugLog
+import cz.kotlinwidget.FuncTemplate.Companion.contains
 
 /**
  * Created by cz on 2017/11/20.
@@ -27,6 +29,11 @@ class ArcTargetView(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) 
     private var animatorDuration=3000L
     private var arcFraction =0f
     private var arcDegrees =0f
+    //是否为忽略速率
+    private var isFilterFraction=false
+    //轨道忽略速率段
+    private val filterFractions= mutableListOf<IntRange>()
+
     init {
         paint.strokeWidth=1f
         paint.style=Paint.Style.STROKE
@@ -65,13 +72,16 @@ class ArcTargetView(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) 
 
 
     fun setArcFraction(fraction:Float){
-        this.arcFraction=fraction
-        //当前行走进度
-        val distance=pathMeasure.length* arcFraction
-        pathMeasure.getPosTan(distance,pos,tan)
-        //设置旋转角度
-        val degrees=(Math.atan2(tan[1]*1.0, tan[0]*1.0) * 180 / Math.PI).toFloat()
-        setArcDegrees(degrees)
+        val value=(fraction*100).toInt()
+        if(filterFractions.none { value in it }){
+            this.arcFraction=fraction
+            //当前行走进度
+            val distance=pathMeasure.length* arcFraction
+            pathMeasure.getPosTan(distance,pos,tan)
+            //设置旋转角度
+            val degrees=(Math.atan2(tan[1]*1.0, tan[0]*1.0) * 180 / Math.PI).toFloat()
+            setArcDegrees(degrees)
+        }
     }
 
     fun getArcFraction()=arcFraction
@@ -79,6 +89,21 @@ class ArcTargetView(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) 
     fun getArcX()=pos[0]
 
     fun getArcY()=pos[1]
+
+    fun isFilter()=isFilterFraction
+
+    fun arc(action:(Float,Float,Boolean)->Unit){
+        action(pos[0],pos[1],isFilterFraction)
+    }
+    /**
+     * 添加过滤速率段
+     */
+    fun addFilterFractions(start:Int,end:Int){
+        val range=IntRange(start,end)
+        filterFractions.add(range)
+    }
+
+    fun clearFilterFractions()=filterFractions.clear()
 
     /**
      * 启动一个椭圆轨道测试动画
@@ -88,7 +113,11 @@ class ArcTargetView(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) 
         valueAnimator.interpolator=LinearInterpolator()
         valueAnimator.duration=animatorDuration
         valueAnimator.addUpdateListener {
-            arcFraction =it.animatedFraction
+            val fraction=(it.animatedFraction*100).toInt()
+            isFilterFraction=filterFractions.any { fraction in it }
+            if(!isFilterFraction){
+                setArcFraction(it.animatedFraction)
+            }
             invalidate()
         }
         valueAnimator.start()
@@ -103,7 +132,7 @@ class ArcTargetView(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) 
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        if(DEBUG){
+        if(DEBUG&&!isFilterFraction){
             canvas.save()
 //            //绘测试轨道
             canvas.rotate(degrees,width/2f,height/2f)
