@@ -10,11 +10,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="450"
-        android:textSize="38sp"
+        android:textSize="34sp"
+        android:alpha="1"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginLeft="28dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="30dp"
         android:textColor="#FFEEE4C6"/>
 
     <TextView
@@ -35,18 +36,17 @@
         android:text="信用分越高 额度越高 费率越低"
         android:textColor="#FFEEE4C6"
         android:textSize="11sp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="5dp"
         app:layout_constraintLeft_toLeftOf="@+id/textCreditInfo"
         app:layout_constraintTop_toBottomOf="@+id/textCreditInfo" />
-
     <View
         android:id="@+id/pageSpace"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@+id/pageLayout"
         android:layout_marginLeft="28dp"
-        android:layout_marginRight="33dp"
-        app:layout_constraintRight_toLeftOf="@+id/pageLayout"/>
+        android:layout_marginRight="33dp" />
 
     <RelativeLayout
         android:id="@+id/pageLayout"
@@ -121,7 +121,7 @@
         app:layout_constraintLeft_toRightOf="@+id/pageLayout"
         android:layout_marginLeft="33dp"
         android:text="信用钱包让有信用的人更有尊严，守护信用，守护尊严！"
-        android:textSize="14sp"
+        android:textSize="13sp"
         android:textColor="#FFEEE4C6"/>
 
 </android.support.constraint.ConstraintLayout>

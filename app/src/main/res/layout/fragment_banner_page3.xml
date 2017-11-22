@@ -10,11 +10,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="450"
-        android:textSize="38sp"
+        android:textSize="34sp"
+        android:alpha="1"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginLeft="28dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="30dp"
         android:textColor="#FFEEE4C6"/>
 
     <TextView
@@ -35,7 +36,7 @@
         android:text="信用分越高 额度越高 费率越低"
         android:textColor="#FFEEE4C6"
         android:textSize="11sp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="5dp"
         app:layout_constraintLeft_toLeftOf="@+id/textCreditInfo"
         app:layout_constraintTop_toBottomOf="@+id/textCreditInfo" />
 
@@ -46,71 +47,64 @@
         app:layout_constraintLeft_toLeftOf="parent"
         android:layout_marginLeft="28dp"
         android:layout_marginRight="33dp"
-        app:layout_constraintRight_toLeftOf="@+id/pageLayout1"/>
+        app:layout_constraintRight_toLeftOf="@+id/pageLayout"/>
 
 
-    <ImageView
-        android:id="@+id/border1"
+    <FrameLayout
+        android:id="@+id/pageLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintLeft_toLeftOf="@+id/pageFlag"
-        app:layout_constraintRight_toRightOf="@+id/pageFlag"
-        app:layout_constraintTop_toTopOf="@+id/pageFlag"
-        app:layout_constraintBottom_toBottomOf="@+id/pageFlag"
-        android:layout_marginBottom="24dp"
-        android:layout_marginLeft="42dp"
-        android:src="@mipmap/banner3_border"/>
-
-    <ImageView
-        android:id="@+id/pageFlag"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:src="@mipmap/banner3_bg"
-        android:layout_marginRight="36dp"
-        android:layout_marginTop="24dp"
+        android:layout_marginRight="33dp"
+        android:layout_marginTop="12dp"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent">
 
-    <ImageView
-        android:id="@+id/pagePoint"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@mipmap/banner3_point"
-        app:layout_constraintLeft_toLeftOf="@+id/pageFlag"
-        app:layout_constraintRight_toRightOf="@+id/pageFlag"
-        app:layout_constraintTop_toTopOf="@+id/pageFlag"
-        app:layout_constraintBottom_toBottomOf="@+id/pageFlag"/>
+        <ImageView
+            android:id="@+id/border1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="36sp"
+            android:alpha="0.4"
+            android:scaleX="0.8"
+            android:scaleY="0.8"
+            android:src="@mipmap/banner3_border"/>
 
-    <ImageView
-        android:id="@+id/border2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@mipmap/banner3_border"
-        android:layout_marginTop="20dp"
-        android:layout_marginRight="48dp"
-        app:layout_constraintLeft_toLeftOf="@+id/pageFlag"
-        app:layout_constraintRight_toRightOf="@+id/pageFlag"
-        app:layout_constraintTop_toTopOf="@+id/pageFlag"
-        app:layout_constraintBottom_toBottomOf="@+id/pageFlag"/>
+        <ImageView
+            android:id="@+id/pageFlag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:src="@mipmap/banner3_bg"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="16dp"/>
 
+        <ImageView
+            android:id="@+id/pagePoint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@mipmap/banner3_point"
+            android:layout_gravity="center"/>
 
-    <View
-        android:id="@+id/line"
-        android:layout_width="wrap_content"
-        android:layout_height="1dp"
-        android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toBottomOf="@+id/pageFlag"/>
+        <ImageView
+            android:id="@+id/border2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@mipmap/banner3_border"
+            android:layout_marginTop="20dp"
+            android:layout_marginRight="48dp"
+            android:alpha="0.4"/>
 
-    <ImageView
-        android:id="@+id/bottom"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@mipmap/banner3_gap"
-        app:layout_constraintLeft_toLeftOf="@+id/pageFlag"
-        app:layout_constraintRight_toRightOf="@+id/pageFlag"
-        app:layout_constraintTop_toBottomOf="@+id/line"/>
+        <ImageView
+            android:id="@+id/bottom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@mipmap/banner3_gap"
+            android:layout_gravity="bottom"
+            android:layout_marginLeft="4dp"
+            android:layout_marginBottom="4dp"
+            android:alpha="0"/>
 
+    </FrameLayout>
 
     <TextView
         android:id="@+id/pageText"
@@ -118,10 +112,10 @@
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="@+id/pageLayout"
         app:layout_constraintBottom_toBottomOf="@+id/pageLayout"
-        app:layout_constraintLeft_toRightOf="@+id/line"
+        app:layout_constraintLeft_toRightOf="@+id/pageLayout"
         android:layout_marginLeft="33dp"
         android:text="信用钱包让有信用的人更有尊严，守护信用，守护尊严！"
-        android:textSize="14sp"
+        android:textSize="13sp"
         android:textColor="#FFEEE4C6"/>
 
 </android.support.constraint.ConstraintLayout>
