@@ -73,7 +73,8 @@ class ArcTargetView(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) 
 
     fun setArcFraction(fraction:Float){
         val value=(fraction*100).toInt()
-        if(filterFractions.none { value in it }){
+        isFilterFraction=filterFractions.any { value in it }
+        if(!isFilterFraction){
             this.arcFraction=fraction
             //当前行走进度
             val distance=pathMeasure.length* arcFraction
@@ -81,6 +82,8 @@ class ArcTargetView(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) 
             //设置旋转角度
             val degrees=(Math.atan2(tan[1]*1.0, tan[0]*1.0) * 180 / Math.PI).toFloat()
             setArcDegrees(degrees)
+        } else if(DEBUG){
+            invalidate()
         }
     }
 
@@ -100,7 +103,9 @@ class ArcTargetView(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) 
      */
     fun addFilterFractions(start:Int,end:Int){
         val range=IntRange(start,end)
-        filterFractions.add(range)
+        if(!filterFractions.contains(range)){
+            filterFractions.add(range)
+        }
     }
 
     fun clearFilterFractions()=filterFractions.clear()
@@ -114,10 +119,7 @@ class ArcTargetView(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) 
         valueAnimator.duration=animatorDuration
         valueAnimator.addUpdateListener {
             val fraction=(it.animatedFraction*100).toInt()
-            isFilterFraction=filterFractions.any { fraction in it }
-            if(!isFilterFraction){
-                setArcFraction(it.animatedFraction)
-            }
+            setArcFraction(it.animatedFraction)
             invalidate()
         }
         valueAnimator.start()

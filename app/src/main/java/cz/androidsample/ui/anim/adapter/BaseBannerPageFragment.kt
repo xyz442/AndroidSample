@@ -22,13 +22,15 @@ abstract class BaseBannerPageFragment:Fragment(){
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        view.onClick { startPageAnimator() }
-        view.post { startPageAnimator() }
+        view.onClick { startClickPageAnimator(view) }
+        view.post { startPageAnimator(view) }
     }
     /**
      * 启动分页动画
      */
-    abstract fun startPageAnimator()
+    abstract fun startPageAnimator(view:View)
+
+    abstract fun startClickPageAnimator(view:View)
 
     /**
      * 动画前置准备
@@ -126,25 +128,24 @@ abstract class BaseBannerPageFragment:Fragment(){
 
     fun arc(view:View, targetView: ArcTargetView, duration: Long=1000, repeatCount:Int=0, repeatMode:Int= ValueAnimator.RESTART): Animator {
         val arcFraction = targetView.getArcFraction()
-        val animator1 = ValueAnimator.ofFloat(arcFraction,1f)
-        animator1.interpolator= LinearInterpolator()
-        animator1.duration= (duration*(1f-arcFraction)).toLong()
-        animator1.addUpdateListener {
-            targetView.setArcFraction(it.animatedValue as Float)
-            setTargetArc(targetView,view)
+        val animator = ValueAnimator.ofFloat(0f,1f)
+        animator.interpolator= LinearInterpolator()
+        animator.duration=duration
+        animator.repeatCount=repeatCount
+        animator.repeatMode=repeatMode
+        animator.addUpdateListener {
+            val fraction=arcFraction+it.animatedValue as Float
+            targetView.setArcFraction(fraction%1f)
+            targetView.arc { _, _, filter ->
+                if(filter){
+                    view.alpha=0f
+                } else {
+                    view.alpha=1f
+                    setTargetArc(targetView,view)
+                }
+            }
         }
-        val animator2 = ValueAnimator.ofFloat(0f,1f)
-        animator2.interpolator= LinearInterpolator()
-        animator2.duration=duration
-        animator2.repeatCount=repeatCount
-        animator2.repeatMode=repeatMode
-        animator2.addUpdateListener {
-            targetView.setArcFraction(it.animatedValue as Float)
-            setTargetArc(targetView,view)
-        }
-        val animatorSet=AnimatorSet()
-        animatorSet.playSequentially(animator1,animator2)
-        return animatorSet
+        return animator
     }
 
     fun translationDrawable(imageView: ImageView, start:Float, to:Float, duration: Long=2000, repeatCount:Int=0, repeatMode:Int= ValueAnimator.RESTART): Animator {
