@@ -10,6 +10,7 @@ import cz.androidsample.ui.layout.ConstraintActivity
 import cz.androidsample.ui.widget.GuideLayoutActivity
 import cz.androidsample.ui.widget.MyImageViewActivity
 import cz.androidsample.ui.widget.seat.SeatTable2Activity
+import cz.androidsample.ui.widget.waterfall.WaterfallActivity
 import cz.kotlinwidget.model.SampleItem
 import cz.layoutmanagersample.ui.Sample1Activity
 import cz.layoutmanagersample.ui.Sample2Activity
@@ -160,6 +161,20 @@ class FuncTemplate {
                         title = "SeatTableView2"
                         desc = "一个电影选座控件,进行了很多运算优化,用以测试亿级数据"
                         clazz= SeatTable2Activity::class.java
+                    }
+                    item {
+                        id=60
+                        pid=6
+                        title = "瀑布流演示"
+                        desc = "以一个瀑布流示例,演示列表涉及功能"
+
+                        item {
+                            pid=60
+                            title = "瀑布流示例1"
+                            desc = "演示控件排版,以及列表滚动"
+                            clazz= WaterfallActivity::class.java
+                        }
+
                     }
                 }
             }

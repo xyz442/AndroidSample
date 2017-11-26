@@ -33,4 +33,10 @@
         <attr name="st_thumbBackgroundDrawable" format="reference"/>
     </declare-styleable>
 
+    <declare-styleable name="WaterFallLayout1">
+        <attr name="wl_row" format="integer"/>
+        <attr name="wl_horizontalSpacing" format="dimension"/>
+        <attr name="wl_verticalSpacing" format="dimension"/>
+    </declare-styleable>
+
 </resources>
