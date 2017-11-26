@@ -18,14 +18,25 @@ import org.jetbrains.anko.find
  * Created by cz on 2017/11/21.
  */
 class BannerPage3Fragment:BaseBannerPageFragment(){
-    private var firstAnimator=false
     var animatorSet: AnimatorSet?=null
-    var ballAnimatorSet:AnimatorSet?=null
-    private var count=1
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_banner_page3,container,false)
     }
-    override fun startPageAnimator() {
+    override fun startPageAnimator(view: View) {
+        val animator0 = alpha(bottom, 1f, 1000)
+        val scaleAnimator1 = scale(border1,1f, 600, 1, ValueAnimator.REVERSE)
+        val animator1 = to(border1, pageFlag.left,pageFlag.top, 600,3,ValueAnimator.REVERSE)
+        val animator2 = to(border2, pageFlag.left,pageFlag.top, 600,3,ValueAnimator.REVERSE)
+        animatorSet = AnimatorSet().apply {
+            //所有联动动画
+            val numberAnimator = numberChange(textScore, 450, 500, 1000)
+            playTogether(numberAnimator, alpha(textScore,1f),alpha(textCreditInfo,1f),
+                    alpha(textInfo,1f), animator0, scaleAnimator1, animator1, animator2)
+            start()
+        }
+    }
+
+    override fun startClickPageAnimator(view: View) {
         val radialView = activity.find<ImageView>(R.id.radialView)
 
         val animator0 = alpha(bottom, 1f, 1000)
@@ -42,16 +53,16 @@ class BannerPage3Fragment:BaseBannerPageFragment(){
 
         //光晕背景跟随Page标记一起移动
         val animator11 = transitionX(pageText, pageSpace.left-pageLayout.left)
-        val animator12 = translationDrawable(radialView, 0.75f, 0.3f, 600)
+        val animator12 = translationDrawable(radialView, 0.75f, 0.25f, 600)
 
         val scaleAnimator2 = scale(border1,1f, 600, 1, ValueAnimator.REVERSE)
         val animator13 = to(border1, pageFlag.left,pageFlag.top, 600, 1, ValueAnimator.REVERSE)
         val animator14 = to(border2, pageFlag.left,pageFlag.top, 600, 1, ValueAnimator.REVERSE)
-        val animator15 = translationDrawable(radialView, 0.3f, 0.75f)
 
-        val animator16 = alpha(bottom, 0f, 600)
-        val animator17 = alpha(pageText, 0f, 600)
-        val animator18 = alpha(pageLayout, 0f, 600)
+        val animator15 = alpha(pageText, 0f, 600)
+        val animator16 = alpha(pageLayout, 0f, 600)
+        val animator17 = alpha(bottom, 0f, 600)
+        val animator18 = translationDrawable(radialView, 0.25f, 0.75f)
 
         //重新计算显示文本大小
         pageText.layoutParams.width = pageSpace.width
@@ -59,15 +70,8 @@ class BannerPage3Fragment:BaseBannerPageFragment(){
         animatorSet?.cancel()
         animatorSet = AnimatorSet().apply {
             //所有联动动画
-            if(!firstAnimator){
-                firstAnimator=true
-                val numberAnimator = numberChange(textScore, 450, 500,1000)
-                playTogether(numberAnimator,alpha(textScore,1f),animator0,scaleAnimator1,animator1,animator2)
-                play(animator2).before(animator5)
-            } else {
-                playTogether(animator0,scaleAnimator1,animator1,animator2)
-                playSequentially(animator2,animator5)
-            }
+            playTogether(animator0,scaleAnimator1,animator1,animator2)
+            playSequentially(animator2,animator5)
             animator11.startDelay = 200
             animator12.startDelay = 300
             playTogether(animator5,animator6,animator7,animator8,animator9,
@@ -76,11 +80,10 @@ class BannerPage3Fragment:BaseBannerPageFragment(){
             playTogether(animator13,scaleAnimator2,animator14)
             playSequentially(animator14,animator15)
 
-            animator16.startDelay=1000
-            animator17.startDelay=1000
-            animator18.startDelay=1000
-            playTogether(animator15,animator16,animator17,animator18)
-            animator15.addListener(object : AnimatorListenerAdapter(){
+            animator15.startDelay=2000
+            playTogether(animator15,animator16,animator17)
+            playSequentially(animator17,animator18)
+            animator18.addListener(object : AnimatorListenerAdapter(){
                 override fun onAnimationEnd(animation: Animator?) {
                     super.onAnimationEnd(animation)
                     cancelAnimator(animatorSet)
@@ -90,15 +93,9 @@ class BannerPage3Fragment:BaseBannerPageFragment(){
                     alphaAnimatorSet.playTogether(alpha(textScore, 1f, 600),
                             alpha(textCreditInfo, 1f, 600),
                             alpha(textInfo, 1f, 600),
-                            alpha(pageLayout, 1f, 600))
+                            alpha(pageLayout, 1f, 600),
+                            alpha(bottom, 1f, 600))
                     alphaAnimatorSet.start()
-                    //设定执行次数
-                    if(0<count--){
-                        startPageAnimator()
-                    } else {
-                        alpha(bottom, 1f, 600).start()
-                        ballAnimatorSet?.start()
-                    }
                 }
             })
             start()
@@ -122,26 +119,9 @@ class BannerPage3Fragment:BaseBannerPageFragment(){
         pageText.x = pageText.left * 1f
 
         bottom.alpha=0f
-
-        val animator1 = scale(border1,1f, 600, 1, ValueAnimator.REVERSE)
-        val animator2 = to(border1, pageFlag.left,pageFlag.top, 600, 1, ValueAnimator.REVERSE)
-        val animator3 = to(border2, pageFlag.left,pageFlag.top, 600, 1, ValueAnimator.REVERSE)
-        //设定每5秒自循环一次
-        ballAnimatorSet=AnimatorSet().apply {
-            animator3.addListener(object :AnimatorListenerAdapter(){
-                override fun onAnimationEnd(animation: Animator?) {
-                    super.onAnimationRepeat(animation)
-                    //设定延持3秒
-                    ballAnimatorSet?.startDelay=3000
-                    start()
-                }
-            })
-            playTogether(animator1,animator2,animator3)
-        }
     }
 
     override fun onDestroyView() {
-        cancelAnimator(ballAnimatorSet)
         cancelAnimator(animatorSet)
         super.onDestroyView()
     }
