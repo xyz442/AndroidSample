@@ -4,16 +4,25 @@ import android.os.Bundle
 import cz.androidsample.R
 import cz.androidsample.annotation.ToolBar
 import cz.androidsample.debugLog
+import cz.androidsample.ui.widget.waterfall.adapter.ImageWaterFallAdapter
 import cz.volunteerunion.ui.ToolBarActivity
+import kotlinx.android.synthetic.main.activity_water_fall.*
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
-import java.io.ByteArrayOutputStream
-import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.Charset
 import java.util.*
 import java.util.concurrent.Executors
+import android.graphics.BitmapFactory
+import android.graphics.Bitmap
+import android.os.Environment
+import java.net.MalformedURLException
+import cz.androidsample.ui.widget.waterfall.adapter.TextWaterFallAdapter
+import java.io.*
+
+
+
 
 /**
  * Created by cz on 2017/11/26.
@@ -26,7 +35,11 @@ class WaterfallActivity:ToolBarActivity(){
         setContentView(R.layout.activity_water_fall)
         setTitle(intent.getStringExtra("title"))
         //请求百度获得一批图片
-        requestGirlImages()
+//        requestGirlImages()
+        //加载一批文本
+        val inputStream=assets.open("txt/text1.txt")
+        val items=inputStream.bufferedReader().readLines()
+        waterFallLayout.setAdapter(TextWaterFallAdapter(this,items))
     }
 
     /**
@@ -47,15 +60,19 @@ class WaterfallActivity:ToolBarActivity(){
                 while (matcher.find()) {
                     //取小图
                     if ("middleURL" == matcher.group(1)&&index++>6) {
-                        imageUrls.add(matcher.group(2))
+                        //绘存到目录中去
+                        val url=matcher.group(2)
+                        imageUrls.add(url)
                     }
                 }
             }
             uiThread {
                 //加载图片
+                waterFallLayout.setAdapter(ImageWaterFallAdapter(this@WaterfallActivity,imageUrls))
             }
         }
     }
+
 
     @Throws(Exception::class)
     fun getHtmlContent(path: String): String {

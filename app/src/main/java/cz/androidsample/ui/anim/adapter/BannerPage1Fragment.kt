@@ -25,9 +25,9 @@ class BannerPage1Fragment:BaseBannerPageFragment(){
         view.isClickable=false
         arcImage.addFilterFractions(65,90)
         setTargetArcFraction(arcImage,ball1,0.1f)
-        val animator2 = arc(ball1, arcImage, 3000, 1)
-        val animator3 = x(ball2, ball2.left + 10, 1000, 5, ValueAnimator.REVERSE)
-        val animator4 = x(ball3, ball3.left + 20, 1000, 5, ValueAnimator.REVERSE)
+        val animator2 = arc(ball1, arcImage, 3000)
+        val animator3 = x(ball2, ball2.left + 10, 1000, 2, ValueAnimator.REVERSE)
+        val animator4 = x(ball3, ball3.left + 20, 1000, 2, ValueAnimator.REVERSE)
         AnimatorSet().apply {
             val animator1 = numberChange(textScore, 450, 500,1000)
             playTogether(animator1,alpha(textScore,1f),alpha(textCreditInfo,1f),
@@ -59,7 +59,7 @@ class BannerPage1Fragment:BaseBannerPageFragment(){
         val animator12 = translationDrawable(radialView, 0.75f, 0.25f,600)
         val animator13 = alpha(pageLayout, 0f, 600)
         val animator14 = alpha(pageText, 0f, 600)
-        val animator15 = translationDrawable(radialView, 0.25f, 0.75f)
+        val animator15 = translationDrawable(radialView, 0.25f, 0.75f,400)
 
         //重新计算显示文本大小
         pageText.layoutParams.width = pageSpace.width

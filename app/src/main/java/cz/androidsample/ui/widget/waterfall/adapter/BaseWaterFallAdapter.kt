@@ -7,4 +7,6 @@ package cz.androidsample.ui.widget.waterfall.adapter
 abstract class BaseWaterFallAdapter<T>(val items:List<T>): WaterFallAdapter() {
 
     override fun getCount(): Int =items.size
+
+    open fun getItem(position:Int)=items[position]
 }
