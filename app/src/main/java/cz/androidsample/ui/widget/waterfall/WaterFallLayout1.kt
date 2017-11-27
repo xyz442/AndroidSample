@@ -54,7 +54,7 @@ class WaterFallLayout1(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         maximumVelocity = configuration.scaledMaximumFlingVelocity
 
         context.obtainStyledAttributes(attrs, R.styleable.WaterFallLayout1).apply {
-            setColumnCount(getInt(R.styleable.WaterFallLayout1_wl_row,2))
+            setColumnCount(getInt(R.styleable.WaterFallLayout1_wl_columnCount,2))
             setHorizontalSpacing(getDimension(R.styleable.WaterFallLayout1_wl_horizontalSpacing,0f))
             setVerticalSpacing(getDimension(R.styleable.WaterFallLayout1_wl_verticalSpacing,0f))
             recycle()
@@ -151,17 +151,14 @@ class WaterFallLayout1(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         var column=0
         var topArray= IntArray(columnCount){paddingTop}
         for(index in 0..childCount-1) {
-            val nextColumn= if(column+1<columnCount) column+1 else 0
             val childView = getChildAt(index)
             val childWidth=childView.measuredWidth
             val childHeight=childView.measuredHeight
             childView.layout(leftArray[column],topArray[column],leftArray[column]+childWidth,topArray[column]+childHeight)
             //顶部位置往下移,这里考虑一个图片特别大情况,另一边则一直积累
             topArray[column]+=childHeight+verticalSpacing.toInt()
-            if(topArray[column]>topArray[nextColumn]){
-                //如果当前位置元素高+新元素高,大于下一个,则继续排
-                column=nextColumn
-            }
+            //始终查找当前列最小元素位置
+            column=topArray.indexOf(topArray.min()?:0)
         }
     }
 

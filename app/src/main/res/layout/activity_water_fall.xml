@@ -10,5 +10,6 @@
         android:layout_height="match_parent"
         android:padding="8dp"
         auto:wl_horizontalSpacing="4dp"
-        auto:wl_verticalSpacing="4dp"/>
+        auto:wl_verticalSpacing="4dp"
+        auto:wl_columnCount="3"/>
 </LinearLayout>
