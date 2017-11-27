@@ -1,6 +1,7 @@
 package cz.androidsample.ui.widget.waterfall
 
 import android.content.Context
+import android.graphics.Canvas
 import android.support.v4.view.MotionEventCompat
 import android.support.v4.view.VelocityTrackerCompat
 import android.support.v4.view.ViewCompat
@@ -12,6 +13,9 @@ import android.widget.Scroller
 import cz.androidsample.R
 import cz.androidsample.debugLog
 import cz.androidsample.ui.widget.waterfall.adapter.WaterFallAdapter
+import android.R.attr.y
+
+
 
 /**
  * Created by cz on 2017/11/26.
@@ -42,7 +46,7 @@ class WaterFallLayout1(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     private var maximumVelocity: Int = 0
     init {
         //设置是否可以渲染,此设置影响边缘效果
-        setWillNotDraw(View.OVER_SCROLL_NEVER!=overScrollMode)
+        setWillNotDraw(false)
         descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
         isFocusable = true
 
@@ -165,6 +169,14 @@ class WaterFallLayout1(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     override fun computeScroll() {
         super.computeScroll()
         if(!scroller.isFinished&&scroller.computeScrollOffset()){
+            if (scrollY != scroller.currY) {
+                val range = computeVerticalScrollRange()
+                if (scroller.currY == 0 && scrollY > 0) {//到达顶部，吸收速度
+                    startEdge.onAbsorb(scroller.currVelocity.toInt())
+                } else if (scroller.currY == range && scrollY < range) {//到达底部，吸收速度
+                    endEdge.onAbsorb(scroller.currVelocity.toInt())
+                }
+            }
             scrollTo(scroller.currX,scroller.currY)
             ViewCompat.postInvalidateOnAnimation(this)
         }
@@ -173,7 +185,7 @@ class WaterFallLayout1(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
         val action = ev.action and MotionEventCompat.ACTION_MASK
         if (action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_UP) {
-            endDrag()
+            resetTouch()
             return false
         }
         if (action != MotionEvent.ACTION_DOWN&&isBeingDragged) {
@@ -219,6 +231,7 @@ class WaterFallLayout1(context: Context, attrs: AttributeSet?, defStyleAttr: Int
             MotionEvent.ACTION_MOVE -> {
                 val x = ev.x
                 val y = ev.y
+                val deltaY = lastMotionY - y
                 var yDiff = y - lastMotionY
                 if (!isBeingDragged&&Math.abs(yDiff) > touchSlop) {
                     isBeingDragged = true
@@ -231,10 +244,22 @@ class WaterFallLayout1(context: Context, attrs: AttributeSet?, defStyleAttr: Int
                     lastMotionY =y
                     //最大滚动区间
                     val verticalScrollRange = computeVerticalScrollRange()
+                    val pullToY = scrollY + deltaY
+                    if (pullToY < 0) {//在顶部
+                        startEdge.onPull(deltaY / height, ev.x / width)
+                        if (!endEdge.isFinished) {
+                            endEdge.onRelease()
+                        }
+                    } else if (pullToY > verticalScrollRange) {//在底部
+                        endEdge.onPull(deltaY / height, 1.0f - ev.x / width)
+                        if (!startEdge.isFinished) {
+                            startEdge.onRelease()
+                        }
+                    }
                     //这里做边界处理
-                    if(0>scrollY-yDiff){
+                    if(0>=scrollY-yDiff){
                         yDiff=scrollY*1f
-                    } else if(verticalScrollRange<scrollY-yDiff){
+                    } else if(verticalScrollRange<=scrollY-yDiff){
                         yDiff=scrollY-verticalScrollRange*1f
                     }
                     scrollBy(0, -yDiff.toInt())
@@ -250,13 +275,24 @@ class WaterFallLayout1(context: Context, attrs: AttributeSet?, defStyleAttr: Int
                 val verticalScrollRange = computeVerticalScrollRange()
                 scroller.fling(scrollX,scrollY,0,-initialVelocityY,0,0,0,verticalScrollRange)
                 postInvalidate()
-                endDrag()
+                resetTouch()
             }
             MotionEvent.ACTION_CANCEL -> if(isBeingDragged){
-                endDrag()
+                resetTouch()
             }
         }
         return true
+    }
+
+    private fun resetTouch() {
+        isBeingDragged = false
+        if (velocityTracker != null) {
+            velocityTracker?.recycle()
+            velocityTracker = null
+        }
+        if(startEdge.onRelease() or endEdge.onRelease()){
+            ViewCompat.postInvalidateOnAnimation(this)
+        }
     }
 
     override fun computeVerticalScrollExtent(): Int {
@@ -268,11 +304,32 @@ class WaterFallLayout1(context: Context, attrs: AttributeSet?, defStyleAttr: Int
         return computeVerticalScrollExtent-height
     }
 
-    private fun endDrag() {
-        isBeingDragged = false
-        if (velocityTracker != null) {
-            velocityTracker?.recycle()
-            velocityTracker = null
+    override fun draw(canvas: Canvas) {
+        super.draw(canvas)
+        val width = width - paddingRight - paddingLeft//内容的宽度
+        val scrollY = scrollY//当前滑动的量
+        if (!startEdge.isFinished) {//动画是否已经结束
+            val restoreCount = canvas.save()
+            canvas.translate(paddingLeft * 1f, Math.min(0, scrollY) * 1f)//画布向右平移，如果View有向下超过0的偏移量就要再向上偏移，超过上边界的平移量
+            startEdge.setSize(width, height)//设置效果的展示范围（内容的宽度，和View的高度）
+            if (startEdge.draw(canvas)) {//绘制边缘效果图，如果绘制需要进行动画效果返回true
+                ViewCompat.postInvalidateOnAnimation(this)//进行动画
+            }
+            canvas.restoreToCount(restoreCount)
+        }
+
+        if (!endEdge.isFinished) {
+            val restoreCount = canvas.save()
+            //下面两行代码的作用就是把画布平移旋转到底部展示，并让效果向上显示
+            val verticalScrollRange = computeVerticalScrollRange()
+            canvas.translate((paddingLeft - width).toFloat(), (Math.max(verticalScrollRange, scrollY) + height).toFloat())
+            canvas.rotate(180f, width * 1f, 0f)
+
+            endEdge.setSize(width, height)
+            if (endEdge.draw(canvas)) {
+                ViewCompat.postInvalidateOnAnimation(this)
+            }
+            canvas.restoreToCount(restoreCount)
         }
     }
 
