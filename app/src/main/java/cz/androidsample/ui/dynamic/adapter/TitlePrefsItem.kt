@@ -14,13 +14,14 @@ class TitlePrefsItem : PrefsListItem<String>() {
     override fun getItemViewType(): Int = TITLE_ITEM
 
     override fun isValid(): Boolean=true
+    override fun invalidText(): String? =null
 
     override fun onCreateViewHolder(parent: ViewGroup): BaseViewHolder {
         return BaseViewHolder(inflaterView(parent, R.layout.list_title_item))
     }
 
 
-    override fun onBindViewHolder(holder: BaseViewHolder,item:String, position: Int) {
+    override fun onBindViewHolder(holder: BaseViewHolder,item:String?, position: Int) {
 
     }
 }

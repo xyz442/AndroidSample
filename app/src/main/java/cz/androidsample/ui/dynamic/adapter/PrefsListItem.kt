@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.cz.recyclerlibrary.adapter.BaseViewHolder
+import cz.androidsample.debugLog
 import rx.Observable
 import rx.subjects.ReplaySubject
 
@@ -33,6 +34,8 @@ abstract class PrefsListItem<E>{
         }
     }
     private val subject: ReplaySubject<Boolean> = ReplaySubject.create<Boolean>()
+    //表单变化监听
+    private var formChange:((PrefsListItem<*>)->Unit)?=null
     private var item:E?=null
 
     fun setItem(item:E?){
@@ -41,14 +44,19 @@ abstract class PrefsListItem<E>{
 
     fun getObservable():Observable<Boolean> = subject
 
+    fun onFormChanged(action:(PrefsListItem<*>)->Unit){
+        this.formChange=action
+    }
+
     /**
      * 通知表表单变化
      */
-    fun notifyFormChanged(){
-        onNext(isValid())
+    protected fun notifyFormChanged(){
+        onNext()
+        formChange?.invoke(this)
     }
 
-    protected fun onNext(result:Boolean)=subject.onNext(result)
+    fun onNext()=subject.onNext(isValid())
 
     protected fun inflaterView(parent:ViewGroup,layoutId:Int): View {
         return LayoutInflater.from(parent.context).inflate(layoutId,parent,false)
@@ -67,17 +75,19 @@ abstract class PrefsListItem<E>{
     abstract fun isValid():Boolean
 
     /**
+     * 无效提示信息
+     */
+    abstract fun invalidText():String?
+
+    /**
      * 绑定viewHolder对象
      */
     fun onBindViewHolder(holder: BaseViewHolder, position: Int){
-        val item=item
-        if(null!=item){
-            onBindViewHolder(holder,item,position)
-        }
+        onBindViewHolder(holder,item,position)
     }
 
     /**
      * 绑定viewHolder对象
      */
-    abstract fun onBindViewHolder(holder: BaseViewHolder,item:E, position: Int)
+    abstract fun onBindViewHolder(holder: BaseViewHolder,item:E?, position: Int)
 }

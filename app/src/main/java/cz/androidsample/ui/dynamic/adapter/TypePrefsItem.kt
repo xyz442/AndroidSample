@@ -12,21 +12,29 @@ import rx.Observable
  * Created by cz on 2017/12/1.
  */
 class TypePrefsItem : PrefsListItem<List<String>>() {
+
     private var selectIndex=-1
     override fun isValid(): Boolean =-1!=selectIndex
 
+    override fun invalidText(): String? {
+        var text:String?=null
+        if(-1==selectIndex){
+            text="请选择一个分类!"
+        }
+        return text
+    }
     override fun getItemViewType(): Int = TYPE_ITEM
 
     override fun onCreateViewHolder(parent: ViewGroup): BaseViewHolder {
         return BaseViewHolder(inflaterView(parent, R.layout.list_type_item))
     }
 
-    override fun onBindViewHolder(holder: BaseViewHolder,item:List<String>, position: Int) {
+    override fun onBindViewHolder(holder: BaseViewHolder,item:List<String>?, position: Int) {
         val context=holder.itemView.context
         val typeLayout=holder.itemView.find<RadioGroup>(R.id.typeLayout)
         //初始化分类
         typeLayout.removeAllViews()
-        item.forEachIndexed { index, item ->
+        item?.forEachIndexed { index, item ->
             val button=RadioButton(context)
             button.id=index
             button.text=item

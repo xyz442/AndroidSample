@@ -1,34 +1,27 @@
 package cz.androidsample.ui.dynamic
 
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
+import android.widget.Toast
 
 import cz.androidsample.R
-import cz.androidsample.debugLog
 import cz.androidsample.ui.dynamic.adapter.*
 import kotlinx.android.synthetic.main.activity_dynamic_config_list.*
+import cz.androidsample.annotation.ToolBar
+import cz.androidsample.ui.dynamic.observer.FormSubscription
+import cz.volunteerunion.ui.ToolBarActivity
 import org.jetbrains.anko.sdk25.coroutines.onClick
-import rx.Observable
-import rx.Observer
-import rx.Subscriber
+import org.jetbrains.anko.toast
 import rx.functions.Action1
-import rx.subjects.ReplaySubject
-import java.util.*
-import rx.functions.Func2
-import rx.android.view.ViewActions.setEnabled
-import android.text.Editable
-import android.text.TextUtils
-import android.text.TextWatcher
-import android.util.Log
 
 
-class DynamicConfigListActivity : AppCompatActivity() {
+@ToolBar
+class DynamicConfigListActivity : ToolBarActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dynamic_config_list)
-
+        setTitle(intent.getStringExtra("title"))
         //组建基础数据
         val items= mutableListOf<PrefsListItem<*>>()
         //分类1:标题
@@ -41,17 +34,25 @@ class DynamicConfigListActivity : AppCompatActivity() {
         items.add(typePrefsItem)
         //分类4:服务地址
         for(index in (0..10)){
-            items.add(ServerPrefsItem("Items1"))
+            items.add(ServerPrefsItem("Items$index"))
         }
-        //汇总结果
-        Observable.combineLatest(items.map { it.getObservable() }) {
-            //汇总结果
-            items.map { it.isValid() }.reduce { acc, item -> acc and item }
-        }.subscribe({
-            applyButton.isEnabled=it
-        },{},{})
         recyclerView.layoutManager=LinearLayoutManager(this)
         recyclerView.adapter= DynamicPrefsAdapter(this,items)
 
+        //表单校验对象,管理所有变化操作,包括动态监听,手动校验.等
+        val formSubscription= FormSubscription(items)
+        //动态变化
+        formSubscription.onSubscribe(Action1<Boolean> {
+            applyButton2.isEnabled=it
+        })
+        //手动检测
+        applyButton1.setOnClickListener {
+            if(formSubscription.isValid()){
+                Toast.makeText(this@DynamicConfigListActivity,"校验通过",Toast.LENGTH_SHORT).show()
+            } else {
+                val inValidText = formSubscription.inValidText()
+                Toast.makeText(this@DynamicConfigListActivity,inValidText,Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }
