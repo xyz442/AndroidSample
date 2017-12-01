@@ -25,6 +25,7 @@ class TypePrefsItem : PrefsListItem<List<String>>() {
         val context=holder.itemView.context
         val typeLayout=holder.itemView.find<RadioGroup>(R.id.typeLayout)
         //初始化分类
+        typeLayout.removeAllViews()
         item.forEachIndexed { index, item ->
             val button=RadioButton(context)
             button.id=index

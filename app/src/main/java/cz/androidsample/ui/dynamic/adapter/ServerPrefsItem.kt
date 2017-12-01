@@ -12,9 +12,15 @@ import rx.Observable
 /**
  * Created by cz on 2017/12/1.
  */
-class ServerPrefsItem : PrefsListItem<String>() {
-    private var text=String()
-
+class ServerPrefsItem(var text:String) : PrefsListItem<String>() {
+    val textWatcher=object : TextWatcher {
+        override fun afterTextChanged(s: Editable?)=Unit
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int)=Unit
+        override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+            text=s.toString()
+            notifyFormChanged()
+        }
+    }
     override fun isValid(): Boolean =4<=text.length
 
     override fun getItemViewType(): Int = SERVER_ITEM
@@ -26,13 +32,7 @@ class ServerPrefsItem : PrefsListItem<String>() {
     override fun onBindViewHolder(holder: BaseViewHolder,item:String, position: Int) {
         val editor = holder.itemView.find<EditText>(R.id.editor)
         editor.setText(text)
-        editor.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?)=Unit
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int)=Unit
-            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
-                text=s.toString()
-                notifyFormChanged()
-            }
-        })
+        editor.removeTextChangedListener(textWatcher)
+        editor.addTextChangedListener(textWatcher)
     }
 }

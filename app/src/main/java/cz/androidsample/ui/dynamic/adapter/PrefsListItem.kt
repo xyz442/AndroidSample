@@ -27,7 +27,7 @@ abstract class PrefsListItem<E>{
             return when(viewType){
                 TITLE_ITEM->TitlePrefsItem().onCreateViewHolder(parent)
                 TYPE_ITEM->TypePrefsItem().onCreateViewHolder(parent)
-                SERVER_ITEM->ServerPrefsItem().onCreateViewHolder(parent)
+                SERVER_ITEM->ServerPrefsItem("Item").onCreateViewHolder(parent)
                 else ->EditPrefsItem().onCreateViewHolder(parent)
             }
         }
@@ -44,7 +44,7 @@ abstract class PrefsListItem<E>{
     /**
      * 通知表表单变化
      */
-    protected fun notifyFormChanged(){
+    fun notifyFormChanged(){
         onNext(isValid())
     }
 
