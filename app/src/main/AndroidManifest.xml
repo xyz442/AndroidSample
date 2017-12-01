@@ -2,11 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="cz.androidsample">
 
-
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
         android:name=".App"
@@ -39,9 +37,10 @@
         <activity android:name=".ui.anim.GuideActivity" />
         <activity android:name=".ui.widget.GuideLayoutActivity" />
         <activity android:name=".ui.anim.BannerActivity" />
-        <activity android:name=".ui.anim.ArcAnimatorActivity"></activity>
-
-        <activity android:name=".ui.widget.waterfall.WaterfallActivity"/>
+        <activity android:name=".ui.anim.ArcAnimatorActivity" />
+        <activity android:name=".ui.widget.waterfall.WaterfallActivity" />
+        <activity android:name=".ui.dynamic.DynamicConfigListActivity" />
+        <activity android:name=".ui.widget.scroll.ViewScrollActivity"></activity>
     </application>
 
 </manifest>

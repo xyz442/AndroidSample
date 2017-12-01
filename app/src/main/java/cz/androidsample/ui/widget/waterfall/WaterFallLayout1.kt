@@ -36,11 +36,11 @@ class WaterFallLayout1(context: Context, attrs: AttributeSet?, defStyleAttr: Int
     private var startEdge: EdgeEffectCompat
     private var endEdge: EdgeEffectCompat
     private var isBeingDragged: Boolean = false
-    private var touchSlop: Int = 0
     //滑动属性
     private var lastMotionX = 0f
     private var lastMotionY = 0f
 
+    private var touchSlop: Int = 0
     private var velocityTracker: VelocityTracker? = null
     private var minimumVelocity: Int = 0
     private var maximumVelocity: Int = 0

@@ -5,10 +5,12 @@ import cz.androidsample.ui.FlipImgActivity
 import cz.androidsample.ui.anim.Animator1Activity
 import cz.androidsample.ui.anim.ArcAnimatorActivity
 import cz.androidsample.ui.anim.BannerActivity
+import cz.androidsample.ui.dynamic.DynamicConfigListActivity
 import cz.androidsample.ui.hierarchy.*
 import cz.androidsample.ui.layout.ConstraintActivity
 import cz.androidsample.ui.widget.GuideLayoutActivity
 import cz.androidsample.ui.widget.MyImageViewActivity
+import cz.androidsample.ui.widget.scroll.ViewScrollActivity
 import cz.androidsample.ui.widget.seat.SeatTable2Activity
 import cz.androidsample.ui.widget.waterfall.WaterfallActivity
 import cz.kotlinwidget.model.SampleItem
@@ -138,6 +140,12 @@ class FuncTemplate {
                         desc = "演示GuideLayout制作一处banner实例"
                         clazz= BannerActivity::class.java
                     }
+                    item {
+                        pid=5
+                        title = "动态表单"
+                        desc = "用列表做一个动态表单,并校验"
+                        clazz= DynamicConfigListActivity::class.java
+                    }
                 }
                 item {
                     id = 6
@@ -161,6 +169,12 @@ class FuncTemplate {
                         title = "SeatTableView2"
                         desc = "一个电影选座控件,进行了很多运算优化,用以测试亿级数据"
                         clazz= SeatTable2Activity::class.java
+                    }
+                    item {
+                        pid=6
+                        title = "控件流动"
+                        desc = "控件滚动基础分享"
+                        clazz= ViewScrollActivity::class.java
                     }
                     item {
                         id=60
