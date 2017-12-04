@@ -1,5 +1,6 @@
 package cz.androidsample.ui.dynamic.adapter
 
+import android.support.v7.widget.RecyclerView
 import android.text.Editable
 import android.text.TextUtils
 import android.text.TextWatcher
@@ -14,8 +15,6 @@ import org.jetbrains.anko.find
  * Created by cz on 2017/12/1.
  */
 class EditPrefsItem : PrefsListItem<String>() {
-
-
     private var text1=String()
     private var text2=String()
 
@@ -66,14 +65,24 @@ class EditPrefsItem : PrefsListItem<String>() {
         //假定编辑框只限定输入个数
         val editor1=holder.itemView.find<EditText>(R.id.editor1)
         val editor2=holder.itemView.find<EditText>(R.id.editor2)
+        removeTextWatcher(editor1)
+        removeTextWatcher(editor2)
+
         editor1.setText(text1)
         editor1.setSelection(text1.length)
-        editor1.removeTextChangedListener(textWatcher1)
+        editor1.tag=textWatcher1
         editor1.addTextChangedListener(textWatcher1)
 
         editor2.setText(text2)
         editor2.setSelection(text2.length)
-        editor2.removeTextChangedListener(textWatcher2)
+        editor2.tag=textWatcher1
         editor2.addTextChangedListener(textWatcher2)
+    }
+
+    private fun removeTextWatcher(editor: EditText) {
+        val watcher = editor.tag as? TextWatcher
+        if (null != watcher) {
+            editor.removeTextChangedListener(watcher)
+        }
     }
 }

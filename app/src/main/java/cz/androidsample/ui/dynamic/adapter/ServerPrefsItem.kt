@@ -1,5 +1,6 @@
 package cz.androidsample.ui.dynamic.adapter
 
+import android.support.v7.widget.RecyclerView
 import android.text.Editable
 import android.text.TextUtils
 import android.text.TextWatcher
@@ -43,8 +44,16 @@ class ServerPrefsItem(var text:String) : PrefsListItem<String>() {
 
     override fun onBindViewHolder(holder: BaseViewHolder,item:String?, position: Int) {
         val editor = holder.itemView.find<EditText>(R.id.editor)
+        removeTextWatcher(editor)
         editor.setText(text)
-        editor.removeTextChangedListener(textWatcher)
+        editor.tag=textWatcher
         editor.addTextChangedListener(textWatcher)
+    }
+
+    private fun removeTextWatcher(editor: EditText) {
+        val watcher = editor.tag as? TextWatcher
+        if (null != watcher) {
+            editor.removeTextChangedListener(watcher)
+        }
     }
 }
