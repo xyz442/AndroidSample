@@ -41,6 +41,12 @@
         <activity android:name=".ui.widget.waterfall.WaterfallActivity" />
         <activity android:name=".ui.dynamic.DynamicConfigListActivity" />
         <activity android:name=".ui.widget.scroll.ViewScrollActivity"></activity>
+
+
+        <activity android:name=".ui.widget.waterfall.other.bao.WaterFull1Activity"/>
+        <activity android:name=".ui.widget.waterfall.other.hui.TestFlowLayoutActivity"/>
+        <activity android:name=".ui.widget.waterfall.other.tao.TaoFlowLayout1Activity"/>
+        <activity android:name=".ui.widget.waterfall.other.liang.LiangFunnyWaterFlowActivity1"/>
     </application>
 
 </manifest>

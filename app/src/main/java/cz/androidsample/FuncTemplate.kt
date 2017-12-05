@@ -13,6 +13,11 @@ import cz.androidsample.ui.widget.MyImageViewActivity
 import cz.androidsample.ui.widget.scroll.ViewScrollActivity
 import cz.androidsample.ui.widget.seat.SeatTable2Activity
 import cz.androidsample.ui.widget.waterfall.WaterfallActivity
+import cz.androidsample.ui.widget.waterfall.other.bao.WaterFull1Activity
+import cz.androidsample.ui.widget.waterfall.other.hui.TestFlowLayoutActivity
+import cz.androidsample.ui.widget.waterfall.other.liang.LiangFunnyWaterFlowActivity1
+import cz.androidsample.ui.widget.waterfall.other.liang.widget.LiangFunnyWaterFlowLayout1
+import cz.androidsample.ui.widget.waterfall.other.tao.TaoFlowLayout1Activity
 import cz.kotlinwidget.model.SampleItem
 import cz.layoutmanagersample.ui.Sample1Activity
 import cz.layoutmanagersample.ui.Sample2Activity
@@ -187,6 +192,63 @@ class FuncTemplate {
                             title = "瀑布流示例1"
                             desc = "演示控件排版,以及列表滚动"
                             clazz= WaterfallActivity::class.java
+                        }
+                        item {
+                            id=660
+                            pid=60
+                            title = "其他成员演示"
+                            desc = "其他成员瀑布滚演示"
+
+                            item {
+                                id=6660
+                                pid=660
+                                title = "bao-sample"
+                                desc = "演示控件排版,以及列表滚动"
+                                item{
+                                    pid=6660
+                                    title = "第一版"
+                                    desc = "控件排版,测量,滚动"
+                                    clazz=WaterFull1Activity::class.java
+                                }
+                            }
+                            item {
+                                id=6661
+                                pid=660
+                                title = "tao-sample"
+                                desc = "演示控件排版,以及列表滚动"
+
+                                item{
+                                    pid=6661
+                                    title = "第一版"
+                                    desc = "控件排版,测量,滚动"
+                                    clazz= TaoFlowLayout1Activity::class.java
+                                }
+                            }
+                            item {
+                                id=6662
+                                pid=660
+                                title = "liang-sample"
+                                desc = "演示控件排版,以及列表滚动"
+                                item{
+                                    pid=6662
+                                    title = "第一版"
+                                    desc = "控件排版,测量,滚动"
+                                    clazz= LiangFunnyWaterFlowActivity1::class.java
+                                }
+                            }
+                            item {
+                                id=6663
+                                pid=660
+                                title = "hui-sample"
+                                desc = "演示控件排版,以及列表滚动"
+
+                                item{
+                                    pid=6663
+                                    title = "第一版"
+                                    desc = "控件排版,测量,滚动"
+                                    clazz=TestFlowLayoutActivity::class.java
+                                }
+                            }
                         }
 
                     }

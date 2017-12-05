@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:auto="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <cz.androidsample.ui.widget.waterfall.other.liang.widget.LiangFunnyWaterFlowLayout1
+        android:id="@+id/funnyLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="12dp"
+        auto:fwfl_columnNum="6"/>
+</LinearLayout>

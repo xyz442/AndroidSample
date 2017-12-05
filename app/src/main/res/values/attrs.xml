@@ -39,4 +39,31 @@
         <attr name="wl_verticalSpacing" format="dimension"/>
     </declare-styleable>
 
+    <declare-styleable name="BaoGridLayout1">
+        <attr name="numColumns" format="integer" />
+        <attr name="itemMargin" format="integer" />
+    </declare-styleable>
+
+    <declare-styleable name="HuiFlowLayout1">
+        <attr name="item_padding" format="dimension"/>
+        <attr name="item_divide_horizontal" format="dimension"/>
+        <attr name="item_divide_vertical" format="dimension"/>
+        <attr name="orientation" format="integer">
+            <enum name="vertical" value="-1"/>
+            <enum name="horizontal" value="-2"/>
+        </attr>
+        <attr name="item_padding_fixable" format="boolean"/>
+        <attr name="columns" format="integer"/>
+    </declare-styleable>
+
+    <declare-styleable name="TaoFlowLayoutView">
+        <attr name="fl_columnsCount" format="integer|reference"/>
+        <attr name="fl_horizontalSpacing" format="dimension|reference"/>
+        <attr name="fl_verticalSpacing" format="dimension|reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="LiangFunnyWaterFlowLayout1">
+        <attr name="fwfl_columnNum" format="integer"/>
+    </declare-styleable>
+
 </resources>
