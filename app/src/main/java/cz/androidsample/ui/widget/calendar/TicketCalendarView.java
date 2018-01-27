@@ -1,9 +1,7 @@
-package cz.androidsample.ui.calendar;
+package cz.androidsample.ui.widget.calendar;
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
@@ -12,7 +10,7 @@ import android.text.TextPaint;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 
-import com.financial.quantgroup.R;
+import cz.androidsample.ui.widget.calendar.model.DateTime;
 
 /**
  * Created by cz on 10/19/16.
@@ -24,7 +22,7 @@ public class TicketCalendarView extends CalendarView {
     private Drawable selectDrawable;
     private Drawable todayDrawable;
     private Drawable tipDrawable;
-    private CalendarDay selectDay;
+    private DateTime selectDay;
     private int tipTextHorizontalPadding;
     private int tipTextVerticalPadding;
     private int drawableVerticalPadding;
@@ -47,19 +45,19 @@ public class TicketCalendarView extends CalendarView {
         maxBookDay =MAX_SELECT_DAY;
         textRect=new Rect();
         tipPaint =new TextPaint(TextPaint.ANTI_ALIAS_FLAG);
-        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TicketCalendarView);
-        setItemSelectDrawable(a.getDrawable(R.styleable.TicketCalendarView_tv_itemSelectDrawable));
-        setTodayDrawable(a.getDrawable(R.styleable.TicketCalendarView_tv_todayDrawable));
-        setItemTipDrawable(a.getDrawable(R.styleable.TicketCalendarView_tv_itemTipDrawable));
-        setItemTipTextHorizontalPadding((int) a.getDimension(R.styleable.TicketCalendarView_tv_itemTipTextHorizontalPadding,0));
-        setItemTipTextVerticalPadding((int) a.getDimension(R.styleable.TicketCalendarView_tv_itemTipTextVerticalPadding,0));
-        setItemTipText(a.getString(R.styleable.TicketCalendarView_tv_itemTipText));
-        setItemTipTextColor(a.getColor(R.styleable.TicketCalendarView_tv_itemTipTextColor, Color.WHITE));
-        setItemTipTextSize(a.getDimension(R.styleable.TicketCalendarView_tv_itemTipTextSize, 0));
-        setItemDrawableHorizontalPadding((int) a.getDimension(R.styleable.TicketCalendarView_tv_itemDrawableHorizontalPadding,0));
-        setItemDrawableVerticalPadding((int) a.getDimension(R.styleable.TicketCalendarView_tv_itemDrawableVerticalPadding,0));
-        setItemTipDays(a.getInteger(R.styleable.TicketCalendarView_tv_itemTipDays,0));
-        a.recycle();
+//        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TicketCalendarView);
+//        setItemSelectDrawable(a.getDrawable(R.styleable.TicketCalendarView_tv_itemSelectDrawable));
+//        setTodayDrawable(a.getDrawable(R.styleable.TicketCalendarView_tv_todayDrawable));
+//        setItemTipDrawable(a.getDrawable(R.styleable.TicketCalendarView_tv_itemTipDrawable));
+//        setItemTipTextHorizontalPadding((int) a.getDimension(R.styleable.TicketCalendarView_tv_itemTipTextHorizontalPadding,0));
+//        setItemTipTextVerticalPadding((int) a.getDimension(R.styleable.TicketCalendarView_tv_itemTipTextVerticalPadding,0));
+//        setItemTipText(a.getString(R.styleable.TicketCalendarView_tv_itemTipText));
+//        setItemTipTextColor(a.getColor(R.styleable.TicketCalendarView_tv_itemTipTextColor, Color.WHITE));
+//        setItemTipTextSize(a.getDimension(R.styleable.TicketCalendarView_tv_itemTipTextSize, 0));
+//        setItemDrawableHorizontalPadding((int) a.getDimension(R.styleable.TicketCalendarView_tv_itemDrawableHorizontalPadding,0));
+//        setItemDrawableVerticalPadding((int) a.getDimension(R.styleable.TicketCalendarView_tv_itemDrawableVerticalPadding,0));
+//        setItemTipDays(a.getInteger(R.styleable.TicketCalendarView_tv_itemTipDays,0));
+//        a.recycle();
     }
 
     public void setItemTipDays(int days) {
@@ -107,7 +105,7 @@ public class TicketCalendarView extends CalendarView {
         invalidate();
     }
 
-    public void setSelectDay(CalendarDay selectDay){
+    public void setSelectDay(DateTime selectDay){
         this.selectDay=selectDay;
         invalidate();
     }
@@ -122,7 +120,7 @@ public class TicketCalendarView extends CalendarView {
     }
 
     @Override
-    public void onPreDrawRect(Canvas canvas, TextPaint textPaint, Paint labelPaint, int column, int row, CalendarDay day, int dayCode) {
+    public void onPreDrawRect(Canvas canvas, TextPaint textPaint, Paint labelPaint, int column, int row, DateTime day, int dayCode) {
         super.onPreDrawRect(canvas, textPaint,labelPaint, column, row, day,dayCode);
         int itemWidth = Math.round(getItemWidth());
         if(null!=todayDrawable&&calendarToday.equals(day)){
@@ -145,7 +143,7 @@ public class TicketCalendarView extends CalendarView {
     }
 
     @Override
-    public void onPostDrawRect(Canvas canvas, TextPaint textPaint, Paint labelPaint, int column, int row, CalendarDay day, int dayCode) {
+    public void onPostDrawRect(Canvas canvas, TextPaint textPaint, Paint labelPaint, int column, int row, DateTime day, int dayCode) {
         super.onPostDrawRect(canvas, textPaint, labelPaint, column, row, day, dayCode);
         //检测是否在 tip day 范围内
         int todayCode = calendarToday.hashCode();
@@ -181,7 +179,7 @@ public class TicketCalendarView extends CalendarView {
     }
 
     @Override
-    protected void onSelectDay(CalendarDay day) {
+    protected void onSelectDay(DateTime day) {
         super.onSelectDay(day);
             //在今天与最大数之间
             int todayCode = calendarToday.hashCode();
@@ -201,6 +199,6 @@ public class TicketCalendarView extends CalendarView {
     }
 
     public interface OnSelectItemListener{
-        void onSelectDay(CalendarDay day);
+        void onSelectDay(DateTime day);
     }
 }

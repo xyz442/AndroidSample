@@ -1,4 +1,4 @@
-package cz.androidsample.ui.calendar.model;
+package cz.androidsample.ui.widget.calendar.model;
 
 /**
  * Created by joybar on 9/12/16.

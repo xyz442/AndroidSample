@@ -1,4 +1,4 @@
-package cz.androidsample.ui.calendar;
+package cz.androidsample.ui.widget.calendar;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -20,6 +20,9 @@ import java.util.HashMap;
 import java.util.TimeZone;
 
 import cz.androidsample.R;
+import cz.androidsample.ui.widget.calendar.model.DateTime;
+import cz.androidsample.ui.widget.calendar.model.Lunar;
+import cz.androidsample.ui.widget.calendar.util.LunarSolarConverter;
 
 /**
  * Created by cz on 8/29/16.
@@ -46,14 +49,14 @@ public class CalendarView extends View {
     private final int NEXT_TOUCH=3;
 
     private final int[] WEEK_DAY=new int[]{7,1,2,3,4,5,6};
-    private final HashMap<CalendarDay,String> calendarInfos;
+    private final HashMap<DateTime,String> calendarInfos;
     private final Calendar calendar;
 
     protected final Paint dividePaint;
     protected final TextPaint labelPaint;
     protected final TextPaint textPaint;
-    protected CalendarDay calendarDay;
-    protected final CalendarDay calendarToday;
+    protected DateTime dateTime;
+    protected final DateTime calendarToday;
     protected float itemPadding;
     protected int divideGravity;
 
@@ -85,11 +88,11 @@ public class CalendarView extends View {
 
         labelPaint=new TextPaint(Paint.ANTI_ALIAS_FLAG);
         textPaint=new TextPaint(Paint.ANTI_ALIAS_FLAG);
-        calendarDay = new CalendarDay(System.currentTimeMillis());
-        calendarToday = new CalendarDay(System.currentTimeMillis());
+        dateTime = new DateTime(System.currentTimeMillis());
+        calendarToday = new DateTime(System.currentTimeMillis());
         calendar= Calendar.getInstance(TimeZone.getTimeZone("GMT+8"));
         calendar.setFirstDayOfWeek(Calendar.MONDAY);
-        calendar.set(calendarDay.year, calendarDay.month, 1);
+        calendar.set(dateTime.getYear(), dateTime.getMonth(), 1);
         todayValue="今天";
 
 
@@ -132,14 +135,14 @@ public class CalendarView extends View {
         invalidate();
     }
 
-    public CalendarDay getCalendarDay(){
-        return calendarDay;
+    public DateTime getDateTime(){
+        return dateTime;
     }
 
 
-    public void setCalendarDay(CalendarDay day){
-        calendarDay =day;
-        calendar.set(day.year,day.month,1);
+    public void setDateTime(DateTime day){
+        dateTime =day;
+        calendar.set(day.getYear(), day.getMonth(),1);
         requestLayout();
     }
 
@@ -187,12 +190,12 @@ public class CalendarView extends View {
         setDivideGravity(gravity);
     }
 
-    public void addCalendarInfo(CalendarDay day,String text){
-        addCalendarInfo(day.year, day.month, day.day, text);
+    public void addCalendarInfo(DateTime day, String text){
+        addCalendarInfo(day.getYear(), day.getMonth(), day.getDay(), text);
     }
 
     public void addCalendarInfo(int year,int month,int day,String text){
-        calendarInfos.put(new CalendarDay(year, month, day), text);
+        calendarInfos.put(new DateTime(year, month, day), text);
         invalidate();
     }
 
@@ -246,7 +249,7 @@ public class CalendarView extends View {
     }
 
     private int getCalendarRow() {
-        calendar.set(calendarDay.year, calendarDay.month, 1);
+        calendar.set(dateTime.getYear(), dateTime.getMonth(), 1);
         int totalDay= calendar.getActualMaximum(Calendar.DAY_OF_MONTH)+ WEEK_DAY[calendar.get(Calendar.DAY_OF_WEEK)-1]-1;
         return (0 ==totalDay%WEEK_DAY_COUNT) ? totalDay / WEEK_DAY_COUNT:totalDay/WEEK_DAY_COUNT+1;
     }
@@ -263,18 +266,18 @@ public class CalendarView extends View {
     }
 
     private void drawCalendarText(Canvas canvas, int totalColumn) {
-        calendar.set(calendarDay.year, calendarDay.month, 1);
+        calendar.set(dateTime.getYear(), dateTime.getMonth(), 1);
         int startDay = WEEK_DAY[calendar.get(Calendar.DAY_OF_WEEK)-1]-1;
         int monthDays=calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
         calendar.add(Calendar.DAY_OF_MONTH,-startDay);
         float itemWidth=getWidth()*1.0f/WEEK_DAY_COUNT;
 
         int total=WEEK_DAY_COUNT*totalColumn;
-        int calendarCode=calendarDay.hashCode();
+        int calendarCode= dateTime.hashCode();
         int todayCode = calendarToday.hashCode();
-        CalendarDay newDay;
+        DateTime newDay;
         for(int i=1;i<=total;i++,calendar.add(Calendar.DAY_OF_MONTH,1)){
-            newDay=new CalendarDay(calendar.getTimeInMillis());
+            newDay=new DateTime(calendar.getTimeInMillis());
             Lunar lunar = LunarSolarConverter.SolarToLunar(newDay);
             int column=(i-1)/WEEK_DAY_COUNT;
             int row=(i-1)%WEEK_DAY_COUNT;
@@ -290,14 +293,14 @@ public class CalendarView extends View {
                 int PREVIOUS_MONTH = 0;
                 state= PREVIOUS_MONTH;
                 textPaint.setColor(textDisableColor);
-                text= String.valueOf(newDay.day);
+                text= String.valueOf(newDay.getDay());
             } else if(newDayCode>=calendarCode&&newDayCode<calendarCode+monthDays){
                 //current days
                 state= CURRENT_MONTH;
                 if(todayCode==newDayCode){
                     text=todayValue;
                 } else {
-                    text= String.valueOf(newDay.day);
+                    text= String.valueOf(newDay.getDay());
                 }
                 if(todayCode>newDayCode){
                     textPaint.setColor(textDisableColor);
@@ -317,7 +320,7 @@ public class CalendarView extends View {
                 int NEXT_MONTH = 2;
                 state= NEXT_MONTH;
                 textPaint.setColor(textDisableColor);
-                text= String.valueOf(newDay.day);
+                text= String.valueOf(newDay.getDay());
             }
 
 
@@ -332,12 +335,12 @@ public class CalendarView extends View {
                 if(calendarInfos.containsKey(newDay)){
                     textPaint.setColor(selectTextColor);
                     calendarInfo = calendarInfos.get(newDay);
-                } else if(!TextUtils.isEmpty(newDay.solarFestivalName)){
-                    calendarInfo = newDay.solarFestivalName;
+                } else if(!TextUtils.isEmpty(newDay.getSolarFestivalName())){
+                    calendarInfo = newDay.getSolarFestivalName();
                 } else if(!TextUtils.isEmpty(lunar.lunarFestivalName)){
                     calendarInfo = lunar.lunarFestivalName;
-                } else if(!TextUtils.isEmpty(newDay.solar24Term)){
-                    calendarInfo =  newDay.solar24Term;
+                } else if(!TextUtils.isEmpty(newDay.getSolar24Term())){
+                    calendarInfo = newDay.getSolar24Term();
                 }  else {
                     calendarInfo = Lunar.getChinaDayString(lunar.lunarDay);
                 }
@@ -362,10 +365,10 @@ public class CalendarView extends View {
         return 0;
     }
 
-    public void onPreDrawRect(Canvas canvas, TextPaint textPaint, Paint labelPaint, int column, int row, CalendarDay day, int dayCode){
+    public void onPreDrawRect(Canvas canvas, TextPaint textPaint, Paint labelPaint, int column, int row, DateTime day, int dayCode){
     }
 
-    public void onPostDrawRect(Canvas canvas, TextPaint textPaint, Paint labelPaint, int column, int row, CalendarDay day, int dayCode){
+    public void onPostDrawRect(Canvas canvas, TextPaint textPaint, Paint labelPaint, int column, int row, DateTime day, int dayCode){
     }
 
     private void drawDivide(Canvas canvas, int column) {
@@ -425,8 +428,8 @@ public class CalendarView extends View {
         return 0<=x&&x<=width&&0<=y&&y<=height;
     }
 
-    public CalendarDay getCalendarByPosition(int position){
-        calendar.set(calendarDay.year, calendarDay.month, 1);
+    public DateTime getCalendarByPosition(int position){
+        calendar.set(dateTime.getYear(), dateTime.getMonth(), 1);
         int startDay = WEEK_DAY[calendar.get(Calendar.DAY_OF_WEEK)-1]-1;
         if(position<startDay){
             //previous month
@@ -435,7 +438,7 @@ public class CalendarView extends View {
             //next days
             calendar.add(Calendar.DAY_OF_MONTH, position-startDay);
         }
-        return new CalendarDay(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+        return new DateTime(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
     }
 
 
@@ -463,14 +466,14 @@ public class CalendarView extends View {
                 break;
             case MotionEvent.ACTION_UP:
                 int position = getSelectPosition(x, y);
-                calendar.set(calendarDay.year, calendarDay.month, 1);
+                calendar.set(dateTime.getYear(), dateTime.getMonth(), 1);
                 onSelectDay(getCalendarByPosition(position));
                 break;
         }
         return true;
     }
 
-    protected void onSelectDay(CalendarDay day){
+    protected void onSelectDay(DateTime day){
     }
 
 

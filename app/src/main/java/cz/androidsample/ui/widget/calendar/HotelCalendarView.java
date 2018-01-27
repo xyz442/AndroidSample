@@ -1,9 +1,7 @@
-package cz.androidsample.ui.calendar;
+package cz.androidsample.ui.widget.calendar;
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
@@ -11,10 +9,11 @@ import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.widget.Toast;
 
-import com.financial.quantgroup.R;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import cz.androidsample.ui.widget.calendar.model.DateTime;
 
 /**
  * Created by cz on 10/19/16.
@@ -27,8 +26,8 @@ public class HotelCalendarView extends CalendarView {
     private int itemSelectTabColor;
     private int itemSelectRangeTextColor;
     private int itemSelectRangeColor;
-    private CalendarDay selectCalendar;
-    private final List<CalendarDay> selectCalendarItems;
+    private DateTime selectCalendar;
+    private final List<DateTime> selectCalendarItems;
     private OnCalendarItemClickListener listener;
     public HotelCalendarView(Context context) {
         this(context,null,0);
@@ -42,12 +41,12 @@ public class HotelCalendarView extends CalendarView {
         super(context, attrs, defStyleAttr);
         selectPaint=new Paint(Paint.ANTI_ALIAS_FLAG);
         selectCalendarItems =new ArrayList<>();
-        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.HotelCalendarView);
-        setItemSelectTabColor(a.getColor(R.styleable.HotelCalendarView_cv_itemSelectTabColor, Color.BLUE));
-        setItemSelectRangeColor(a.getColor(R.styleable.HotelCalendarView_cv_itemSelectRangeColor, Color.DKGRAY));
-        setItemSelectRangeTextColor(a.getColor(R.styleable.HotelCalendarView_cv_itemSelectRangeTextColor, Color.BLUE));
-        setItemSelectRoundRadii(a.getDimension(R.styleable.HotelCalendarView_cv_itemSelectRoundRadii, 0));
-        a.recycle();
+//        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.HotelCalendarView);
+//        setItemSelectTabColor(a.getColor(R.styleable.HotelCalendarView_cv_itemSelectTabColor, Color.BLUE));
+//        setItemSelectRangeColor(a.getColor(R.styleable.HotelCalendarView_cv_itemSelectRangeColor, Color.DKGRAY));
+//        setItemSelectRangeTextColor(a.getColor(R.styleable.HotelCalendarView_cv_itemSelectRangeTextColor, Color.BLUE));
+//        setItemSelectRoundRadii(a.getDimension(R.styleable.HotelCalendarView_cv_itemSelectRoundRadii, 0));
+//        a.recycle();
     }
 
     public void setItemSelectTabColor(int color) {
@@ -70,7 +69,7 @@ public class HotelCalendarView extends CalendarView {
         invalidate();
     }
 
-    public void setSelectCalendarDay(CalendarDay newSelectDay){
+    public void setSelectCalendarDay(DateTime newSelectDay){
         this.selectCalendar=newSelectDay;
         this.selectCalendarItems.add(newSelectDay);
         invalidate();
@@ -87,7 +86,7 @@ public class HotelCalendarView extends CalendarView {
     }
 
     @Override
-    public void onPreDrawRect(Canvas canvas, TextPaint textPaint, Paint labelPaint, int column, int row, CalendarDay newDay, int dayCode) {
+    public void onPreDrawRect(Canvas canvas, TextPaint textPaint, Paint labelPaint, int column, int row, DateTime newDay, int dayCode) {
         super.onPreDrawRect(canvas,textPaint,labelPaint, column, row,newDay,dayCode);
         float itemWidth = getItemWidth();
         float itemHeight = getItemHeight();
@@ -105,7 +104,7 @@ public class HotelCalendarView extends CalendarView {
             }
             int size = selectCalendarItems.size();
             if(1==size){
-                CalendarDay selectStartDay = selectCalendarItems.get(0);
+                DateTime selectStartDay = selectCalendarItems.get(0);
                 int selectCode = selectStartDay.hashCode();
                 int endCode = todayCode+MAX_SELECT_DAY;
                 if(endCode-selectCode>MAX_RANGE_DAY){
@@ -117,8 +116,8 @@ public class HotelCalendarView extends CalendarView {
                     textPaint.setColor(textDisableColor);
                 }
             } else if(2==size){
-                CalendarDay selectStartDay = selectCalendarItems.get(0);
-                CalendarDay selectEndDay = selectCalendarItems.get(1);
+                DateTime selectStartDay = selectCalendarItems.get(0);
+                DateTime selectEndDay = selectCalendarItems.get(1);
                 if(newDayCode>selectStartDay.hashCode()&&newDayCode<selectEndDay.hashCode()){
                     textPaint.setColor(itemSelectRangeTextColor);
                     selectPaint.setColor(itemSelectRangeColor);
@@ -144,12 +143,12 @@ public class HotelCalendarView extends CalendarView {
     }
 
     @Override
-    protected void onSelectDay(CalendarDay calendarDay) {
-        super.onSelectDay(calendarDay);
+    protected void onSelectDay(DateTime dateTime) {
+        super.onSelectDay(dateTime);
         int size = selectCalendarItems.size();
         int todayCode = calendarToday.hashCode();
         int endCode=todayCode+MAX_SELECT_DAY;
-        int selectCode = calendarDay.hashCode();
+        int selectCode = dateTime.hashCode();
         boolean touchInRect=false;
         if(0==size){
             //点击范围:当天-30
@@ -170,23 +169,23 @@ public class HotelCalendarView extends CalendarView {
                 }
             } else if(null==selectCalendar){
                 selectCalendarItems.clear();
-                selectCalendar=calendarDay;
-                selectCalendarItems.add(calendarDay);
+                selectCalendar= dateTime;
+                selectCalendarItems.add(dateTime);
                 if(null!=listener){
-                    listener.onItemClick(calendarDay, null, false);
+                    listener.onItemClick(dateTime, null, false);
                 }
-            } else if(calendarDay.equals(selectCalendar)){
+            } else if(dateTime.equals(selectCalendar)){
                 selectCalendarItems.remove(selectCalendar);
                 selectCalendar=null;
                 if(null!=listener){
                     listener.onItemClick(null,null,true);
                 }
-            } else if(0>calendarDay.hashCode()-selectCalendar.hashCode()){
+            } else if(0> dateTime.hashCode()-selectCalendar.hashCode()){
                 Toast.makeText(getContext(), "选择日期异常!", Toast.LENGTH_SHORT).show();
             } else {
-                selectCalendarItems.add(calendarDay);
+                selectCalendarItems.add(dateTime);
                 if(null!=listener){
-                    listener.onItemClick(selectCalendar,calendarDay,false);
+                    listener.onItemClick(selectCalendar, dateTime,false);
                 }
             }
         }
@@ -199,7 +198,7 @@ public class HotelCalendarView extends CalendarView {
     }
 
     public interface OnCalendarItemClickListener{
-        void onItemClick(CalendarDay calendarDay1, CalendarDay calendarDay2, boolean cancle);
+        void onItemClick(DateTime dateTime1, DateTime dateTime2, boolean cancle);
 
     }
 }

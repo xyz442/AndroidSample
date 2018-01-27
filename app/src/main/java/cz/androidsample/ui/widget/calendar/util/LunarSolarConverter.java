@@ -1,16 +1,16 @@
-package cz.androidsample.ui.calendar.util;
+package cz.androidsample.ui.widget.calendar.util;
 
 
 import android.text.TextUtils;
 import android.util.SparseArray;
 
-import com.financial.quantgroup.widgets.calendar.CalendarDay;
-import com.financial.quantgroup.widgets.calendar.model.Lunar;
-
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
+
+import cz.androidsample.ui.widget.calendar.model.DateTime;
+import cz.androidsample.ui.widget.calendar.model.Lunar;
 
 public class LunarSolarConverter {
     private static final int MAX_MONTH_DAY=31;
@@ -149,14 +149,14 @@ public class LunarSolarConverter {
      *
      * @return 二十四节气字符串, 若不是节气日, 返回空串(例:冬至)
      */
-    public static String getTermString(CalendarDay solar) {
+    public static String getTermString(DateTime solar) {
       //  System.out.println(solar.solarYear + "-" + solar.solarMonth + "-" + solar.solarDay);
         // 二十四节气
-        int convertMonth = solar.month;
+        int convertMonth = solar.getMonth();
         String termString = "";
-        if (getSolarTermDay(solar.year, convertMonth * 2) == solar.day) {
+        if (getSolarTermDay(solar.getYear(), convertMonth * 2) == solar.getDay()) {
             termString = LunarSolarConverter.solarTerm[convertMonth * 2];
-        } else if (getSolarTermDay(solar.year, convertMonth * 2 + 1) == solar.day) {
+        } else if (getSolarTermDay(solar.getYear(), convertMonth * 2 + 1) == solar.getDay()) {
             termString = LunarSolarConverter.solarTerm[convertMonth * 2 + 1];
         }
         return termString;
@@ -217,12 +217,12 @@ public class LunarSolarConverter {
     }
 
 
-    public synchronized static void findFestival(CalendarDay solar, Lunar lunar) {
-        int code=(solar.month+1)*MAX_MONTH_DAY+solar.day;
+    public synchronized static void findFestival(DateTime solar, Lunar lunar) {
+        int code=(solar.getMonth() +1)*MAX_MONTH_DAY+ solar.getDay();
         String value = festivalItems1.get(code);
         if(!TextUtils.isEmpty(value)){
-            solar.isSFestival = true;
-            solar.solarFestivalName = value;
+            solar.setIsSFestival(true);
+            solar.setSolarFestivalName(value);
         }
 
 
@@ -250,12 +250,12 @@ public class LunarSolarConverter {
 
 
 
-    public static Lunar SolarToLunar(CalendarDay solar) {
-        int month = solar.month + 1;
+    public static Lunar SolarToLunar(DateTime solar) {
+        int month = solar.getMonth() + 1;
         Lunar lunar = new Lunar();
-        int index = solar.year - solar_1_1[0];
-        int data = (solar.year << 9) | (month << 5)
-                | (solar.day);
+        int index = solar.getYear() - solar_1_1[0];
+        int data = (solar.getYear() << 9) | (month << 5)
+                | (solar.getDay());
         int solar11 = 0;
         if (solar_1_1[index] > data) {
             index--;
@@ -264,8 +264,8 @@ public class LunarSolarConverter {
         int y = GetBitInt(solar11, 12, 9);
         int m = GetBitInt(solar11, 4, 5);
         int d = GetBitInt(solar11, 5, 0);
-        long offset = solarToInt(solar.year, month,
-                solar.day) - solarToInt(y, m, d);
+        long offset = solarToInt(solar.getYear(), month,
+                solar.getDay()) - solarToInt(y, m, d);
 
         int days = lunar_month_days[index];
         int leap = GetBitInt(days, 4, 13);
@@ -295,7 +295,7 @@ public class LunarSolarConverter {
             }
         }
         lunar.lunarDay = lunarD;
-        solar.solar24Term = getTermString(solar);
+        solar.setSolar24Term(getTermString(solar));
         findFestival(solar, lunar);
         return lunar;
     }

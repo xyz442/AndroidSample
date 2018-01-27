@@ -91,4 +91,24 @@
         </attr>
     </declare-styleable>
 
+    <declare-styleable name="BaseCalendarView">
+        <attr name="bv_dividerDrawable" format="reference"/>
+        <attr name="bv_dividerSize" format="dimension"/>
+        <attr name="bv_divideGravity" >
+            <flag name="none" value="0x01"/>
+            <flag name="left" value="0x02"/>
+            <flag name="top" value="0x04"/>
+            <flag name="right" value="0x08"/>
+            <flag name="bottom" value="0x10"/>
+            <flag name="horizontal_divide" value="0x20"/>
+            <flag name="vertical_divide" value="0x40"/>
+        </attr>
+        <attr name="bv_calendarMode" format="enum">
+            <enum name="east" value="0x00"/>
+            <enum name="west" value="0x01"/>
+        </attr>
+        <attr name="bv_horizontalSpacing" format="dimension"/>
+        <attr name="bv_verticalSpacing" format="dimension"/>
+    </declare-styleable>
+
 </resources>
