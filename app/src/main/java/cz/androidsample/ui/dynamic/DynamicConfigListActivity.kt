@@ -1,5 +1,6 @@
 package cz.androidsample.ui.dynamic
 
+import android.content.Intent
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
 import android.widget.Toast
@@ -10,6 +11,7 @@ import kotlinx.android.synthetic.main.activity_dynamic_config_list.*
 import cz.androidsample.annotation.ToolBar
 import cz.androidsample.ui.dynamic.observer.FormSubscription
 import cz.volunteerunion.ui.ToolBarActivity
+import org.jetbrains.anko.adapterViewFlipper
 import org.jetbrains.anko.sdk25.coroutines.onClick
 import org.jetbrains.anko.toast
 import rx.functions.Action1
@@ -37,7 +39,9 @@ class DynamicConfigListActivity : ToolBarActivity() {
             items.add(ServerPrefsItem("Items$index"))
         }
         recyclerView.layoutManager=LinearLayoutManager(this)
-        recyclerView.adapter= DynamicPrefsAdapter(this,items)
+        val adapter= DynamicPrefsAdapter(this,items)
+
+        recyclerView.adapter=adapter
 
         //表单校验对象,管理所有变化操作,包括动态监听,手动校验.等
         val formSubscription= FormSubscription(items)
@@ -53,6 +57,15 @@ class DynamicConfigListActivity : ToolBarActivity() {
                 val inValidText = formSubscription.inValidText()
                 Toast.makeText(this@DynamicConfigListActivity,inValidText,Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+        super.onActivityResult(requestCode, resultCode, data)
+        val position = data.getIntExtra("position", -1)
+        val adapter = recyclerView.adapter
+        if(null!=adapter&&adapter is DynamicPrefsAdapter){
+            adapter.updateItem(position,data.extras)
         }
     }
 }

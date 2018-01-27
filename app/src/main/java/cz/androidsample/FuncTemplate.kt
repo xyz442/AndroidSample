@@ -5,6 +5,7 @@ import cz.androidsample.ui.FlipImgActivity
 import cz.androidsample.ui.anim.Animator1Activity
 import cz.androidsample.ui.anim.ArcAnimatorActivity
 import cz.androidsample.ui.anim.BannerActivity
+import cz.androidsample.ui.app.AppInfoActivity
 import cz.androidsample.ui.dynamic.DynamicConfigListActivity
 import cz.androidsample.ui.hierarchy.*
 import cz.androidsample.ui.layout.ConstraintActivity
@@ -253,8 +254,13 @@ class FuncTemplate {
 
                     }
                 }
+                item {
+                    id = 7
+                    title = "应用信息"
+                    desc = "检测应用信息,如cpu,内存等"
+                    clazz=AppInfoActivity::class.java
+                }
             }
-
         }
     }
 }

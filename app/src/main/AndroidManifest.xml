@@ -34,19 +34,19 @@
         <activity android:name=".ui.hierarchy.SeatTable1Activity" />
         <activity android:name=".ui.hierarchy.Hierarchy4Activity" />
         <activity android:name=".ui.widget.seat.SeatTable2Activity" />
+        <activity android:name=".ui.widget.seat.SeatTable3Activity" />
         <activity android:name=".ui.anim.GuideActivity" />
         <activity android:name=".ui.widget.GuideLayoutActivity" />
         <activity android:name=".ui.anim.BannerActivity" />
         <activity android:name=".ui.anim.ArcAnimatorActivity" />
         <activity android:name=".ui.widget.waterfall.WaterfallActivity" />
         <activity android:name=".ui.dynamic.DynamicConfigListActivity" />
-        <activity android:name=".ui.widget.scroll.ViewScrollActivity"></activity>
-
-
-        <activity android:name=".ui.widget.waterfall.other.bao.WaterFull1Activity"/>
-        <activity android:name=".ui.widget.waterfall.other.hui.TestFlowLayoutActivity"/>
-        <activity android:name=".ui.widget.waterfall.other.tao.TaoFlowLayout1Activity"/>
-        <activity android:name=".ui.widget.waterfall.other.liang.LiangFunnyWaterFlowActivity1"/>
+        <activity android:name=".ui.widget.scroll.ViewScrollActivity" />
+        <activity android:name=".ui.widget.waterfall.other.bao.WaterFull1Activity" />
+        <activity android:name=".ui.widget.waterfall.other.hui.TestFlowLayoutActivity" />
+        <activity android:name=".ui.widget.waterfall.other.tao.TaoFlowLayout1Activity" />
+        <activity android:name=".ui.widget.waterfall.other.liang.LiangFunnyWaterFlowActivity1" />
+        <activity android:name=".ui.app.AppInfoActivity"></activity>
     </application>
 
 </manifest>

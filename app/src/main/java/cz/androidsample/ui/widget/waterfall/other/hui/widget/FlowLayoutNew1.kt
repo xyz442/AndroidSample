@@ -1,16 +1,18 @@
 package cz.androidsample.ui.widget.waterfall.other.hui.widget
 
 import android.content.Context
+import android.support.v4.widget.ScrollerCompat
 import android.util.AttributeSet
 import android.util.Log
 import android.view.*
 import android.widget.OverScroller
+import android.widget.Scroller
 import cz.androidsample.R
 
 /**
  * Created by wanghui on 2017/11/29.
  */
-class FlowLayoutNew1(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : ViewGroup(context, attrs, defStyleAttr, defStyleRes) {
+class FlowLayoutNew1(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : ViewGroup(context, attrs, defStyleAttr) {
     private val TAG = "FlowLayoutNew1"
     private var itemDivideHorizontalAttr = 0
     private var itemDivideVerticalAttr = 0
@@ -20,7 +22,7 @@ class FlowLayoutNew1(context: Context, attrs: AttributeSet?, defStyleAttr: Int, 
     private var columnHeight = ArrayList<Int>()
     private var childWidth = 0
 
-    private val scroller : OverScroller  //可以滑动查看
+    private val scroller : ScrollerCompat  //可以滑动查看
     private var touchSlop = 0
     private var currentX = 0f
     private var currentY = 0f
@@ -33,9 +35,8 @@ class FlowLayoutNew1(context: Context, attrs: AttributeSet?, defStyleAttr: Int, 
     private var velocityTracker : VelocityTracker? = null
 
     private var itemPaddingFixable = false
-    constructor(context: Context):this(context, null, 0, 0)
-    constructor(context: Context, attrs: AttributeSet?):this(context, attrs, 0, 0)
-    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int): this(context, attrs, defStyleAttr, 0)
+    constructor(context: Context):this(context, null, 0)
+    constructor(context: Context, attrs: AttributeSet?):this(context, attrs, 0)
 
 
     init {
@@ -47,7 +48,7 @@ class FlowLayoutNew1(context: Context, attrs: AttributeSet?, defStyleAttr: Int, 
             columns = getInt(R.styleable.HuiFlowLayout1_columns, 2)
         }.recycle()
 
-        scroller = OverScroller(context)
+        scroller = ScrollerCompat.create(context)
         ViewConfiguration.get(context).run {
             touchSlop = scaledPagingTouchSlop
             minVelocity = scaledMinimumFlingVelocity
@@ -127,7 +128,7 @@ class FlowLayoutNew1(context: Context, attrs: AttributeSet?, defStyleAttr: Int, 
      * 实现连贯滑动
      */
     override fun computeScroll() {
-        if (scroller.computeScrollOffset()){
+        if (!scroller.isFinished&&scroller.computeScrollOffset()){
             Log.d(TAG, "debug---computeScroll--${scroller.currY}")
             scrollTo(scroller.currX, scroller.currY)
             postInvalidate()
@@ -178,7 +179,8 @@ class FlowLayoutNew1(context: Context, attrs: AttributeSet?, defStyleAttr: Int, 
                 if (velocityTracker != null){
                     if (Math.abs(velocityTracker!!.yVelocity) > minVelocity){
                         scroller.fling(scrollX, scrollY, 0, -velocityTracker!!.yVelocity.toInt(),
-                                leftBorder, rightBorder, topBorder, bottomBorder - measuredHeight, 0, 50)
+                                leftBorder, rightBorder, topBorder, bottomBorder - measuredHeight)
+                        postInvalidate()
                     }
                     releaseVelocityTracker()
                 }

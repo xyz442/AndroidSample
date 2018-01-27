@@ -1,7 +1,9 @@
 package cz.androidsample.ui.dynamic.adapter
 
 import android.content.Context
+import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import com.cz.recyclerlibrary.adapter.BaseViewHolder
 import cz.androidsample.R
 import rx.Observable
@@ -22,6 +24,11 @@ class TitlePrefsItem : PrefsListItem<String>() {
 
 
     override fun onBindViewHolder(holder: BaseViewHolder,item:String?, position: Int) {
+        holder.itemView
+    }
 
+    override fun onItemClick(view: View, item: PrefsListItem<String>, position: Int): Boolean {
+        Toast.makeText(view.context,"Clicked!",Toast.LENGTH_SHORT).show()
+        return true
     }
 }

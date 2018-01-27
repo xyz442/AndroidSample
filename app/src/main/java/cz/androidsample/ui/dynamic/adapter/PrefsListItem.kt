@@ -1,6 +1,7 @@
 package cz.androidsample.ui.dynamic.adapter
 
 import android.content.Context
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -69,6 +70,9 @@ abstract class PrefsListItem<E>{
 
     abstract fun onCreateViewHolder(parent: ViewGroup): BaseViewHolder
 
+    open fun updateItem(data: Bundle)=Unit
+
+    open fun onItemClick(view:View,item:PrefsListItem<E>,position: Int):Boolean=false
     /**
      * 本条目是否校验通过
      */

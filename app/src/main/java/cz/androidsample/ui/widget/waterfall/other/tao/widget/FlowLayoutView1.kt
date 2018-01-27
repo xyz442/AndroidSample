@@ -53,8 +53,6 @@ class FlowLayoutView1(context: Context, attrs: AttributeSet?, defStyleAttr: Int)
             drawable.addState(intArrayOf(android.R.attr.state_empty), ColorDrawable(color))
             drawable.addState(intArrayOf(android.R.attr.state_pressed), ColorDrawable(pressColor))
             view.backgroundDrawable = drawable
-            view.width = LayoutParams.WRAP_CONTENT
-            view.height = LayoutParams.WRAP_CONTENT
             view.text = it
             view.setOnClickListener {
                 Toast.makeText(context, "点击${indexOfChild(it)}", Toast.LENGTH_SHORT).show()

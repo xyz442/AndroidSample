@@ -5,6 +5,7 @@ import android.text.Editable
 import android.text.TextUtils
 import android.text.TextWatcher
 import android.util.Patterns
+import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import com.cz.recyclerlibrary.adapter.BaseViewHolder
@@ -15,6 +16,7 @@ import org.jetbrains.anko.find
  * Created by cz on 2017/12/1.
  */
 class EditPrefsItem : PrefsListItem<String>() {
+
     private var text1=String()
     private var text2=String()
 

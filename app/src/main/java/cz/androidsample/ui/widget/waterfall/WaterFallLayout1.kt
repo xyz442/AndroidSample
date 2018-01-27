@@ -196,7 +196,7 @@ class WaterFallLayout1(context: Context, attrs: AttributeSet?, defStyleAttr: Int
                 val x = ev.x
                 val y = ev.y
                 val dy = y - lastMotionY
-                if (dy > touchSlop) {
+                if (Math.abs(dy) > touchSlop) {
                     isBeingDragged = true
                 }
             }
